@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <title>Framespace <%= fs.name %></title>
+    <link rel="stylesheet" type="text/css" href="/web/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <div id="users" style="position: fixed; top: 0px; left: 0px; pointer-events: none;">
+      <!-- Users are added dynamically using this template -->
+      <div id="user-template" style="display: none; position: relative; left: 0">
+        <svg height="80" width="80" class="button">
+          <circle cx="40" cy="40" r="32"/>
+        </svg>
+        <!-- avatar and tool cursor added as img tags here -->
+      </div>
+    </div>
+
+    <!-- The main paper of the framespace -->
+    <svg id="<%= fs.id %>" class="paper" width="100%" height="100%" font-size="30"></svg>
+
+    <div style="position: fixed; bottom: 0px; left: 0px; width: 100%; pointer-events: none;">
+      <div style="margin-left: auto; margin-right: auto; width: 320px; height: 80px;">
+        <svg id="toolbar" width="100%" height="100%">
+          <defs>
+            <filter id="f3" x="-20%" y="-20%" width="200%" height="200%">
+              <feOffset result="offOut" in="SourceAlpha" dx="3" dy="3" />
+              <feGaussianBlur result="blurOut" in="offOut" stdDeviation="3" />
+              <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+            </filter>
+          </defs>
+          <g class="button" id="undo-button">
+            <circle cx="40" cy="40" r="32"/>
+            <image id="undo-icon" x="24" y="24" width="32" height="32" xlink:href="/web/undo.svg" />
+          </g>
+          <g class="button" id="pen-button">
+            <circle cx="120" cy="40" r="32"/>
+            <image id="pen-icon" x="104" y="24" width="32" height="32" xlink:href="/web/pen.svg" />
+          </g>
+          <g class="button" id="hand-button">
+            <circle cx="200" cy="40" r="32"/>
+            <image id="hand-icon" x="184" y="24" width="32" height="32" xlink:href="/web/hand.svg" />
+          </g>
+          <g class="button" id="next-button">
+            <circle cx="280" cy="40" r="32"/>
+            <image id="next-icon" x="264" y="24" width="32" height="32" xlink:href="/web/next.svg" />
+          </g>
+        </svg>
+      </div>
+    </div>
+    <script src="/web/bundle.js"></script>
+  </body>
+</html>

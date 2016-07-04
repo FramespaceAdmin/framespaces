@@ -1,0 +1,48 @@
+.paper {
+  stroke: black;
+  stroke-width: 4;
+  stroke-linecap: round;
+  fill: none;
+}
+.paper text {
+  font-family: 'Comic Sans', 'Comic Sans MS', cursive;
+  stroke: none;
+  fill: black;
+  letter-spacing: -1px;
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+  user-select: none;          /* Likely future */
+}
+.paper.hand-mode :not(text):not(tspan) {
+  fill: black;
+  fill-opacity: 0;
+}
+.paper.hand-mode :not(text):not(tspan):hover {
+  fill-opacity: 0.1;
+}
+.paper.hand-mode text:hover {
+  stroke: black;
+  stroke-width: 4;
+  stroke-opacity: 0.1;
+}
+.dot {
+  r: 2; /* Half of pen stroke-width */
+  fill: black;
+  stroke: none;
+}
+
+.button {
+  transform: translate(0px, 0px);
+  stroke: black;
+  stroke-width: 1.5;
+  pointer-events: auto;
+  fill: white;
+}
+.button:hover {
+  filter: url(#f3);
+}
+.button:active {
+  transform: translate(3px, 3px);
+  filter: none;
+}

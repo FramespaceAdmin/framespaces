@@ -1,0 +1,38 @@
+{
+  "id" : "http://framespaces.com/schema/action.json",
+  "$schema" : "http://json-schema.org/schema#",
+  "definitions" : {
+    "guid" : { "type" : "string", "pattern" : "^[a-f][a-f0-9]{31}$" },
+    "action" : {
+      "type" : "object",
+      "properties" : {
+        "id" : { "$ref": "#/definitions/guid" },
+        "type" : { "type" : "string", "enum" : ["addition", "removal", "replacement", "mutation"] },
+        "element" : { "$ref": "#/definitions/guid" },
+        "shape" : { "$ref": "#/definitions/shape" },
+        "undo" : { "type" : "boolean" }
+      },
+      "required" : ["id", "type"],
+      "additionalProperties" : false
+    },
+    "shape" : {
+      "type" : "object",
+      "properties" : {
+        "name" : { "type" : "string", "enum" : ["text", "tspan", "polygon", "polyline", "line", "rect", "ellipse", "circle", "path"] },
+        "attr" : {
+          "type" : "object",
+          "maxProperties" : 100,
+          "additionalProperties" : { "oneOf" : [{ "type" : "string" }, { "type" : "number" }] }
+        },
+        "text" : { "type" : "string", "maxLength" : 1000 },
+        "children" : { "type" : "array", "items" : { "$ref": "#/definitions/shape" } }
+      },
+      "required" : ["name", "attr"],
+      "additionalProperties" : false
+    }
+  },
+  "oneOf" : [
+    { "$ref": "#/definitions/action" },
+    { "type" : "array", "items" : { "$ref": "#/definitions/action" }
+  }]
+}
