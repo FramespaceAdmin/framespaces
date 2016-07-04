@@ -23,7 +23,7 @@
     "request": "^2.72.0",
     "snapsvg": "^0.4",
     "socket.io": "^1.4.6",
-    "svg-intersections": "git://github.com/gsvarovsky/svg-intersections",
+    "svg-intersections": "https://github.com/effektif/svg-intersections",
     "svg-points": "^2.0.1",
     "taffydb": "^2.7.2"
   },
