@@ -13,7 +13,7 @@ module.exports = function suggestArcify(picture, element) {
     // The centroid, C, of the shape will indicate the direction of the arc
     var p1 = _.first(shape.points), p2 = _.last(shape.points),
         C = new Point(_stat.mean(_.map(shape.points, 'x')), _stat.mean(_.map(shape.points, 'y'))),
-        m = new Point(_stat.mean([p1.x, p2.x]), _stat.mean([p1.y, p2.y]));
+        m = p1.lerp(p2, 0.5);
     // The line from the mid-point, through the centroid, is a part of a radius
     // Extend a vector well beyond the extent, and intersect to find an approximate sagitta
     var rv = vector(m, C).unit().multiply(2 * shape.extent);
