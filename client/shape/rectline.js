@@ -1,17 +1,22 @@
 var _ = require('lodash'),
     Shape = require('../shape'),
     Point = require('kld-affine').Point2D,
-    Polyline = require('./polyline');
+    Rect = require('./rect'),
+    Polyline = require('./polyline'),
+    Polygon = require('./polygon');
 
 /**
  * A rectline is a polyline in which each point varies from the last in only one of x or y.
  */
 function Rectline(attr) {
   Polyline.call(this, Shape.deltaAttr(attr, { class : 'rect' }));
+  this.axis1 = this.points[0].x === this.points[1].x ? 'y' : 'x';
+  this.axis2 = this.points[1].x === this.points[2].x ? 'y' : 'x';
 }
 
 Rectline.check = function (attr) {
-  return _.every(Shape.points(attr.points), function (p, i, ps) {
+  var points = Shape.points(attr.points);
+  return points.length > 2 && _.every(points, function (p, i, ps) {
     return i === 0 || p.x === ps[i - 1].x || p.y === ps[i - 1].y;
   });
 };
@@ -78,5 +83,19 @@ Rectline.prototype.mover = function (isEdge, cursor) {
     return Polyline.prototype.mover.call(this, isEdge, cursor);
   }
 };
+
+Rectline.prototype.close = function () {
+  // If there are an odd number of points, drop the last one
+  var points = this.points.length > 3 && this.points.length % 2 ? _.initial(this.points) : this.points,
+      end = _.last(points);
+  // Adjust the last point to be recty with respect to the first
+  end = _.set({ x : end.x, y : end.y }, this.axis1, points[0][this.axis1]);
+  points = (points.length > 3 ? _.initial(points) : points).concat(new Point(end.x, end.y));
+  if (points.length === 4) {
+    return new Rect(_(this.attr).omit('points').assign(Shape.computeBBox(points)).value());
+  } else if (points.length > 4) {
+    return new Polygon(_(this.attr).clone().set('points', Shape.pointStr(points)).value());
+  }
+}
 
 module.exports = Rectline;

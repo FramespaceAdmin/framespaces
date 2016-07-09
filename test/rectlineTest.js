@@ -3,6 +3,7 @@ var _ = require('lodash'),
     Shape = require('../client/shape'),
     Point = require('kld-affine').Point2D,
     Rectline = require('../client/shape/rectline'),
+    Rect = require('../client/shape/rect'),
     MockSnap = require('./mockSnap');
 
 describe('Rectline', function () {
@@ -43,5 +44,45 @@ describe('Rectline', function () {
     assert.equal(rectline.points[1].y, 2);
     assert.equal(rectline.points[2].x, 2);
     assert.equal(rectline.points[2].y, 2);
+  });
+
+  it('should close to a rectangle if three points', function () {
+    var rectline = new Rectline({ points : '0,0,0,2,2,2' });
+    rect = rectline.close();
+    assert.instanceOf(rect, Rect);
+    assert.equal(rect.attr.x, 0);
+    assert.equal(rect.attr.y, 0);
+    assert.equal(rect.attr.width, 2);
+    assert.equal(rect.attr.height, 2);
+  });
+
+  it('should close to a rectangle if four points', function () {
+    var rectline = new Rectline({ points : '0,0,0,2,2,2,2,0' });
+    rect = rectline.close();
+    assert.instanceOf(rect, Rect);
+    assert.equal(rect.attr.x, 0);
+    assert.equal(rect.attr.y, 0);
+    assert.equal(rect.attr.width, 2);
+    assert.equal(rect.attr.height, 2);
+  });
+
+  it('should favour the first point when closing to a rectangle', function () {
+    var rectline = new Rectline({ points : '0,0,0,2,2,2,2,-1' });
+    rect = rectline.close();
+    assert.instanceOf(rect, Rect);
+    assert.equal(rect.attr.x, 0);
+    assert.equal(rect.attr.y, 0);
+    assert.equal(rect.attr.width, 2);
+    assert.equal(rect.attr.height, 2);
+  });
+
+  it('should close to a rectangle if five points', function () {
+    var rectline = new Rectline({ points : '0,0,0,2,2,2,2,-1,1,-1' });
+    rect = rectline.close();
+    assert.instanceOf(rect, Rect);
+    assert.equal(rect.attr.x, 0);
+    assert.equal(rect.attr.y, 0);
+    assert.equal(rect.attr.width, 2);
+    assert.equal(rect.attr.height, 2);
   });
 });

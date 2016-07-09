@@ -58,4 +58,9 @@ Polyline.prototype.mover = function (isEdge, cursor) {
   };
 };
 
+Polyline.prototype.close = function () {
+  var Polygon = require('./polygon');
+  return new Polygon(_.set(this.attr, 'points', Shape.pointStr(_.initial(this.points))));
+};
+
 module.exports = Polyline;

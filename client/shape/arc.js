@@ -3,6 +3,7 @@ var _ = require('lodash'),
     vector = require('kld-affine').Vector2D.fromPoints,
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
+    Circle = require('./circle'),
     Ellipse = require('./ellipse');
 
 function Arc(attr) {
@@ -116,6 +117,18 @@ Arc.prototype.mover = function (isEdge, cursor) {
         '1.curve.sweepFlag' : vector(this.p1, this.p2).angleBetween(vector(this.p1, p)) < 0
       }).mapValues(Number).mapValues(_.constant).value());
     };
+  }
+};
+
+Arc.prototype.close = function () {
+  if (this.curve.rx === this.curve.ry) {
+    return new Circle(_(this.attr).omit('d').assign({
+      cx : this.curve.c.x, cy : this.curve.c.y, r : this.curve.rx
+    }));
+  } else {
+    return new Ellipse(_(this.attr).omit('d').assign({
+      cx : this.curve.c.x, cy : this.curve.c.y, rx : this.curve.rx, ry : this.curve.ry
+    }));
   }
 };
 

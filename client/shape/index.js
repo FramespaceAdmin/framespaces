@@ -105,7 +105,14 @@ Shape.prototype.computePoints = function () {
  * Called after points have been computed.
  */
 Shape.prototype.computeBBox = function () {
-  var xs = _.map(this.points, 'x'), ys = _.map(this.points, 'y'), x = _.min(xs), y = _.min(ys);
+  return Shape.computeBBox(this.points);
+};
+
+/**
+ * Utility bbox computation for an array of points.
+ */
+Shape.computeBBox = function(points) {
+  var xs = _.map(points, 'x'), ys = _.map(points, 'y'), x = _.min(xs), y = _.min(ys);
   return { x : x, y : y, width : _.max(xs) - x, height : _.max(ys) - y };
 };
 
@@ -223,8 +230,22 @@ Shape.prototype.mover = null;
 /**
  * Breaks the shape with the given eraser cursor
  * @param cursor { c : centre, r : radius }
+ * @returns an array of shapes
  */
 Shape.prototype.break = null;
+
+/**
+ * If truthy, then a function that closes an open shape
+ * @returns a closed shape
+ */
+Shape.prototype.close = null;
+
+/**
+ * If truthy, then a function that adds the other shape onto this shape
+ * @param that a shape to add
+ * @returns a compound shape
+ */
+Shape.prototype.add = null;
 
 /**
  * Returns strongly typed attributes for the given element
