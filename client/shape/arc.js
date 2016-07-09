@@ -5,37 +5,51 @@ var _ = require('lodash'),
     Ellipse = require('./ellipse');
 
 function Arc(attr) {
-  this.svgp = Arc.toSvgPoints(attr.d);
+  var pointObjects = toPointObjects(attr.d);
+  this.p1 = new Point(pointObjects[0].x, pointObjects[0].y);
+  this.p2 = new Point(pointObjects[1].x, pointObjects[1].y);
+  this.curve = pointObjects[1].curve;
+
   Shape.call(this, 'path', attr);
 }
 
-Arc.toSvgPoints = function (d) {
+function toPointObjects(d) {
   var svgp = _svgp.toPoints({ type : 'path', d : d });
   return svgp.length === 2 && _.get(svgp, '1.curve.type') === 'arc' && svgp;
 }
 
 Arc.fromJSON = function (data) {
-  return data.name === 'path' && Arc.toSvgPoints(data.attr.d) && new Arc(data.attr);
+  return data.name === 'path' && toPointObjects(data.attr.d) && new Arc(data.attr);
 };
 
 Arc.of = function (e) {
-  return e.node.nodeName === 'path' && Arc.toSvgPoints(e.attr('d')) && new Arc(Shape.nodeAttr(e));
+  return e.node.nodeName === 'path' && toPointObjects(e.attr('d')) && new Arc(Shape.nodeAttr(e));
 };
+
+Arc.fromPoints = function (p1, p2, params) {
+  // Allow omission of curve type
+  return new Arc({
+    d : _svgp.toPath([{ x : p1.x, y : p1.y }, {
+      // Coerce all parameters to be numbers (avoiding 'true' & 'false')
+      x : p2.x, y : p2.y, curve : _.set(_.mapValues(params, Number), 'type', 'arc')
+    }])
+  });
+}
 
 Arc.prototype = Object.create(Shape.prototype);
 Arc.prototype.constructor = Arc;
 
 Arc.prototype.computePoints = function () {
   // Start and end points
-  return _.map(this.svgp, function (p) { return new Point(p.x, p.y); });
+  return [this.p1, this.p2];
 };
 
 Arc.prototype.computeBBox = function () {
-  if (this.svgp[1].curve.largeArcFlag) {
+  if (this.curve.largeArcFlag) {
     // Large arc bbox is the bbox of the full ellipse
     // Intersection params have calculated the centre as a point
     var pathParams = this.params.params[0], arcParams = pathParams[0];
-    return Ellipse.computeBBox(arcParams.params[0], this.svgp[1].curve.rx, this.svgp[1].curve.ry);
+    return Ellipse.computeBBox(arcParams.params[0], this.curve.rx, this.curve.ry);
   } else {
     // Small arc bbox is the bbox of the begin and end points
     return Shape.prototype.computeBBox.call(this);
@@ -43,9 +57,9 @@ Arc.prototype.computeBBox = function () {
 };
 
 Arc.prototype.computeExtent = function () {
-  if (this.svgp[1].curve.largeArcFlag) {
+  if (this.curve.largeArcFlag) {
     // Large arc extent is the extent of the full ellipse
-    return this.svgp[1].curve.rx + this.svgp[1].curve.ry; // diameter-ish
+    return this.curve.rx + this.curve.ry; // diameter-ish
   } else {
     // Small arc extent is the extent of the begin and end points
     return this.points[0].distanceFrom(this.points[1]);
@@ -55,7 +69,7 @@ Arc.prototype.computeExtent = function () {
 Arc.prototype.deltaD = function (deltas) {
   return this.delta({ d : _svgp.toPath(_.reduce(deltas, function (svgp, d, path) {
     return _.update(svgp, path, function (v) { return (v || 0) + d; });
-  }, _.cloneDeep(this.svgp))) });
+  }, [{ x : p1.x, y : p1.y }, { x : p2.x, y : p2.y, curve : _.clone(this.curve) }])) });
 };
 
 Arc.prototype.mover = function (isEdge, cursor) {

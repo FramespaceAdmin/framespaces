@@ -1,0 +1,37 @@
+var _ = require('lodash'),
+    Arc = require('../shape/arc'),
+    Polyline = require('../shape/polyline'),
+    Line = require('../shape/line'),
+    Shape = require('../shape'),
+    Point = require('kld-affine').Point2D,
+    vector = require('kld-affine').Vector2D.fromPoints,
+    _stat = require('jstat').jStat;
+
+module.exports = function suggestArcify(picture, element) {
+  var shape = element && !element.removed && Shape.of(element);
+  if (shape && shape instanceof Polyline && shape.points.length > 3) {
+    // The centroid, C, of the shape will indicate the direction of the arc
+    var p1 = _.first(shape.points), p2 = _.last(shape.points),
+        C = new Point(_stat.mean(_.map(shape.points, 'x')), _stat.mean(_.map(shape.points, 'y'))),
+        m = new Point(_stat.mean([p1.x, p2.x]), _stat.mean([p1.y, p2.y]));
+    // The line from the mid-point, through the centroid, is a part of a radius
+    // Extend a vector well beyond the extent, and intersect to find an approximate sagitta
+    var rv = vector(m, C).unit().multiply(2 * shape.extent);
+    var i = _.maxBy(shape.intersect(new Line({
+      x1 : m.x, y1 : m.y, x2 : m.x + rv.x, y2 : m.y + rv.y
+    })), _.method('distanceFrom', m));
+    if (i) {
+      // Sagitta, half-chord and so radius (see http://liutaiomottola.com/formulae/sag.htm)
+      var s = i.distanceFrom(m), l = p1.distanceFrom(m), r = (s*s + l*l) / (2*s);
+      // Work from the intersect back to find the centre
+      var c = i.add(vector(i, m).unit().multiply(r));
+
+      return _.assign(picture.action.replacement(element, Arc.fromPoints(p1, p2, {
+        rx : r, ry : r, largeArcFlag : s > r, sweepFlag : vector(p1, p2).angleBetween(vector(p1, i)) < 0
+      })), {
+        // Confidence is in the distance of all points from the centre
+        confidence : 1 - _stat.stdev(_.map(shape.points, _.method('distanceFrom', c))) / r
+      });
+    }
+  }
+}

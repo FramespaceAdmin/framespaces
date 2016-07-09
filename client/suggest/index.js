@@ -6,7 +6,7 @@ module.exports = function Suggestor(picture, history) {
       simplify : require('./simplify')(picture, lastAction.result),
       rectify : require('./rectify')(picture, lastAction.result),
       snap : require('./snap')(picture, lastAction.result),
-      circle : require('./circle')(picture, lastAction.result),
+      arcify : require('./arcify')(picture, lastAction.result),
       rect : require('./rect')(picture, lastAction.result),
       link : require('./link')(picture, lastAction.result),
       label : require('./label')(picture, lastAction.result),
