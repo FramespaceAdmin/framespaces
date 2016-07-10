@@ -3,17 +3,17 @@ var _ = require('lodash'),
     guid = require('../lib/guid'),
     Picture = require('../client/picture'),
     Line = require('../client/shape/line'),
-    MockSnap = require('./mockSnap');
+    MockPaper = require('./mockPaper');
 
 describe('Picture', function () {
   it('should get an element by id', function () {
-    var paper = MockSnap(10, 10), picture = new Picture(paper), id = guid();
+    var paper = MockPaper(10, 10), picture = new Picture(paper), id = guid();
     var line = paper.line(0, 0, 1, 1).attr('id', id);
     assert.equal(picture.getElement(id), line);
   });
 
   it('should perform addition', function () {
-    var paper = MockSnap(10, 10), picture = new Picture(paper);
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
     var shape = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
     var action = picture.action.addition(shape);
     assert.isOk(action.isOK());
@@ -22,7 +22,7 @@ describe('Picture', function () {
   });
 
   it('should undo addition', function () {
-    var paper = MockSnap(10, 10), picture = new Picture(paper);
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
     var shape = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
     var action = picture.action.addition(shape);
     action();
@@ -33,7 +33,7 @@ describe('Picture', function () {
   });
 
   it('should perform removal', function () {
-    var paper = MockSnap(10, 10), picture = new Picture(paper), id = guid();
+    var paper = MockPaper(10, 10), picture = new Picture(paper), id = guid();
     var addedLine = paper.line(0, 0, 1, 1).attr('id', id);
     var action = picture.action.removal(addedLine);
     assert.isOk(action.isOK());
@@ -43,7 +43,7 @@ describe('Picture', function () {
   });
 
   it('should undo removal', function () {
-    var paper = MockSnap(10, 10), picture = new Picture(paper), id = guid();
+    var paper = MockPaper(10, 10), picture = new Picture(paper), id = guid();
     var action = picture.action.removal(paper.line(0, 0, 1, 1).attr('id', id));
     action();
     assert.isOk(action.undo.isOK());

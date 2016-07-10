@@ -5,11 +5,11 @@ var _ = require('lodash'),
     Line = require('../client/shape/line'),
     Polyline = require('../client/shape/polyline'),
     simplify = require('../client/suggest/simplify'),
-    MockSnap = require('./mockSnap'),
+    MockPaper = require('./mockPaper'),
     guid = require('../lib/guid');
 
 describe('Simplify suggestor', function () {
-  var paper = MockSnap(10, 10), picture = new Picture(paper);
+  var paper = MockPaper(10, 10), picture = new Picture(paper);
 
   it('should simplify a straight line', function () {
     var pl = paper.polyline(0, 0, 1, 0, 2, 0).attr('id', guid());

@@ -2,7 +2,7 @@ var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
     Text = require('../client/shape/text'),
-    MockSnap = require('./mockSnap');
+    MockPaper = require('./mockPaper');
 
 describe('Text', function () {
   describe('with raw attributes', function () {

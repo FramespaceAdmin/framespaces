@@ -1,24 +1,35 @@
 var _ = require('lodash');
 
+var suggest = {
+  simplify : require('./simplify'),
+  rectify : require('./rectify'),
+  snap : require('./snap'),
+  arcify : require('./arcify'),
+  link : require('./link'),
+  label : require('./label'),
+  scribble : require('./scribble')
+};
+
 module.exports = function Suggestor(picture, history) {
   this.suggest = function(lastAction) {
-    var suggestions = {
-      simplify : require('./simplify')(picture, lastAction.result),
-      rectify : require('./rectify')(picture, lastAction.result),
-      snap : require('./snap')(picture, lastAction.result),
-      arcify : require('./arcify')(picture, lastAction.result),
-      rect : require('./rect')(picture, lastAction.result),
-      link : require('./link')(picture, lastAction.result),
-      label : require('./label')(picture, lastAction.result),
-      scribble : require('./scribble')(picture, lastAction.result)
-    }, sorted = _.reverse(_.sortBy(_.compact(_.values(suggestions)), 'confidence'));
-
-    console.log(_.mapValues(suggestions, 'confidence'));
-
-    var action = _.get(_.first(sorted), 'confidence') > 0.9 ? sorted.shift() : null;
-    history.add(_.takeWhile(sorted, function (suggestion) {
+    var suggestions = _(suggest).map(function (suggestor, name) {
+      var action = suggestor(picture, lastAction.result);
+      if (action) {
+        return { action : action, confidence : action.confidence, name : name };
+      }
+    }).compact().sortBy('confidence').reverse().takeWhile(function (suggestion) {
       return suggestion.confidence > 0.5;
-    }));
+    }).value();
+
+    var message = _.transform(suggestions, function (message, suggestion) {
+      return _.set(message, suggestion.name, suggestion.confidence);
+    }, {});
+    if (!_.isEmpty(message)) {
+      console.log(message);
+    }
+
+    var action = _.get(_.first(suggestions), 'confidence') > 0.9 ? suggestions.shift().action : null;
+    history.add(_.map(suggestions, 'action'));
     history.step(action);
   };
 };

@@ -2,7 +2,7 @@ var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
     Polygon = require('../client/shape/polygon'),
-    MockSnap = require('./mockSnap');
+    MockPaper = require('./mockPaper');
 
 describe('Polygon', function () {
   describe('with raw attributes', function () {
@@ -15,7 +15,7 @@ describe('Polygon', function () {
   });
 
   describe('with a Snap.svg element', function () {
-    var paper = MockSnap(10, 10);
+    var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
       var polygon = Shape.of(paper.polygon(0, 0, 1, 0, 1, 1, 0, 1));

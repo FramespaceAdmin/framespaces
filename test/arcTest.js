@@ -3,7 +3,7 @@ var _ = require('lodash'),
     Shape = require('../client/shape'),
     Arc = require('../client/shape/arc'),
     Point = require('kld-affine').Point2D,
-    MockSnap = require('./mockSnap');
+    MockPaper = require('./mockPaper');
 
 describe('Arc', function () {
   describe('with raw attributes', function () {
@@ -108,7 +108,7 @@ describe('Arc', function () {
   });
 
   describe('with a Snap.svg element', function () {
-    var paper = MockSnap(10, 10);
+    var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
       var arc = Shape.of(paper.path('M1 1 A 1 1, 0, 0, 0, 2 2'));

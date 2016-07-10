@@ -2,7 +2,7 @@ var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
     Linkline = require('../client/shape/linkline'),
-    MockSnap = require('./mockSnap');
+    MockPaper = require('./mockPaper');
 
 describe('Linkline', function () {
   function assertMoves(linkline) {

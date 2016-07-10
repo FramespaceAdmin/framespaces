@@ -1,6 +1,5 @@
 var _ = require('lodash'),
     Shape = require('../shape'),
-    Line = require('./line'),
     Point = require('kld-affine').Point2D,
     _cap = require('svg-intersections');
 
@@ -65,12 +64,12 @@ Polyline.prototype.close = function () {
 
 Polyline.prototype.reverse = function () {
   return this.cloneAs(Polyline, {
-    points : Shape.pointStr(_.reverse(this.points))
+    points : Shape.pointStr(_.reverse(_.clone(this.points)))
   });
 }
 
 Polyline.prototype.add = function (that) {
-  if (that instanceof Line || that instanceof Polyline) {
+  if (that instanceof require('./line') || that instanceof Polyline) {
     return this.cloneAs(Polyline, {
       // Lose our last point
       points : Shape.pointStr(_.initial(this.points).concat(that.points))

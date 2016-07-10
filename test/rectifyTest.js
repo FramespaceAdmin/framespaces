@@ -5,11 +5,11 @@ var _ = require('lodash'),
     Line = require('../client/shape/line'),
     Polyline = require('../client/shape/polyline'),
     rectify = require('../client/suggest/rectify'),
-    MockSnap = require('./mockSnap'),
+    MockPaper = require('./mockPaper'),
     guid = require('../lib/guid');
 
 describe('Rectify suggestor', function () {
-  var paper = MockSnap(10, 10), picture = new Picture(paper);
+  var paper = MockPaper(10, 10), picture = new Picture(paper);
 
   it('should rectify a straight line', function () {
     var line = paper.line(0, 0, 1, 0.01).attr('id', guid());

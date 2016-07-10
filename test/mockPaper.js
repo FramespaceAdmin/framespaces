@@ -3,7 +3,7 @@ var _ = require('lodash');
 require('jsdom-global')();
 var Snap = require('snapsvg');
 
-function MockSnap() {
+function MockPaper() {
   var paper = Snap.apply(this, arguments);
 
   function bbox(/*points*/) {
@@ -45,4 +45,4 @@ function MockSnap() {
   });
 }
 
-module.exports = MockSnap;
+module.exports = MockPaper;

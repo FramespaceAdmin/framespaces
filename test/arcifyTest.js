@@ -5,11 +5,11 @@ var _ = require('lodash'),
     Arc = require('../client/shape/arc'),
     Polyline = require('../client/shape/polyline'),
     arcify = require('../client/suggest/arcify'),
-    MockSnap = require('./mockSnap'),
+    MockPaper = require('./mockPaper'),
     guid = require('../lib/guid');
 
 describe('Rectify suggestor', function () {
-  var paper = MockSnap(10, 10), picture = new Picture(paper);
+  var paper = MockPaper(10, 10), picture = new Picture(paper);
 
   it('should arcify a small arc with positive sweep', function () {
     var line = paper.polyline(0, 0, 1, 1, 2, 1, 3, 0).attr('id', guid());

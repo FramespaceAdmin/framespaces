@@ -4,7 +4,7 @@ var _ = require('lodash'),
     Point = require('kld-affine').Point2D,
     Rectline = require('../client/shape/rectline'),
     Rect = require('../client/shape/rect'),
-    MockSnap = require('./mockSnap');
+    MockPaper = require('./mockPaper');
 
 describe('Rectline', function () {
   it('should have expected properties', function () {
@@ -15,7 +15,7 @@ describe('Rectline', function () {
   });
 
   it('should be recognised by its class', function () {
-    var paper = MockSnap(10, 10);
+    var paper = MockPaper(10, 10);
     var rectline = Shape.of(paper.polyline(0, 0, 0, 2, 2, 2).addClass('rect'));
     assert.instanceOf(rectline, Rectline);
     assert.equal(rectline.name, 'polyline');

@@ -59,4 +59,13 @@ Linkline.prototype.mover = function () {
   };
 };
 
+Linkline.prototype.reverse = function () {
+  return this.cloneAs(_Linkline, {
+    x1 : this.attr.x2, y1 : this.attr.y2, x2 : this.attr.x1, y2 : this.attr.y1,
+    from : this.attr.to, to : this.attr.from
+  });
+};
+
+Linkline.prototype.add = null; // Links cannot be added to
+
 module.exports = Linkline;
