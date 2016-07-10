@@ -27,7 +27,7 @@ Label.fromJSON = function (data) {
 
 Label.of = function (e) {
   return e.node.nodeName === 'text' && e.hasClass('label') &&
-    new _Label(Shape.nodeAttr(e), _.map(e.selectAll('tspan'), Text.Span.of), e.getBBox());
+    new _Label(Shape.strongAttr(e), _.map(e.selectAll('tspan'), Text.Span.of), e.getBBox());
 };
 
 Label.prototype = _Label.prototype = Object.create(Text.prototype);

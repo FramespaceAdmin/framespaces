@@ -9,7 +9,7 @@ Rect.fromJSON = function (data) {
 };
 
 Rect.of = function (e) {
-  return e.node.nodeName === 'rect' && new Rect(Shape.nodeAttr(e));
+  return e.node.nodeName === 'rect' && new Rect(Shape.strongAttr(e));
 };
 
 Rect.prototype = Object.create(Shape.prototype);

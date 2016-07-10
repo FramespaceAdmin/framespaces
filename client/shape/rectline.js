@@ -26,7 +26,7 @@ Rectline.fromJSON = function (data) {
 };
 
 Rectline.of = function (e) {
-  return e.node.nodeName === 'polyline' && Rectline.fromAttr(Shape.nodeAttr(e));
+  return e.node.nodeName === 'polyline' && Rectline.fromAttr(Shape.strongAttr(e));
 };
 
 Rectline.fromAttr = function (attr) {
@@ -92,9 +92,9 @@ Rectline.prototype.close = function () {
   end = _.set({ x : end.x, y : end.y }, this.axis1, points[0][this.axis1]);
   points = (points.length > 3 ? _.initial(points) : points).concat(new Point(end.x, end.y));
   if (points.length === 4) {
-    return new Rect(_(this.attr).omit('points').assign(Shape.computeBBox(points)).value());
+    return this.cloneAs(Rect, { points : undefined }, Shape.computeBBox(points));
   } else if (points.length > 4) {
-    return new Polygon(_(this.attr).clone().set('points', Shape.pointStr(points)).value());
+    return this.cloneAs(Polygon, { 'points' : Shape.pointStr(points) });
   }
 }
 

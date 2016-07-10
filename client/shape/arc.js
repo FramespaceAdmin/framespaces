@@ -25,7 +25,7 @@ Arc.fromJSON = function (data) {
 };
 
 Arc.of = function (e) {
-  return e.node.nodeName === 'path' && toPointObjects(e.attr('d')) && new Arc(Shape.nodeAttr(e));
+  return e.node.nodeName === 'path' && toPointObjects(e.attr('d')) && new Arc(Shape.strongAttr(e));
 };
 
 Arc.fromPoints = function (p1, p2, params) {

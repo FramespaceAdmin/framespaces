@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     Shape = require('../shape'),
+    Line = require('./line'),
     Point = require('kld-affine').Point2D,
     _cap = require('svg-intersections');
 
@@ -12,7 +13,7 @@ Polyline.fromJSON = function (data) {
 };
 
 Polyline.of = function (e) {
-  return e.node.nodeName === 'polyline' && new Polyline(Shape.nodeAttr(e));
+  return e.node.nodeName === 'polyline' && new Polyline(Shape.strongAttr(e));
 };
 
 Polyline.prototype = Object.create(Shape.prototype);
@@ -59,8 +60,22 @@ Polyline.prototype.mover = function (isEdge, cursor) {
 };
 
 Polyline.prototype.close = function () {
-  var Polygon = require('./polygon');
-  return new Polygon(_.set(this.attr, 'points', Shape.pointStr(_.initial(this.points))));
+  return this.cloneAs(require('./polygon'), { points : Shape.pointStr(_.initial(this.points)) });
+};
+
+Polyline.prototype.reverse = function () {
+  return this.cloneAs(Polyline, {
+    points : Shape.pointStr(_.reverse(this.points))
+  });
+}
+
+Polyline.prototype.add = function (that) {
+  if (that instanceof Line || that instanceof Polyline) {
+    return this.cloneAs(Polyline, {
+      // Lose our last point
+      points : Shape.pointStr(_.initial(this.points).concat(that.points))
+    });
+  }
 };
 
 module.exports = Polyline;

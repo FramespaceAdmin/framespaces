@@ -10,7 +10,7 @@ Circle.fromJSON = function (data) {
 };
 
 Circle.of = function (e) {
-  return e.node.nodeName === 'circle' && new Circle(Shape.nodeAttr(e));
+  return e.node.nodeName === 'circle' && new Circle(Shape.strongAttr(e));
 };
 
 Circle.prototype = Object.create(Shape.prototype);

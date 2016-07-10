@@ -150,6 +150,16 @@ Shape.prototype.delta = function (dAttr) {
 };
 
 /**
+ * returns a new shape of the given type, optionally with new attributes as given.
+ * Will remove any attributes set to 'undefined' in the parameter.
+ * Default implementation assumes a one-arg constructor.
+ */
+Shape.prototype.cloneAs = function (constructor, attr/*, ...*/) {
+  var assigns = [_.clone(this.attr)].concat(_.tail(_.toArray(arguments)));
+  return new (constructor)(_.omitBy(_.assign.apply(_, assigns), _.isUndefined));
+};
+
+/**
  * static shortcut for parsing the class attribute
  */
 Shape.hasClass = function (attr, c) {
@@ -241,16 +251,22 @@ Shape.prototype.break = null;
 Shape.prototype.close = null;
 
 /**
+ * If truthy, then a function that reverses this shape
+ * @returns the same shape with the ends reversed
+ */
+Shape.prototype.reverse = null;
+
+/**
  * If truthy, then a function that adds the other shape onto this shape
  * @param that a shape to add
- * @returns a compound shape
+ * @returns a compound shape, begin = this.begin, end = that.end
  */
 Shape.prototype.add = null;
 
 /**
  * Returns strongly typed attributes for the given element
  */
-Shape.nodeAttr = function (e) {
+Shape.strongAttr = function (e) {
   var attr = _.mapValues(_.pickBy(e.attr(), function (v, key) {
     return NUMERIC_ATTR.test(key) || STRING_ATTR.test(key);
   }), function (value, key) {

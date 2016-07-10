@@ -42,7 +42,7 @@ Linkline.fromJSON = function (data) {
 };
 
 Linkline.of = function (e) {
-  return e.node.nodeName === 'line' && e.hasClass('link') && new _Linkline(Shape.nodeAttr(e));
+  return e.node.nodeName === 'line' && e.hasClass('link') && new _Linkline(Shape.strongAttr(e));
 };
 
 Linkline.prototype = _Linkline.prototype = Object.create(Line.prototype);

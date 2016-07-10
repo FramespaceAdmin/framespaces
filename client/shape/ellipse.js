@@ -9,7 +9,7 @@ Ellipse.fromJSON = function (data) {
 };
 
 Ellipse.of = function (e) {
-  return e.node.nodeName === 'ellipse' && new Ellipse(Shape.nodeAttr(e));
+  return e.node.nodeName === 'ellipse' && new Ellipse(Shape.strongAttr(e));
 };
 
 Ellipse.prototype = Object.create(Shape.prototype);

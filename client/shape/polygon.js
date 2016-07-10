@@ -13,7 +13,7 @@ Polygon.fromJSON = function (data) {
 };
 
 Polygon.of = function (e) {
-  return e.node.nodeName === 'polygon' && new Polygon(Shape.nodeAttr(e));
+  return e.node.nodeName === 'polygon' && new Polygon(Shape.strongAttr(e));
 };
 
 Polygon.prototype = Object.create(Shape.prototype);

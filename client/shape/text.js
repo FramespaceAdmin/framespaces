@@ -14,7 +14,7 @@ Text.fromJSON = function (data) {
 
 Text.of = function (e) {
   return e.node.nodeName === 'text' &&
-    new Text(Shape.nodeAttr(e), _.map(e.selectAll('tspan'), Text.Span.of), e.getBBox());
+    new Text(Shape.strongAttr(e), _.map(e.selectAll('tspan'), Text.Span.of), e.getBBox());
 };
 
 Text.prototype = Object.create(Shape.prototype);
@@ -53,7 +53,7 @@ Text.Span.fromJSON = function (data) {
 
 Text.Span.of = function (e) {
   return e.node.nodeName === 'tspan' &&
-    new Text.Span(Shape.nodeAttr(e), e.node.childNodes[0].textContent, e.getBBox());
+    new Text.Span(Shape.strongAttr(e), e.node.childNodes[0].textContent, e.getBBox());
 };
 
 Text.Span.prototype = Object.create(Text.prototype);
