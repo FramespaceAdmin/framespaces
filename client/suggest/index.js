@@ -22,7 +22,7 @@ module.exports = function Suggestor(picture, history) {
     }).value();
 
     var message = _.transform(suggestions, function (message, suggestion) {
-      return _.set(message, suggestion.name, suggestion.confidence);
+      return _.set(message, suggestion.name, Number(suggestion.confidence.toFixed(3)));
     }, {});
     if (!_.isEmpty(message)) {
       console.log(message);

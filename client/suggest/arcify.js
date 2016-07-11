@@ -25,12 +25,14 @@ module.exports = function suggestArcify(picture, element) {
       var s = i.distanceFrom(m), l = p1.distanceFrom(m), r = (s*s + l*l) / (2*s);
       // Work from the intersect back to find the centre
       var c = i.add(vector(i, m).unit().multiply(r));
+      // Find the distances of all points from the putative centre
+      var dists = _.map(shape.points, _.method('distanceFrom', c));
 
       return _.assign(picture.action.replacement(element, Arc.fromPoints(p1, p2, {
         rx : r, ry : r, largeArcFlag : s > r, sweepFlag : vector(p1, p2).angleBetween(vector(p1, i)) < 0
       })), {
-        // Confidence is in the distance of all points from the centre
-        confidence : 1 - _stat.stdev(_.map(shape.points, _.method('distanceFrom', c))) / r
+        // Confidence is in the distance of all points from the centre, and the number of points
+        confidence : (1 - _stat.stdev(dists) / r) * (1 - 1 / shape.points.length)
       });
     }
   }
