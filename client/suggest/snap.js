@@ -6,6 +6,15 @@ var _ = require('lodash'),
     Point = require('kld-affine').Point2D,
     _stat = require('jstat').jStat;
 
+var GAP_FACTOR = 0.1; // Magic number, ideal ratio of gap to point-adjusted shape extent
+
+function getConfidence(p1, p2, s1, s2) {
+  var d = p1.distanceFrom(p2),
+      extent = s1.extent + (s2 ? s2.extent : 0),
+      count = s1.points.length + (s2 ? s2.points.length : 0);
+  return 1 - (d / (extent / count)) * GAP_FACTOR;
+}
+
 module.exports = function suggestSnap(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
   if (shape) {
@@ -13,7 +22,7 @@ module.exports = function suggestSnap(picture, element) {
 
     if (shape.close) {
       snaps.push(_.assign(picture.action.replacement(element, shape.close()), {
-        confidence : 1 - (_.first(shape.points).distanceFrom(_.last(shape.points)) / shape.extent)
+        confidence : getConfidence(_.first(shape.points), _.last(shape.points), shape)
       }));
     }
     picture.paper.selectAll('[id]:not(#' + shape.attr.id + ')').forEach(function (oldElement) {
@@ -24,7 +33,7 @@ module.exports = function suggestSnap(picture, element) {
           var sFinal = sOld.add(sNew); // carrying forward old shape
           if (sFinal) {
             snaps.push(_.assign(removeNew.and(replaceOldWith(sFinal)), {
-              confidence : 1 - (_.first(sNew.points).distanceFrom(_.last(sOld.points)) / (sNew.extent + sOld.extent))
+              confidence : getConfidence(_.first(sNew.points), _.last(sOld.points), sNew, sOld)
             }));
           }
         }
