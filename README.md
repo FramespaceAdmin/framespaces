@@ -46,4 +46,4 @@ You will also need to create Shapes (`/client/shape/index.js`). See the existing
 To wire in your suggester, modify `/client/suggest/index.js` in the obvious way.
 
 ##Touch & Platform Support
-`client/index.js` contains all the event and mouse listening code, and should be the main place things go wrong on other platforms.
+`client/index.js` contains all the event and mouse listening code, and should be the main place things go wrong on other platforms. 
