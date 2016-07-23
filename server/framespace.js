@@ -1,5 +1,5 @@
 var _url = require('url'),
-    log = require('./log'),
+    log = require('../lib/log'),
     ajv = new (require('ajv'))({
       verbose : log.getLevel() <= log.levels.DEBUG,
       allErrors : log.getLevel() <= log.levels.DEBUG

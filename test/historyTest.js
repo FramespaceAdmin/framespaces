@@ -12,25 +12,43 @@ describe('History', function () {
     function action() {
       return acted = true;
     }
+    action.isUser = true;
     history.on('done', function (a) {
       assert.equal(action, a);
       done = true;
     });
-    history.step(action, true);
+    history.step(action);
     assert.isTrue(acted);
     assert.isTrue(done);
+  });
+
+  it('should perform two actions', function () {
+    var history = new History(subject);
+    var acted1 = false, acted2 = false;
+    function action1() {
+      return acted1 = true;
+    }
+    action1.isUser = true;
+    history.step(action1);
+    function action2() {
+      return acted2 = true;
+    }
+    action2.isUser = true;
+    history.step(action2);
+    assert.isTrue(acted1);
   });
 
   it('should undo an action', function () {
     var history = new History(subject);
     var unacted = false, undone = false;
     function action() {}
+    action.isUser = true;
     action.undo = function () { return unacted = true; };
     history.on('undone', function (a) {
       assert.equal(action, a);
       undone = true;
     });
-    history.step(action, true);
+    history.step(action);
     history.undo();
     assert.isTrue(unacted);
     assert.isTrue(undone);
@@ -40,12 +58,13 @@ describe('History', function () {
     var history = new History(subject);
     var acted = false, reacted = false, redone = false;
     function action() { return !acted ? (acted = true) : (reacted = true); }
+    action.isUser = true;
     action.undo = function () {};
     history.on('redone', function (a) {
       assert.equal(action, a);
       redone = true;
     });
-    history.step(action, true);
+    history.step(action);
     history.undo();
     history.next();
     assert.isTrue(reacted);
@@ -90,7 +109,8 @@ describe('History', function () {
     var acted1 = false, acted2 = false, unacted2 = false, unacted0 = false;
     function action0() {}
     action0.undo = function () { unacted0 = true; }
-    history.step(action0, true);
+    action0.isUser = true;
+    history.step(action0);
     function action1() { return acted1 = true; }
     action1.undo = function () {}
     action1.confidence = 0.9;
@@ -102,8 +122,9 @@ describe('History', function () {
     history.next(); // Do action2
     var acted3 = false;
     function action3() {}
+    action3.isUser = true;
     action3.undo = function () {};
-    history.step(action3, true);
+    history.step(action3);
     history.undo(); // Undo action3
     history.undo(); // Undo action2
     assert.isTrue(unacted2);

@@ -1,4 +1,5 @@
-var _ = require('lodash');
+var _ = require('lodash'),
+    log = require('../../lib/log');
 
 var suggest = {
   simplify : require('./simplify'),
@@ -15,21 +16,19 @@ module.exports = function Suggestor(picture, history) {
     var suggestions = _(suggest).map(function (suggestor, name) {
       var action = suggestor(picture, lastAction.result);
       if (action) {
-        return { action : action, confidence : action.confidence, name : name };
+        action.description = name + ' @ ' + Number(action.confidence.toFixed(3));
+        return action;
       }
-    }).compact().sortBy('confidence').reverse().takeWhile(function (suggestion) {
-      return suggestion.confidence > 0.5;
+    }).compact().sortBy('confidence').reverse().takeWhile(function (action) {
+      return action.confidence > 0.5;
     }).value();
 
-    var message = _.transform(suggestions, function (message, suggestion) {
-      return _.set(message, suggestion.name, Number(suggestion.confidence.toFixed(3)));
-    }, {});
-    if (!_.isEmpty(message)) {
-      console.log(message);
+    if (!_.isEmpty(suggestions)) {
+      log.info('suggestions', ':', _.map(suggestions, 'description').join(', '));
     }
 
-    var action = _.get(_.first(suggestions), 'confidence') > 0.9 ? suggestions.shift().action : null;
-    history.add(_.map(suggestions, 'action'));
+    var action = _.get(_.first(suggestions), 'confidence') > 0.9 ? suggestions.shift() : null;
+    history.add(suggestions);
     history.step(action);
   };
 };

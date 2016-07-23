@@ -16,13 +16,19 @@ var _ = require('lodash'),
     history = new History(picture),
     users = {};
 
+function userAction(action, description) {
+  action.description = description;
+  action.isUser = true;
+  history.step(action);
+}
+
 var pen = new Pen(picture);
 pen.on('finished', function (shape) {
-  history.step(picture.action.addition(shape), 'user');
+  userAction(picture.action.addition(shape), 'pen');
 });
 var hand = new Hand(picture);
 hand.on('finished', function (element, oldShape) {
-  history.step(picture.action.mutation(element, oldShape, true), 'user');
+  userAction(picture.action.mutation(element, oldShape, true), 'hand');
 });
 var toolbar = new Toolbar(Snap('#toolbar'));
 toolbar.undoButton.mousedown(history.undo);

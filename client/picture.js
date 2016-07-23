@@ -1,4 +1,5 @@
 var _ = require('lodash'),
+    _action = require('./action'),
     EventEmitter = require('events'),
     Shape = require('./shape'),
     Linkline = require('./shape/linkline'),
@@ -8,39 +9,36 @@ var _ = require('lodash'),
 module.exports = function Picture(paper) {
   var events = new EventEmitter();
 
-  function bareAddition(actionId, shape) {
+  function bareAddition(shape) {
     shape.attr.id || (shape.attr.id = guid()); // Slightly naughty
-    function action() {
+    function addition() {
       return changed(shape.addTo(paper));
     };
-    action.isOK = function () {
+    addition.isOK = function () {
       return !getElement(shape.attr.id);
     };
-    action.preview = previewer(shape);
-    action.toJSON = function () {
-      return { id : actionId, type : 'addition', shape : shape.toJSON() };
+    addition.preview = previewer(shape);
+    addition.toJSON = function () {
+      return { id : addition.id, type : 'addition', shape : shape.toJSON() };
     };
-    return action;
+    return addition;
   }
 
   function addition(shape) {
-    var actionId = guid();
-    var action = bareAddition(actionId, shape);
-    action.undo = bareRemoval(actionId, shape.attr.id);
-    return chainable(action);
+    return publicAction(bareAddition(shape), bareRemoval(shape.attr.id));
   }
 
-  function bareRemoval(actionId, id) {
-    function action() {
+  function bareRemoval(id) {
+    function removal() {
       return changed(getElement(id).remove());
     };
-    action.isOK = function () {
+    removal.isOK = function () {
       return getElement(id);
     };
-    action.toJSON = function () {
-      return { id : actionId, type : 'removal', element : id };
+    removal.toJSON = function () {
+      return { id : removal.id, type : 'removal', element : id };
     };
-    return action;
+    return removal;
   }
 
   function removal(element) {
@@ -49,47 +47,41 @@ module.exports = function Picture(paper) {
           return mutation(e1, linkRemoved(e1));
         }).concat(_.map(labelsOn(id), function (e1) {
           return mutation(e1, labelRemoved(e1));
-        })),
-        actionId = guid(),
-        action = bareRemoval(actionId, id);
+        }));
 
-    action.undo = bareAddition(actionId, shape);
-    return chainable(action).and(collateral);
+    return publicAction(bareRemoval(id), bareAddition(shape)).and(collateral);
   }
 
-  function bareReplacement(actionId, id, shape) {
+  function bareReplacement(id, shape) {
     shape.attr.id || (shape.attr.id = id); // Slightly naughty
-    function action() {
+    function replacement() {
       getElement(id).remove();
       return changed(shape.addTo(paper));
     };
-    action.isOK = function () {
+    replacement.isOK = function () {
       return getElement(id);
     };
-    action.preview = previewer(shape);
-    action.toJSON = function () {
-      return { id : actionId, type : 'replacement', element : id, shape : shape.toJSON() };
+    replacement.preview = previewer(shape);
+    replacement.toJSON = function () {
+      return { id : replacement.id, type : 'replacement', element : id, shape : shape.toJSON() };
     };
-    return action;
+    return replacement;
   }
 
   function replacement(element, shape) {
     var id = element.attr('id'),
-        oldShape = Shape.of(element),
-        actionId = guid();
-        action = bareReplacement(actionId, id, shape);
+        oldShape = Shape.of(element);
 
-    action.undo = bareReplacement(actionId, id, oldShape);
-    return chainable(action);
+    return publicAction(bareReplacement(id, shape), bareReplacement(id, oldShape));
   }
 
-  function bareMutation(actionId, id, shape) {
-    function action() {
+  function bareMutation(id, shape) {
+    function mutation() {
       var element = getElement(id);
       changed(shape.applyTo(element));
       return shape.hasClass('label') ? getElement(shape.attr.on) : element;
     };
-    action.isOK = function () {
+    mutation.isOK = function () {
       return getElement(id) &&
         (!shape.hasClass('label') || getElement(shape.attr.on)) &&
         (!shape.hasClass('link') || (getElement(shape.attr.from) && getElement(shape.attr.to)));
@@ -98,58 +90,30 @@ module.exports = function Picture(paper) {
       var fromShape = Shape.of(getElement(shape.attr.from)),
           toShape = Shape.of(getElement(shape.attr.to)),
           linkShape = new Linkline(shape, fromShape, toShape);
-      action.preview = previewer(fromShape, toShape, linkShape);
+      mutation.preview = previewer(fromShape, toShape, linkShape);
     } else if (shape.hasClass('label')) {
       var onShape = Shape.of(getElement(shape.attr.on)),
           labelShape = new Label(shape, onShape);
-      action.preview = previewer(onShape, labelShape);
+      mutation.preview = previewer(onShape, labelShape);
     } else {
-      action.preview = previewer(shape);
+      mutation.preview = previewer(shape);
     }
-    action.toJSON = function () {
-      return { id : actionId, type : 'mutation', element : id, shape : shape.toJSON() };
+    mutation.toJSON = function () {
+      return { id : mutation.id, type : 'mutation', element : id, shape : shape.toJSON() };
     };
-    return action;
+    return mutation;
   }
 
   function mutation(element, shape, done) {
     var oldShape = done ? shape : Shape.of(element),
-        newShape = done ? Shape.of(element) : shape,
-        actionId = guid(),
-        action = bareMutation(actionId, shape.attr.id, newShape);
+        newShape = done ? Shape.of(element) : shape;
 
-    action.undo = bareMutation(actionId, shape.attr.id, oldShape);
-    return chainable(action);
+    return publicAction(bareMutation(shape.attr.id, newShape),
+                        bareMutation(shape.attr.id, oldShape));
   }
 
-  function bareChained(actions) {
-    function chained() {
-      // Return the result of the last action to succeed
-      return _.reduce(actions, function (e, a) { return e && a(); }, true);
-    }
-    chained.isOK = function () {
-      return _.first(actions).isOK(); // Can't tell if more is OK until action is run
-    };
-    chained.preview = _.first(actions).preview; // TODO
-    chained.toJSON = function () {
-      return _.flatten(_.map(actions, _.method('toJSON')));
-    };
-    return chained;
-  }
-
-  function chainable(action) {
-    action.and = function (more) {
-      if (_.isEmpty(more)) {
-        return action;
-      } else {
-        var actions = [action].concat(more),
-            chained = bareChained(actions);
-
-        chained.undo = bareChained(_.reverse(_.map(actions, 'undo')));
-        return chainable(chained);
-      }
-    }
-    return action;
+  function publicAction(action, undo) {
+    return _action.chainable(_action.undoable(_action.identified(action), undo));
   }
 
   function previewer(shape) {
@@ -223,15 +187,19 @@ module.exports = function Picture(paper) {
   this.action = {
     fromJSON : function actionFromJSON(data) {
       if (_.isArray(data)) {
-        return bareChained(_.map(data, actionFromJSON));
+        return _action.batch(_.map(data, actionFromJSON));
       } else {
         var shape = data.shape && Shape.fromJSON(data.shape);
-        switch (data.type) {
-          case 'addition': return bareAddition(data.id, shape);
-          case 'removal': return bareRemoval(data.id, data.element);
-          case 'replacement': return bareReplacement(data.id, data.element, shape);
-          case 'mutation': return bareMutation(data.id, data.element, shape);
-        }
+        var action = (function () {
+          switch (data.type) {
+            case 'addition': return bareAddition(shape);
+            case 'removal': return bareRemoval(data.element);
+            case 'replacement': return bareReplacement(data.element, shape);
+            case 'mutation': return bareMutation(data.element, shape);
+          }
+        })();
+        action.id = data.id;
+        return action;
       }
     }
   };

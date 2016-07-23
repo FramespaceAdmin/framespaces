@@ -1,19 +1,11 @@
 var _ = require('lodash'),
+    _action = require('./action'),
+    log = require('../lib/log'),
     EventEmitter = require('events');
 
 module.exports = function History(subject) {
   var events = new EventEmitter();
-  var present = /* class Action extends function() */ { /*
-    id : String,
-    isOK : function() : boolean // Can this action be applied
-    undo : Action,
-    prev : undefined Action, // Set by history
-    next : undefined Action, // Set by history
-    preview : optional function(paper), // Paper is a temporary svg
-    toJSON : function() // returns JSONable data,
-    result : undefined value // the returned value, set by history,
-    confidence : Number < 1 // for futures
-*/};
+  var present = {};
 
   function revised(result) {
     delete revising.action;
@@ -37,16 +29,16 @@ module.exports = function History(subject) {
    * Takes the given action immediately. If the isUser flag is set, then
    * all suggested future states are disregarded and the past is linearised.
    */
-  function step(action, isUser) {
+  function step(action) {
     if (action) {
       // User taking an explicit action collapses the wave-form and discards quantum states
       var nextAction = present.next;
-      if (isUser && present.prev) {
+      if (action.isUser && present.prev) {
         // Linearise the recent history so undo+redo behaves as expected
         present.prev.next = present;
       }
       present.next = action;
-      init(action, present, isUser ? null : nextAction);
+      init(action, present, action.isUser ? null : nextAction);
       next();
     }
   }
@@ -71,24 +63,33 @@ module.exports = function History(subject) {
   }
 
   /**
-   * Enacts the net registered action, and shuffles the present forward.
+   * Enacts the next registered action, and shuffles the present forward.
    * If the action has already been done, a 'redone' event is fired, otherwise 'done',
    * in both cases with the action that was done.
    */
   function next() {
     if (present.next) {
-      // Restore the state required for the next action
-      var action = present.next, requiredPrev = present.next.prev;
-      while (present.prev && present !== requiredPrev) {
+      // Rewind to a state required for the next action
+      var action = present.next, branch = antecedents(action), posPresent;
+      while ((posPresent = _.indexOf(branch, present)) === -1 && present.prev) {
         undo();
       }
       // If we already have a result for the action, this is a redo
       var event = action.result ? 'redone' : 'done';
-      action.result = action();
+      action.result = _action.batch(branch.slice(posPresent + 1))();
       present = action;
       events.emit(event, action);
       return action;
     }
+  }
+
+  function antecedents(action) {
+    var result = [action];
+    while (action = action.prev) {
+      result.unshift(action);
+      if (action.isUser) break; // optimisation
+    }
+    return result;
   }
 
   /**
@@ -119,6 +120,12 @@ module.exports = function History(subject) {
         revised();
       }
     }
+  });
+
+  _.each(['done', 'undone', 'redone'], function logListen(event) {
+    events.on(event, function (action) {
+      log.debug(event, ':', action.description);
+    });
   });
 
   this.step = revising(step);

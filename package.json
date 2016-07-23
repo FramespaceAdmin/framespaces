@@ -30,6 +30,7 @@
   "devDependencies": {
     "browserify": "^13",
     "chai": "^3",
+    "envify": "^3.4.1",
     "jsdom": "9.2.1",
     "jsdom-global": "2.0.0",
     "minifyify": "^7.3.3",
@@ -42,8 +43,8 @@
     "start:dev": "npm run build:dev && LOG_LEVEL=DEBUG npm start",
     "restart:dev": "npm run build:dev && LOG_LEVEL=DEBUG npm restart",
     "copy:dist": "cp -R web/* dist/",
-    "bundle:dev": "./node_modules/browserify/bin/cmd.js client/index.js > dist/bundle.js",
-    "bundle:dist": "./node_modules/browserify/bin/cmd.js client/index.js -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] > dist/bundle.js",
+    "bundle:dev": "LOG_LEVEL=DEBUG ./node_modules/browserify/bin/cmd.js client/index.js -t envify > dist/bundle.js",
+    "bundle:dist": "./node_modules/browserify/bin/cmd.js client/index.js -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] -t envify > dist/bundle.js",
     "build:dist": "npm test && npm run copy:dist && npm run bundle:dist",
     "build:dev": "npm test && npm run copy:dist && npm run bundle:dev"
   }

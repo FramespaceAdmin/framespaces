@@ -1,5 +1,5 @@
 var _ = require('lodash'),
-    log = require('./log'),
+    log = require('../lib/log'),
     express = require('express'),
     app = express(),
     server = require('http').createServer(app),
