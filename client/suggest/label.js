@@ -1,8 +1,7 @@
 var _ = require('lodash')
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
-    Snap = require('snapsvg'),
-    _stat = require('jstat').jStat;
+    Snap = require('snapsvg');
 
 module.exports = function suggestLabel(picture, e1) {
   if (e1 && !e1.removed && !e1.hasClass('label')) {

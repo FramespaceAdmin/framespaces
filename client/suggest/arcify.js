@@ -5,14 +5,15 @@ var _ = require('lodash'),
     Shape = require('../shape'),
     Point = require('kld-affine').Point2D,
     vector = require('kld-affine').Vector2D.fromPoints,
-    _stat = require('jstat').jStat;
+    stdev = require('compute-stdev'),
+    mean = require('compute-mean');
 
 module.exports = function suggestArcify(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
   if (shape && shape instanceof Polyline && shape.points.length > 3) {
     // The centroid, C, of the shape will indicate the direction of the arc
     var p1 = _.first(shape.points), p2 = _.last(shape.points),
-        C = new Point(_stat.mean(_.map(shape.points, 'x')), _stat.mean(_.map(shape.points, 'y'))),
+        C = new Point(mean(_.map(shape.points, 'x')), mean(_.map(shape.points, 'y'))),
         m = p1.lerp(p2, 0.5);
     // The line from the mid-point, through the centroid, is a part of a radius
     // Extend a vector well beyond the extent, and intersect to find an approximate sagitta
@@ -32,7 +33,7 @@ module.exports = function suggestArcify(picture, element) {
         rx : r, ry : r, largeArcFlag : s > r, sweepFlag : vector(p1, p2).angleBetween(vector(p1, i)) < 0
       })), {
         // Confidence is in the distance of all points from the centre, and the number of points
-        confidence : (1 - _stat.stdev(dists) / r) * (1 - 1 / shape.points.length)
+        confidence : (1 - stdev(dists) / r) * (1 - 1 / shape.points.length)
       });
     }
   }

@@ -3,7 +3,7 @@ var _ = require('lodash'),
     Line = require('../shape/line'),
     Shape = require('../shape'),
     Point = require('kld-affine').Point2D,
-    _stat = require('jstat').jStat;
+    mean = require('compute-mean');
 
 function d(p1, p2, axis) {
   return Math.abs(p2[axis] - p1[axis]);
@@ -30,7 +30,7 @@ module.exports = function suggestRectify(picture, element) {
         points : Shape.pointStr([_.first(shape.points)].concat(_.map(rp, 'p'))),
         class : 'rect' // Upgrades this Polyline to a Rectline, which changes its behaviour
       })), {
-        confidence : _stat.mean(_.map(rp, 'confidence'))
+        confidence : mean(_.map(rp, 'confidence'))
       });
     }
   }

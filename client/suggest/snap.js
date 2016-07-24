@@ -3,8 +3,7 @@ var _ = require('lodash'),
     Polygon = require('../shape/polygon'),
     Line = require('../shape/line'),
     Shape = require('../shape'),
-    Point = require('kld-affine').Point2D,
-    _stat = require('jstat').jStat;
+    Point = require('kld-affine').Point2D;
 
 var GAP_FACTOR = 0.1; // Magic number, ideal ratio of gap to point-adjusted shape extent
 

@@ -2,8 +2,7 @@ var _ = require('lodash'),
     Shape = require('../shape'),
     Polyline = require('../shape/polyline'),
     Point = require('kld-affine').Point2D,
-    Vector = require('kld-affine').Vector2D,
-    _stat = require('jstat').jStat;
+    Vector = require('kld-affine').Vector2D;
 
 var MIN_POINTS = 6, MIN_REVERSES = 4, INTERSECTS_FACTOR = 4;
 

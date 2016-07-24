@@ -2,7 +2,7 @@ var _ = require('lodash')
     Point = require('kld-affine').Point2D,
     Line = require('../shape/line'),
     Shape = require('../shape'),
-    _stat = require('jstat').jStat;
+    mean = require('compute-mean');
 
 module.exports = function suggestLink(picture, line) {
   var shape = line && !line.removed && Shape.of(line);
@@ -34,7 +34,7 @@ module.exports = function suggestLink(picture, line) {
           to : to.e.attr('id'),
           class : 'link'
         })), {
-          confidence : _stat.mean([from.confidence, to.confidence])
+          confidence : mean([from.confidence, to.confidence])
         });
       } // TODO: sow's ear!
     }
