@@ -45,7 +45,7 @@ module.exports = function User(paper, json) {
     if (!delta || delta.active) {
       avatar.style.position = state.active ? 'fixed' : 'absolute';
       cursor.style.display = state.active && tool ? 'block' : 'none';
-      cursor.src = tool ? '/web/' + tool.name + '.svg' : '';
+      cursor.src = tool ? '/web/' + tool.constructor.name.toLowerCase() + '.svg' : '';
     }
     if (state.active) {
       var svgToScr = Snap.matrix(paper.node.getScreenCTM());
@@ -69,7 +69,7 @@ module.exports = function User(paper, json) {
       });
       state = _.defaults(newState, {
         time : new Date().getTime(), // Timestamp
-        tool : tool.name // The active tool
+        tool : tool.constructor.name // The active tool
       }, state); // Carry forward unchanged state
 
       events.emit('interacting', delta, state);

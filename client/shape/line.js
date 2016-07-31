@@ -6,6 +6,7 @@ var _ = require('lodash'),
 
 function Line(attr) {
   Shape.call(this, 'line', attr);
+  this.vector = new Vector(this.attr.x2 - this.attr.x1, this.attr.y2 - this.attr.y1);
 }
 
 Line.fromJSON = function (data) {
@@ -25,14 +26,13 @@ Line.prototype.computePoints = function () {
 
 Line.prototype.transform = function (m) {
   // Lines are implicitly rotated by their angle
-  return (m || Matrix.IDENTITY).scale(this.extent)
-    .rotateFromVector(Vector.fromPoints(_.first(this.points), _.last(this.points)));
+  return (m || Matrix.IDENTITY).scale(this.extent).rotateFromVector(this.vector);
 };
 
 Line.prototype.mover = function (isEdge, cursor) {
-  if (cursor.c.distanceFrom(_.first(this.points)) < cursor.r) {
+  if (cursor.contains(_.first(this.points))) {
     return function (dx, dy) { return this.delta({ x1 : dx, y1 : dy }); };
-  } else if (cursor.c.distanceFrom(_.last(this.points)) < cursor.r) {
+  } else if (cursor.contains(_.last(this.points))) {
     return function (dx, dy) { return this.delta({ x2 : dx, y2 : dy }); };
   } else {
     return function (dx, dy) { return this.delta({ x1 : dx, y1 : dy, x2 : dx, y2 : dy }); };
@@ -53,6 +53,25 @@ Line.prototype.add = function (that) {
       points : Shape.pointStr(_.initial(this.points).concat(that.points))
     });
   }
+};
+
+Line.prototype.pointOrder = function (axis) {
+  var direction = Math.sign(this.vector[axis]);
+  return function (p) {
+    return direction * p[axis];
+  };
+}
+
+Line.prototype.erase = function (cursor) {
+  var points = this.points.concat(this.intersect(cursor));
+  points = _.sortBy(points, this.pointOrder('x'), this.pointOrder('y'));
+  points = cursor.contains(this.points[0]) ? _.tail(points) : points;
+  return _.reduce(points, _.bind(function (fragments, p, i) {
+    if (i % 2) {
+      fragments.push(new Line({ x1 : points[i - 1].x, y1 : points[i - 1].y, x2 : p.x, y2 : p.y }));
+    }
+    return fragments;
+  }, this), []);
 };
 
 module.exports = Line;

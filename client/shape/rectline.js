@@ -49,9 +49,7 @@ Rectline.prototype.pointsMover = function (pointMover/*(dx, dy, p, i , points)*/
 Rectline.prototype.mover = function (isEdge, cursor) {
   if (isEdge) {
     // First decide if we have hold of a point or a segment
-    var pointIndex = _.findIndex(this.points, function (p) {
-      return p.distanceFrom(cursor.c) < cursor.r;
-    });
+    var pointIndex = _.findIndex(this.points, _.bind(cursor.contains, cursor));
     if (pointIndex > -1) {
       // Move the point and its neighbours
       return this.pointsMover(function (dx, dy, p, i, points) {
@@ -66,8 +64,8 @@ Rectline.prototype.mover = function (isEdge, cursor) {
       // Find the nearest segment
       var segmentIndex = _.findIndex(this.points, function (p, i, points) {
         if (i < points.length - 1) {
-          var axis = p.x === points[i + 1].x ? 'x' : 'y';
-          return Math.abs(cursor.c[axis] - p[axis]) < cursor.r;
+          return cursor.contains(p.x === points[i + 1].x ?
+            new Point(p.x, cursor.bbox.c.y) : new Point(cursor.bbox.c.x, p.y));
         }
       });
       if (segmentIndex > -1) {

@@ -29,11 +29,16 @@ exports.batch = function (actions) {
   batch.toJSON = function () {
     return _.flatten(_.map(actions, _.method('toJSON')));
   };
+  // Undo is lazy to prevent recursion
+  batch.withUndo = function () {
+    batch.undo = exports.batch(_.reverse(_.map(actions, 'undo')));
+    return batch;
+  };
   return batch;
 };
 
-exports.identified = function (action) {
-  return _.set(action, 'id', guid());
+exports.identified = function (action, id) {
+  return _.set(action, 'id', id || guid());
 };
 
 exports.undoable = function (action, undo) {
@@ -45,11 +50,7 @@ exports.chainable = function (action) {
     if (_.isEmpty(more)) {
       return action;
     } else {
-      var actions = [action].concat(more),
-          chained = exports.batch(actions);
-
-      chained.undo = exports.batch(_.reverse(_.map(actions, 'undo')));
-      return exports.chainable(chained);
+      return exports.chainable(exports.batch([action].concat(more)).withUndo());
     }
   });
 };

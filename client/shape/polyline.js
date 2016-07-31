@@ -37,7 +37,7 @@ Polyline.prototype.mover = function (isEdge, cursor) {
       return d.concat({
         p : p,
         fromBegin : prev ? prev.fromBegin + p.distanceFrom(prev.p) : 0,
-        fromCursor : p.distanceFrom(cursor.c)
+        fromCursor : p.distanceFrom(cursor.bbox.c)
       });
     }, []);
     var closest = _.minBy(d, 'fromCursor'), length = _.last(d).fromBegin;

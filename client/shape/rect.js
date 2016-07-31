@@ -1,4 +1,5 @@
-var Shape = require('../shape');
+var Shape = require('../shape'),
+    Point = require('kld-affine').Point2D;
 
 function Rect(attr) {
   Shape.call(this, 'rect', attr);
@@ -15,24 +16,29 @@ Rect.of = function (e) {
 Rect.prototype = Object.create(Shape.prototype);
 Rect.prototype.constructor = Rect;
 
+Rect.prototype.contains = function (point) {
+  return point.x >= this.bbox.x && point.x <= this.bbox.x2 &&
+         point.y >= this.bbox.y && point.y <= this.bbox.y2;
+}
+
 Rect.prototype.mover = function (isEdge, cursor) {
   if (!isEdge) { // Body
     return function (dx, dy) { return this.delta({ x : dx, y : dy }); };
-  } else if (cursor.c.distanceFrom(new Point(this.bbox.x, this.bbox.y)) < cursor.r) { // Top left corner
+  } else if (cursor.contains(new Point(this.bbox.x, this.bbox.y))) { // Top left corner
     return function (dx, dy) { return this.delta({ x : dx, y : dy, width : -dx, height : -dy }); };
-  } else if (cursor.c.distanceFrom(new Point(this.bbox.x2, this.bbox.y)) < cursor.r) { // Top right corner
+  } else if (cursor.contains(new Point(this.bbox.x2, this.bbox.y))) { // Top right corner
     return function (dx, dy) { return this.delta({ y : dy, width : dx, height : -dy }); };
-  } else if (cursor.c.distanceFrom(new Point(this.bbox.x, this.bbox.y2)) < cursor.r) { // Bottom left corner
+  } else if (cursor.contains(new Point(this.bbox.x, this.bbox.y2))) { // Bottom left corner
     return function (dx, dy) { return this.delta({ x : dx, width : -dx, height : dy }); };
-  } else if (cursor.c.distanceFrom(new Point(this.bbox.x2, this.bbox.y2)) < cursor.r) { // Bottom right corner
+  } else if (cursor.contains(new Point(this.bbox.x2, this.bbox.y2))) { // Bottom right corner
     return function (dx, dy) { return this.delta({ width : dx, height : dy }); };
-  } else if (Math.abs(cursor.c.x - this.bbox.x) < cursor.r) { // Left side
+  } else if (cursor.contains(new Point(this.bbox.x, cursor.bbox.c.y))) { // Left side
     return function (dx, dy) { return this.delta({ x : dx, width : -dx }); };
-  } else if (Math.abs(cursor.c.y - this.bbox.y) < cursor.r) { // Top side
+  } else if (cursor.contains(new Point(cursor.bbox.c.x, this.bbox.y))) { // Top side
     return function (dx, dy) { return this.delta({ y : dy, height : -dy }); };
-  } else if (Math.abs(cursor.c.x - this.bbox.x2) < cursor.r) { // Right side
+  } else if (cursor.contains(new Point(this.bbox.x2, cursor.bbox.c.y))) { // Right side
     return function (dx, dy) { return this.delta({ width : dx }); };
-  } else if (Math.abs(cursor.c.y - this.bbox.y2) < cursor.r) { // Bottom side
+  } else if (cursor.contains(new Point(cursor.bbox.c.x, this.bbox.y2))) { // Bottom side
     return function (dx, dy) { return this.delta({ height : dy }); };
   }
 };

@@ -4,7 +4,7 @@
   "type" : "object",
   "properties" : {
     "time" : { "type" : "integer", "description" : "millis per Date.getTime" },
-    "tool" : { "type" : "string", "enum" : ["pen", "hand"] },
+    "tool" : { "type" : "string", "enum" : ["Pen", "Hand", "Eraser"] },
     "active" : { "type" : "boolean", "description" : "e.g. mouse button is down" },
     "x" : { "type" : "number", "description" : "in SVG coordinates" },
     "y" : { "type" : "number", "description" : "in SVG coordinates" },

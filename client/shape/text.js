@@ -37,7 +37,7 @@ Text.prototype.mover = function (isEdge, cursor) {
 
 Text.prototype.resizer = function (isEdge, cursor) {
   // Scale by bottom-right corner
-  if (cursor.c.distanceFrom(new Point(this.bbox.x2, this.bbox.y2)) < cursor.r) { // Bottom right corner
+  if (cursor.contains(new Point(this.bbox.x2, this.bbox.y2))) { // Bottom right corner
     return function (dx, dy) { return this.delta({ 'font-size' : (dx + dy) / 2 }); };
   }
 };

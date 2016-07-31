@@ -28,6 +28,10 @@ Circle.prototype.computeExtent = function () {
   return this.attr.r * 2; // diameter
 };
 
+Circle.prototype.contains = function (point) {
+  return point.distanceFrom(this.bbox.c) <= this.attr.r;
+};
+
 Circle.prototype.mover = function (isEdge, cursor) {
   if (!isEdge) {
     return function (dx, dy) { return this.delta({ cx : dx, cy : dy }); };

@@ -1,10 +1,6 @@
 var _ = require('lodash'),
-    User = require('./user'),
     Snap = require('snapsvg'),
     Picture = require('./picture'),
-    tool = require('./tool'),
-    Pen = tool.pen,
-    Hand = tool.hand,
     History = require('./history'),
     Toolbar = require('./toolbar'),
     Suggestor = require('./suggest'),
@@ -16,20 +12,20 @@ var _ = require('lodash'),
     history = new History(picture),
     users = {};
 
-function userAction(action, description) {
-  action.description = description;
-  action.isUser = true;
-  history.step(action);
+function makeTool(constructor) {
+  var tool = new constructor(picture);
+  tool.on('finished', function (action) {
+    action.description = tool.constructor.name;
+    action.isUser = true;
+    history.step(action);
+  });
+  return tool;
 }
 
-var pen = new Pen(picture);
-pen.on('finished', function (shape) {
-  userAction(picture.action.addition(shape), 'pen');
-});
-var hand = new Hand(picture);
-hand.on('finished', function (element, oldShape) {
-  userAction(picture.action.mutation(element, oldShape, true), 'hand');
-});
+var pen = makeTool(require('./tool/pen')),
+    hand = makeTool(require('./tool/hand')),
+    eraser = makeTool(require('./tool/eraser'));
+
 var toolbar = new Toolbar(Snap('#toolbar'));
 toolbar.undoButton.mousedown(history.undo);
 toolbar.redoButton.mousedown(history.next);
@@ -84,18 +80,19 @@ fsIO.on('connect', function () {
   paper.mousedown(mouseHandler).mousemove(mouseHandler);
 
   function cursor(which, p) {
-    paper.attr('style', 'cursor: url(/web/' + which + '.svg) ' + p.x + ' ' + p.y + ', auto;');
+    paper.attr('style', 'cursor: url(/web/' + which.toLowerCase() + '.svg) ' + p.x + ' ' + p.y + ', auto;');
   }
   var tool;
   function use(newTool) {
     _.invoke(tool, 'deactivate');
     user.use(tool = newTool);
     _.invoke(tool, 'activate');
-    cursor(tool.name, tool.offset);
+    cursor(tool.constructor.name, tool.offset);
   }
   use(pen);
-  toolbar.handButton.mousedown(function () { use(hand) });
   toolbar.penButton.mousedown(function () { use(pen) });
+  toolbar.handButton.mousedown(function () { use(hand) });
+  toolbar.eraserButton.mousedown(function () { use(eraser) });
 });
 
 // Handle interactions from other users
@@ -110,7 +107,7 @@ fsIO.on('user.disconnected', function (id) {
 fsIO.on('interaction', function (userId, state) {
   var user = users[userId];
   if (!user.isUsing(state.tool)) {
-    user.use(new (tool[state.tool])(picture));
+    user.use(new (require('./tool/' + state.tool.toLowerCase()))(picture));
   }
   user.interacting(state);
 });

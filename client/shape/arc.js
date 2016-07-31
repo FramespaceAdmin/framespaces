@@ -90,14 +90,14 @@ Arc.prototype.mover = function (isEdge, cursor) {
     return function (dx, dy) {
       return this.deltaD({ '0.x' : dx, '0.y' : dy, '1.x' : dx, '1.y' : dy });
     };
-  } else if (this.p1.distanceFrom(cursor.c) < cursor.r) {
+  } else if (cursor.contains(this.p1)) {
     // Move p1
     return function (dx, dy) {
       var fd = this.p1.add(new Point(dx, dy)).distanceFrom(this.p2) / this.p1.distanceFrom(this.p2);
       function dr(r) { return r * fd; }
       return this.deltaD({ '0.x' : dx, '0.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr });
     };
-  } else if (this.p2.distanceFrom(cursor.c) < cursor.r) {
+  } else if (cursor.contains(this.p2)) {
     // Move p2
     return function (dx, dy) {
       var fd = this.p2.add(new Point(dx, dy)).distanceFrom(this.p1) / this.p2.distanceFrom(this.p1);

@@ -2,6 +2,7 @@ var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
     Arc = require('../client/shape/arc'),
+    Circle = require('../client/shape/circle'),
     Point = require('kld-affine').Point2D,
     MockPaper = require('./mockPaper');
 
@@ -74,7 +75,7 @@ describe('Arc', function () {
 
     it('should stay in proportion when an end is moved', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
-      var move = arc.mover(true, { c : new Point(1, 1), r : 0.1 });
+      var move = arc.mover(true, new Circle({ cx : 1, cy : 1, r : 0.1 }));
       arc = move.call(arc, 1, 1);
       assert.equal(arc.p1.x, 0);
       assert.equal(arc.p1.y, 0);
@@ -86,7 +87,7 @@ describe('Arc', function () {
 
     it('should sweep the other way when the line is moved to the opposite side', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
-      var move = arc.mover(true, { c : new Point(1/3, 2/3), r : 0.2 });
+      var move = arc.mover(true, new Circle({ cx : 1/3, cy : 2/3, r : 0.2 }));
       arc = move.call(arc, 1/3, -1/3, 2/3, 1/3);
       assert.equal(arc.p1.x, 0);
       assert.equal(arc.p1.y, 0);
@@ -97,7 +98,7 @@ describe('Arc', function () {
 
     it('should become large when the line is moved further than the radius', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
-      var move = arc.mover(true, { c : new Point(1/3, 2/3), r : 0.2 });
+      var move = arc.mover(true, new Circle({ cx : 1/3, cy : 2/3, r : 0.2 }));
       arc = move.call(arc, -1, 1, 1/3-1, 1+2/3);
       assert.equal(arc.p1.x, 0);
       assert.equal(arc.p1.y, 0);

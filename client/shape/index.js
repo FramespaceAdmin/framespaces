@@ -142,6 +142,18 @@ Shape.prototype.intersect = function (that) {
 };
 
 /**
+ * returns truthy if the shape contains the point.
+ * The default behaviour uses the Jordan curve theorem per
+ * https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+ */
+Shape.prototype.contains = function (point) {
+  var ray = _cap.shape('line', { x1 : this.bbox.x, y1 : this.bbox.y, x2 : point.x, y2 : point.y }),
+      intersects = _cap.intersect(this.params, ray).points;
+
+  return !intersects || intersects.length % 2;
+};
+
+/**
  * returns a new shape with attributes changed by the given deltas, @see Shape.prototype.deltaAttr.
  * Default implementation assumes a one-arg constructor.
  */
@@ -150,12 +162,20 @@ Shape.prototype.delta = function (dAttr) {
 };
 
 /**
+ * Clones this shape with the given optional additional attributes
+ */
+Shape.prototype.clone = function (attr/*, ...*/) {
+  return this.cloneAs(this.constructor, _.isArray(attr) ? attr : _.toArray(arguments));
+};
+
+/**
  * returns a new shape of the given type, optionally with new attributes as given.
  * Will remove any attributes set to 'undefined' in the parameter.
  * Default implementation assumes a one-arg constructor.
  */
 Shape.prototype.cloneAs = function (constructor, attr/*, ...*/) {
-  var assigns = [_.clone(this.attr)].concat(_.tail(_.toArray(arguments)));
+  attr = _.isArray(attr) ? attr : _.tail(_.toArray(arguments));
+  var assigns = [_.clone(this.attr)].concat(attr); // _.assign can't take an array
   return new (constructor)(_.omitBy(_.assign.apply(_, assigns), _.isUndefined));
 };
 
@@ -231,18 +251,18 @@ Shape.deltaAttr = function (attr, dAttr) {
 /**
  * Returns a function for moving the shape based on the given parameters
  * @param isEdge whether the cursor is on the edge of the shape
- * @param cursor { c : centre, r : radius }
+ * @param cursor Shape
  * @param getShapeById function (id) : Shape
  * @returns function (dx, dy, x, y) : Shape
  */
 Shape.prototype.mover = null;
 
 /**
- * Breaks the shape with the given eraser cursor
- * @param cursor { c : centre, r : radius }
- * @returns an array of shapes
+ * Erases the part of the shape occluded by the given eraser cursor
+ * @param cursor Shape
+ * @returns an array of resulting shapes. Empty if the shape is completely erased.
  */
-Shape.prototype.break = null;
+Shape.prototype.erase = null;
 
 /**
  * If truthy, then a function that closes an open shape

@@ -42,6 +42,7 @@ module.exports = function Toolbar(toolPaper) {
   this.undoButton = toolPaper.select('#undo-button');
   this.redoButton = toolPaper.select('#next-button');
 
+  this.eraserButton = toolPaper.select('#eraser-button');
   this.penButton = toolPaper.select('#pen-button');
   this.handButton = toolPaper.select('#hand-button');
 };

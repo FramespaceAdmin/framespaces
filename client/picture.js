@@ -127,8 +127,18 @@ module.exports = function Picture(paper) {
     }
   }
 
-  function getElement(id) {
-    return paper.select('#' + id);
+  function allElements() {
+    return _.filter(paper.selectAll('[id]'), function (e) {
+      return _.get(e, 'node.style.display') !== 'none';
+    });
+  }
+
+  function getElement(filter) {
+    if (_.isFunction(filter)) {
+      return _.find(allElements(), filter);
+    } else {
+      return paper.select('#' + filter);
+    }
   }
 
   function linksTo(id) {
@@ -209,5 +219,6 @@ module.exports = function Picture(paper) {
   this.action.mutation = mutation;
   this.changed = changed;
   this.getElement = getElement;
+  this.allElements = allElements;
   this.on = _.bind(events.on, events);
 };

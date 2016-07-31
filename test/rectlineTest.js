@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
+    Circle = require('../client/shape/circle'),
     Point = require('kld-affine').Point2D,
     Rectline = require('../client/shape/rectline'),
     Rect = require('../client/shape/rect'),
@@ -24,7 +25,7 @@ describe('Rectline', function () {
 
   it('should stay recty when a point is dragged', function () {
     var rectline = new Rectline({ points : '0,0,0,2,2,2' });
-    var move = rectline.mover(true, { c : new Point(0, 2), r : 0.5 });
+    var move = rectline.mover(true, new Circle({ cx : 0, cy : 2, r : 0.5 }));
     rectline = move.call(rectline, 1, 1);
     assert.equal(rectline.points[0].x, 1);
     assert.equal(rectline.points[0].y, 0);
@@ -36,7 +37,7 @@ describe('Rectline', function () {
 
   it('should stay recty when a segment is dragged', function () {
     var rectline = new Rectline({ points : '0,0,0,2,2,2' });
-    var move = rectline.mover(true, { c : new Point(0, 1), r : 0.5 });
+    var move = rectline.mover(true, new Circle({ cx : 0, cy : 1, r : 0.5 }));
     rectline = move.call(rectline, 1, 1);
     assert.equal(rectline.points[0].x, 1);
     assert.equal(rectline.points[0].y, 0);

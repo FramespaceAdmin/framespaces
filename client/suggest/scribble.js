@@ -18,7 +18,7 @@ module.exports = function suggestScribble(picture, pline) {
     }, [])
 
     if (reverses.length >= MIN_REVERSES) {
-      return _.last(_.sortBy(_.reduce(picture.paper.selectAll('[id]'), function (candidates, other) {
+      return _.last(_.sortBy(_.reduce(picture.allElements(), function (candidates, other) {
         if (other !== pline) {
           var otherShape = Shape.of(other);
           // Look for shapes we intersect with
