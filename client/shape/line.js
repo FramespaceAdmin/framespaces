@@ -1,6 +1,5 @@
 var _ = require('lodash'),
     Shape = require('../shape'),
-    Polyline = require('./polyline'),
     Vector = require('kld-affine').Vector2D,
     Matrix = require('kld-affine').Matrix2D;
 
@@ -46,8 +45,8 @@ Line.prototype.reverse = function () {
 }
 
 Line.prototype.add = function (that) {
-  if (that instanceof Line || that instanceof Polyline) {
-    return this.cloneAs(Polyline, {
+  if (that instanceof Line || that instanceof require('./polyline')) {
+    return this.cloneAs(require('./polyline'), {
       x1 : undefined, y1 : undefined, x2 : undefined, y2 : undefined,
       // Lose our second point
       points : Shape.pointStr(_.initial(this.points).concat(that.points))
@@ -66,12 +65,17 @@ Line.prototype.erase = function (cursor) {
   var points = this.points.concat(this.intersect(cursor));
   points = _.sortBy(points, this.pointOrder('x'), this.pointOrder('y'));
   points = cursor.contains(this.points[0]) ? _.tail(points) : points;
-  return _.reduce(points, _.bind(function (fragments, p, i) {
-    if (i % 2) {
-      fragments.push(new Line({ x1 : points[i - 1].x, y1 : points[i - 1].y, x2 : p.x, y2 : p.y }));
+  return Line.linesBetween(points, function (i) { return i % 2 });
+};
+
+Line.linesBetween = function (points, filterIndex) {
+  filterIndex || (filterIndex = _.identity);
+  return _.reduce(points, function (lines, p, i) {
+    if (i && filterIndex(i)) {
+      lines.push(new Line({ x1 : points[i - 1].x, y1 : points[i - 1].y, x2 : p.x, y2 : p.y }));
     }
-    return fragments;
-  }, this), []);
+    return lines;
+  }, []);
 };
 
 module.exports = Line;

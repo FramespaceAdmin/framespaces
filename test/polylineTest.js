@@ -1,6 +1,8 @@
 var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
+    Circle = require('../client/shape/circle'),
+    Line = require('../client/shape/line'),
     Polyline = require('../client/shape/polyline'),
     MockPaper = require('./mockPaper');
 
@@ -15,6 +17,61 @@ describe('Polyline', function () {
       assert.equal(polyline.points[1].x, 1);
       assert.equal(polyline.points[1].y, 1);
       assert.equal(polyline.extent, Math.sqrt(2));
+    });
+
+    describe('when being erased', function () {
+      it('should be unaffected by a non-overlapping cursor', function () {
+        var polyline = new Polyline({ points : '0,0,2,0,2,2' });
+        var fragments = polyline.erase(new Circle({ cx : 0, cy : 2, r : 0.5 }));
+        assert.isOk(fragments);
+        assert.lengthOf(fragments, 1);
+        assert.deepEqual(fragments[0].attr, polyline.attr);
+      });
+
+      it('should be removed by an occluding cursor', function () {
+        var polyline = new Polyline({ points : '0,0,2,0,2,2' });
+        var fragments = polyline.erase(new Circle({ cx : 1, cy : 1, r : 2 }));
+        assert.isOk(fragments);
+        assert.lengthOf(fragments, 0);
+      });
+
+      it('should have its head removed', function () {
+        var polyline = new Polyline({ points : '0,0,2,0,2,2' });
+        var fragments = polyline.erase(new Circle({ cx : 0, cy : 0, r : 1 }));
+        assert.isOk(fragments);
+        assert.lengthOf(fragments, 1);
+        assert.equal(fragments[0].attr.points, '1,0,2,0,2,2');
+      });
+
+      it('should have its tail removed', function () {
+        var polyline = new Polyline({ points : '0,0,2,0,2,2' });
+        var fragments = polyline.erase(new Circle({ cx : 2, cy : 2, r : 1 }));
+        assert.isOk(fragments);
+        assert.lengthOf(fragments, 1);
+        assert.equal(fragments[0].attr.points, '0,0,2,0,2,1');
+      });
+
+      it('should have an intermediate point removed', function () {
+        var polyline = new Polyline({ points : '0,0,2,0,2,2' });
+        var fragments = polyline.erase(new Circle({ cx : 2, cy : 0, r : 1 }));
+        assert.isOk(fragments);
+        assert.lengthOf(fragments, 2);
+        assert.instanceOf(fragments[0], Line);
+        assert.deepEqual(fragments[0].attr, { x1 : 0, y1 : 0, x2 : 1, y2 : 0 });
+        assert.instanceOf(fragments[1], Line);
+        assert.deepEqual(fragments[1].attr, { x1 : 2, y1 : 1, x2 : 2, y2 : 2 });
+      });
+
+      it('should have the middle of an intermediate line removed', function () {
+        var polyline = new Polyline({ points : '0,0,2,0,2,2' });
+        var fragments = polyline.erase(new Circle({ cx : 1, cy : 0, r : 0.5 }));
+        assert.isOk(fragments);
+        assert.lengthOf(fragments, 2);
+        assert.instanceOf(fragments[0], Line);
+        assert.deepEqual(fragments[0].attr, { x1 : 0, y1 : 0, x2 : 0.5, y2 : 0 });
+        assert.instanceOf(fragments[1], Polyline);
+        assert.equal(fragments[1].attr.points, '1.5,0,2,0,2,2');
+      });
     });
   });
 

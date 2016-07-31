@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     Shape = require('../shape'),
     Point = require('kld-affine').Point2D,
+    Line = require('./line'),
     _cap = require('svg-intersections');
 
 function Polyline(attr) {
@@ -69,12 +70,27 @@ Polyline.prototype.reverse = function () {
 }
 
 Polyline.prototype.add = function (that) {
-  if (that instanceof require('./line') || that instanceof Polyline) {
+  if (that instanceof Line || that instanceof Polyline) {
     return this.cloneAs(Polyline, {
       // Lose our last point
       points : Shape.pointStr(_.initial(this.points).concat(that.points))
     });
   }
+};
+
+Polyline.prototype.erase = function (cursor) {
+  // Consider each line segment in turn
+  return _.flatten(_.reduce(Line.linesBetween(this.points), function (fragments, line, i) {
+    var prevFragment = _.last(fragments),
+        prevPoint = _.last(_.get(prevFragment, 'points')),
+        lineFragments = line.erase(cursor);
+
+    if (prevPoint && lineFragments.length && prevPoint.equals(lineFragments[0].points[0])) {
+      // Extend the previous fragment with the new line (consumes first line fragment)
+      fragments.splice(fragments.length - 1, 1, prevFragment.add(lineFragments.shift()));
+    }
+    return fragments.concat(lineFragments);
+  }, []));
 };
 
 module.exports = Polyline;

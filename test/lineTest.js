@@ -18,7 +18,7 @@ describe('Line', function () {
       assert.equal(line.extent, Math.sqrt(2));
     });
 
-    describe('delta method', function () {
+    describe('when being delta\'d', function () {
       it('should apply numeric deltas', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 })
           .delta({ x1 : 1, y1 : 1, x2 : 1, y2 : 1 });
@@ -43,7 +43,7 @@ describe('Line', function () {
       });
     });
 
-    describe('erase method', function () {
+    describe('when being erased', function () {
       it('should be unchanged with a non-overlapping cursor', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
         var fragments = line.erase(new Circle({ cx : 2, cy : 2, r : 0.5 }));
@@ -53,7 +53,7 @@ describe('Line', function () {
         assert.deepEqual(fragments[0].attr, line.attr);
       });
 
-      it('should be erased by an overlapping cursor', function () {
+      it('should be removed by an occluding cursor', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
         var fragments = line.erase(new Circle({ cx : 0.5, cy : 0, r : 2 }));
         assert.isOk(fragments);
