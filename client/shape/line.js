@@ -16,6 +16,10 @@ Line.of = function (e) {
   return e.node.nodeName === 'line' && new Line(Shape.strongAttr(e));
 };
 
+Line.fromPoints = function (p1, p2) {
+  return new Line({ x1 : p1.x, y1 : p1.y, x2 : p2.x, y2 : p2.y });
+};
+
 Line.prototype = Object.create(Shape.prototype);
 Line.prototype.constructor = Line;
 
@@ -75,7 +79,7 @@ Line.linesBetween = function (points, filterIndex) {
   return _.reduce(points, function (lines, p2, i) {
     var p1 = points[i - 1];
     if (p1 && !p1.equals(p2) && filterIndex(i)) {
-      lines.push(new Line({ x1 : p1.x, y1 : p1.y, x2 : p2.x, y2 : p2.y }));
+      lines.push(Line.fromPoints(p1, p2));
     }
     return lines;
   }, []);

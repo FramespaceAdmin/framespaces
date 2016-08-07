@@ -9,16 +9,21 @@ var _ = require('lodash'),
  * A rectline is a polyline in which each point varies from the last in only one of x or y.
  */
 function Rectline(attr) {
-  Polyline.call(this, Shape.deltaAttr(attr, { class : 'rect' }));
+  Polyline.call(this, attr);
   this.axis1 = this.points[0].x === this.points[1].x ? 'y' : 'x';
   this.axis2 = this.points[1].x === this.points[2].x ? 'y' : 'x';
 }
 
 Rectline.check = function (attr) {
   var points = Shape.points(attr.points);
-  return points.length > 2 && _.every(points, function (p, i, ps) {
-    return i === 0 || p.x === ps[i - 1].x || p.y === ps[i - 1].y;
-  });
+  return _.reduce(points, function (axis, p2, i, ps) {
+    var p1 = ps[i - 1];
+    switch (i) {
+      case 0 : return null;
+      case 1 : return p2.x === p1.x ? 'y' : p2.y === p1.y ? 'x' : null;
+      default : return axis && p2[axis] === p1[axis] ? axis === 'x' ? 'y' : 'x' : null;
+    }
+  }, null);
 };
 
 Rectline.fromJSON = function (data) {
@@ -30,7 +35,7 @@ Rectline.of = function (e) {
 };
 
 Rectline.fromAttr = function (attr) {
-  return Shape.hasClass(attr, 'rect') && Rectline.check(attr) && new Rectline(attr);
+  return Rectline.check(attr) && new Rectline(attr);
 };
 
 Rectline.prototype = Object.create(Polyline.prototype);

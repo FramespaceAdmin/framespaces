@@ -19,17 +19,6 @@ Polyline.of = function (e) {
 Polyline.prototype = Object.create(Shape.prototype);
 Polyline.prototype.constructor = Polyline;
 
-Polyline.prototype.computeParams = function () {
-  return _cap.shape(this.name, _.mapValues(this.attr, function (value, key) {
-    if (key === 'points') {
-      // svg-intersections requires space-delimited points
-      return _.map(Shape.points(value), Shape.pointStr).join(' ');
-    } else {
-      return value;
-    }
-  }));
-};
-
 Polyline.prototype.computeEnds = function () {
   return [_.first(this.points), _.last(this.points)];
 };
@@ -82,12 +71,16 @@ Polyline.prototype.add = function (that) {
   }
 };
 
-Polyline.prototype.minus = function (cursor) {
+Polyline.prototype.minus = function (that) {
+  return Polyline.pointsMinus(this.points, that);
+};
+
+Polyline.pointsMinus = function (points, shape) {
   // Consider each line segment in turn
-  return _.flatten(_.reduce(Line.linesBetween(this.points), function (fragments, line, i) {
+  return _.flatten(_.reduce(Line.linesBetween(points), function (fragments, line, i) {
     var prevFragment = _.last(fragments),
         prevPoint = _.last(_.get(prevFragment, 'points')),
-        lineFragments = line.minus(cursor);
+        lineFragments = line.minus(shape);
 
     if (prevPoint && lineFragments.length && prevPoint.equals(lineFragments[0].points[0])) {
       // Extend the previous fragment with the new line (consumes first line fragment)

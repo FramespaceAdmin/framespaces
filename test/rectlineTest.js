@@ -15,9 +15,9 @@ describe('Rectline', function () {
     assert.equal(rectline.extent, Math.sqrt(8));
   });
 
-  it('should be recognised by its class', function () {
+  it('should be recognised', function () {
     var paper = MockPaper(10, 10);
-    var rectline = Shape.of(paper.polyline(0, 0, 0, 2, 2, 2).addClass('rect'));
+    var rectline = Shape.of(paper.polyline(0, 0, 0, 2, 2, 2));
     assert.instanceOf(rectline, Rectline);
     assert.equal(rectline.name, 'polyline');
     assert.equal(rectline.points.length, 3);

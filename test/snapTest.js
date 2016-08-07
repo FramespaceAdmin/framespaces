@@ -4,7 +4,7 @@ var _ = require('lodash'),
     Shape = require('../client/shape'),
     Line = require('../client/shape/line'),
     Polyline = require('../client/shape/polyline'),
-    Polygon = require('../client/shape/polygon'),
+    Rect = require('../client/shape/rect'),
     snap = require('../client/suggest/snap'),
     MockPaper = require('./mockPaper'),
     guid = require('../lib/guid');
@@ -41,7 +41,7 @@ describe('Snap suggestor', function () {
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
     var snapped = Shape.of(action());
-    assert.instanceOf(snapped, Polygon);
+    assert.instanceOf(snapped, Rect);
     assert.equal(snapped.extent, Math.sqrt(2));
   });
 });

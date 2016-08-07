@@ -27,8 +27,7 @@ module.exports = function suggestRectify(picture, element) {
       return _.assign(picture.action.mutation(element, shape.delta(shape instanceof Line ? {
         x2 : rp[0].p.x - shape.attr.x2, y2 : rp[0].p.y - shape.attr.y2
       } : {
-        points : Shape.pointStr([shape.ends[0]].concat(_.map(rp, 'p'))),
-        class : 'rect' // Upgrades this Polyline to a Rectline, which changes its behaviour
+        points : Shape.pointStr([shape.ends[0]].concat(_.map(rp, 'p')))
       })), {
         confidence : mean(_.map(rp, 'confidence'))
       });

@@ -1,4 +1,5 @@
 var Shape = require('../shape'),
+    Polygon = require('./polygon'),
     Point = require('kld-affine').Point2D;
 
 function Rect(attr) {
@@ -13,7 +14,7 @@ Rect.of = function (e) {
   return e.node.nodeName === 'rect' && new Rect(Shape.strongAttr(e));
 };
 
-Rect.prototype = Object.create(Shape.prototype);
+Rect.prototype = Object.create(Polygon.prototype);
 Rect.prototype.constructor = Rect;
 
 Rect.prototype.contains = function (point) {

@@ -5,6 +5,7 @@ var _ = require('lodash'),
 
 function Pen(picture) {
   Tool.call(this, picture);
+  var paper = picture.paper;
 
   var element, activity;
 
@@ -40,14 +41,14 @@ function Pen(picture) {
 
   this.using = function using(delta, state) {
     function text() {
-      return this.paper.text(state.x, state.y, toLines(_.map(activity, 'char')))
-        .attr('font-size', _.get(this.paper.attr(), 'font-size'));
+      return paper.text(state.x, state.y, toLines(_.map(activity, 'char')))
+        .attr('font-size', _.get(paper.attr(), 'font-size'));
     }
 
     if (delta.active) {
       if (state.active) { // Started something new
         activity = [state];
-        element = state.char ? text() : this.paper.circle(state.x, state.y, 0).addClass('dot');
+        element = state.char ? text() : paper.circle(state.x, state.y, 0).addClass('dot');
         processLFs(element);
       } else { // Finished an element
         activity = undefined;
@@ -57,7 +58,7 @@ function Pen(picture) {
     } else if (state.active) { // Drawing or typing
       element.remove();
       activity.push(state);
-      element = state.char ? text() : this.paper.polyline(_(activity).map(function (state) {
+      element = state.char ? text() : paper.polyline(_(activity).map(function (state) {
         return [state.x, state.y];
       }).uniqBy(_.toString).flatten().value());
       processLFs(element);

@@ -88,7 +88,14 @@ Shape.of = function (element) {
  * This is for the svg-intersections library.
  */
 Shape.prototype.computeParams = function () {
-  return _cap.shape(this.name, this.attr);
+  return _cap.shape(this.name, _.mapValues(this.attr, function (value, key) {
+    if (key === 'points') {
+      // svg-intersections requires space-delimited points
+      return _.map(Shape.points(value), Shape.pointStr).join(' ');
+    } else {
+      return value;
+    }
+  }));
 };
 
 /**

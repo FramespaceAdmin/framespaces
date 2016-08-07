@@ -4,6 +4,7 @@ var _ = require('lodash'),
     Shape = require('../client/shape'),
     Line = require('../client/shape/line'),
     Polyline = require('../client/shape/polyline'),
+    Point = require('kld-affine').Point2D,
     rectify = require('../client/suggest/rectify'),
     MockPaper = require('./mockPaper'),
     guid = require('../lib/guid');
@@ -34,8 +35,10 @@ describe('Rectify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var rectified = Shape.of(action());
     assert.instanceOf(rectified, Polyline);
-    assert.isTrue(rectified.hasClass('rect'));
     assert.equal(rectified.points.length, 3);
+    assert.deepEqual(rectified.points[0], new Point(0, 0));
+    assert.deepEqual(rectified.points[1], new Point(1, 0));
+    assert.deepEqual(rectified.points[2], new Point(1, 1));
     assert.equal(rectified.extent, Math.sqrt(2));
   });
 });
