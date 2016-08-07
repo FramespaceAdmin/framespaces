@@ -15,7 +15,7 @@ function Eraser(picture) {
   function erase(e, cursor, removeOld) {
     var shape = Shape.of(e);
     if (cursor.intersect(shape).length || _.every(shape.points, _.bind(cursor.contains, cursor))) {
-      var fragmentShapes = _.invoke(Shape.of(e), 'erase', cursor);
+      var fragmentShapes = _.invoke(Shape.of(e), 'minus', cursor);
       if (fragmentShapes) {
         removeOld ? removeOld() : e.remove();
         return _.map(fragmentShapes, _.method('addTo', picture.paper));
@@ -27,19 +27,15 @@ function Eraser(picture) {
     if (state.active) { // Erasing
       // Cursor radius is dependent on how fast we are moving
       var cursor = Tool.cursor(state, Math.max(MIN_CURSOR_RADIUS, new Vector(delta.x || 0, delta.y || 0).length()));
-      // Affect picture elements
-      _.each(picture.allElements(), function (e) {
+      // Affect picture elements and previous fragments
+      _.assign(erased, _.reduce(picture.allElements(), function (erased, e) {
         var fragments = erase(e, cursor, _.bind(e.attr, e, 'display', 'none'));
-        if (fragments) {
-          erased[e.attr('id')] = fragments;
-        }
-      });
-      // Affect previous fragments
-      _.each(erased, function (fragments, id) {
-        erased[id] = _.flatten(_.map(fragments, function (e) {
+        return fragments ? _.set(erased, e.attr('id'), fragments) : erased;
+      }, {}), _.reduce(erased, function (erased, fragments, id) {
+        return _.set(erased, id, _.flatten(_.map(fragments, function (e) {
           return erase(e, cursor) || e;
-        }));
-      });
+        })));
+      }, {}));
     } else if (delta.active) { // Finished erasing
       // Emit the rolled-up replacements and removals
       var actions = _.map(erased, function (fragments, id) {

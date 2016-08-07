@@ -12,7 +12,7 @@ module.exports = function suggestArcify(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
   if (shape && shape instanceof Polyline && shape.points.length > 3) {
     // The centroid, C, of the shape will indicate the direction of the arc
-    var p1 = _.first(shape.points), p2 = _.last(shape.points),
+    var p1 = shape.ends[0], p2 = shape.ends[1],
         C = new Point(mean(_.map(shape.points, 'x')), mean(_.map(shape.points, 'y'))),
         m = p1.lerp(p2, 0.5);
     // The line from the mid-point, through the centroid, is a part of a radius

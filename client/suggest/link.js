@@ -8,8 +8,7 @@ module.exports = function suggestLink(picture, line) {
   var shape = line && !line.removed && Shape.of(line);
   if (shape && shape instanceof Line && !shape.hasClass('link')) {
     // Look for candidate circles and rectangles to connect
-    var begin = _.first(shape.points), end = _.last(shape.points),
-        elements = picture.paper.selectAll('rect,circle');
+    var elements = picture.paper.selectAll('rect,circle');
 
     if (elements.length) {
       function suggestEnd(point) {
@@ -27,7 +26,7 @@ module.exports = function suggestLink(picture, line) {
           }]);
         }, []), 'confidence'));
       }
-      var from = suggestEnd(begin), to = suggestEnd(end);
+      var from = suggestEnd(shape.ends[0]), to = suggestEnd(shape.ends[1]);
       if (from.e !== to.e) {
         return _.assign(picture.action.mutation(line, shape.delta({
           from : from.e.attr('id'),

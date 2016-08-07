@@ -3,6 +3,7 @@ var _ = require('lodash'),
     Shape = require('../client/shape'),
     Arc = require('../client/shape/arc'),
     Circle = require('../client/shape/circle'),
+    Rect = require('../client/shape/rect'),
     Point = require('kld-affine').Point2D,
     MockPaper = require('./mockPaper');
 
@@ -77,10 +78,10 @@ describe('Arc', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
       var move = arc.mover(true, new Circle({ cx : 1, cy : 1, r : 0.1 }));
       arc = move.call(arc, 1, 1);
-      assert.equal(arc.p1.x, 0);
-      assert.equal(arc.p1.y, 0);
-      assert.equal(arc.p2.x, 2);
-      assert.equal(arc.p2.y, 2);
+      assert.equal(arc.ends[0].x, 0);
+      assert.equal(arc.ends[0].y, 0);
+      assert.equal(arc.ends[1].x, 2);
+      assert.equal(arc.ends[1].y, 2);
       assert.equal(arc.curve.rx, 2);
       assert.equal(arc.curve.ry, 2);
     });
@@ -89,10 +90,10 @@ describe('Arc', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
       var move = arc.mover(true, new Circle({ cx : 1/3, cy : 2/3, r : 0.2 }));
       arc = move.call(arc, 1/3, -1/3, 2/3, 1/3);
-      assert.equal(arc.p1.x, 0);
-      assert.equal(arc.p1.y, 0);
-      assert.equal(arc.p2.x, 1);
-      assert.equal(arc.p2.y, 1);
+      assert.equal(arc.ends[0].x, 0);
+      assert.equal(arc.ends[0].y, 0);
+      assert.equal(arc.ends[1].x, 1);
+      assert.equal(arc.ends[1].y, 1);
       assert.equal(arc.curve.sweepFlag, 1);
     });
 
@@ -100,11 +101,68 @@ describe('Arc', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
       var move = arc.mover(true, new Circle({ cx : 1/3, cy : 2/3, r : 0.2 }));
       arc = move.call(arc, -1, 1, 1/3-1, 1+2/3);
-      assert.equal(arc.p1.x, 0);
-      assert.equal(arc.p1.y, 0);
-      assert.equal(arc.p2.x, 1);
-      assert.equal(arc.p2.y, 1);
+      assert.equal(arc.ends[0].x, 0);
+      assert.equal(arc.ends[0].y, 0);
+      assert.equal(arc.ends[1].x, 1);
+      assert.equal(arc.ends[1].y, 1);
       assert.equal(arc.curve.largeArcFlag, 1);
+    });
+
+    it('should be unaffected by an non-overlapping minus shape', function () {
+      var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 2 0' }); // Semicircle below x axis
+      var fragments = arc.minus(new Rect({ x : 0.5, y : 0, width : 1, height : 0.5 }));
+      assert.isOk(fragments);
+      assert.lengthOf(fragments, 1);
+      assert.match(fragments[0].attr.d, dPattern('M0 0 A 1 1, 0, 0, 0, 2 0'));
+    });
+
+    it('should be completely minused by an occluding shape', function () {
+      var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 2 0' }); // Semicircle below x axis
+      var fragments = arc.minus(new Rect({ x : -1, y : -1, width : 4, height : 3 }));
+      assert.isOk(fragments);
+      assert.lengthOf(fragments, 0);
+    });
+
+    function dPattern(d) {
+      return new RegExp(d.replace(/,?\s+/g, ',?\\s*'));
+    }
+
+    it('should have its head minused', function () {
+      var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 2 0' }); // Semicircle below x axis
+      var fragments = arc.minus(new Rect({ x : -1, y : -1, width : 2, height : 2 }));
+      assert.isOk(fragments);
+      assert.lengthOf(fragments, 1);
+      assert.instanceOf(fragments[0], Arc);
+      assert.match(fragments[0].attr.d, dPattern('M1 1 A 1 1, 0, 0, 0, 2 0'));
+    });
+
+    it('should have its tail minused', function () {
+      var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 2 0' }); // Semicircle below x axis
+      var fragments = arc.minus(new Rect({ x : 1, y : -1, width : 2, height : 2 }));
+      assert.isOk(fragments);
+      assert.lengthOf(fragments, 1);
+      assert.instanceOf(fragments[0], Arc);
+      assert.match(fragments[0].attr.d, dPattern('M0 0 A 1 1, 0, 0, 0, 1 1'));
+    });
+
+    it('should have its middle minused', function () {
+      var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 2 0' }); // Semicircle below x axis
+      var fragments = arc.minus(new Rect({ x : 0.5, y : 0, width : 1, height : 1.01 }));
+      assert.isOk(fragments);
+      assert.lengthOf(fragments, 2);
+      assert.instanceOf(fragments[0], Arc);
+      assert.match(fragments[0].attr.d, dPattern('M0 0 A 1 1, 0, 0, 0, 0.5 0.86[0-9]+'));
+      assert.instanceOf(fragments[1], Arc);
+      assert.match(fragments[1].attr.d, dPattern('M1.5 0.86[0-9]+ A 1 1, 0, 0, 0, 2 0'));
+    });
+
+    it('should stay large if angle > 180', function () {
+      var arc = new Arc({ d : 'M0 1 A 1 1, 0, 1, 0, 1 0' }); // Three-quarter circle around 1,1
+      var fragments = arc.minus(new Rect({ x : -0.1, y : 0.9, width : 0.2, height : 0.2 }));
+      assert.isOk(fragments);
+      assert.lengthOf(fragments, 1);
+      assert.instanceOf(fragments[0], Arc);
+      assert.isOk(fragments[0].curve.largeArcFlag);
     });
   });
 

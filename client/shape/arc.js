@@ -8,9 +8,12 @@ var _ = require('lodash'),
 
 function Arc(attr) {
   var pointObjects = toPointObjects(attr.d);
-  this.p1 = new Point(pointObjects[0].x, pointObjects[0].y);
-  this.p2 = new Point(pointObjects[1].x, pointObjects[1].y);
+  this.ends = [
+    new Point(pointObjects[0].x, pointObjects[0].y),
+    new Point(pointObjects[1].x, pointObjects[1].y)
+  ];
   this.curve = pointObjects[1].curve;
+  this.chord = this.ends[0].distanceFrom(this.ends[1]);
 
   Shape.call(this, 'path', attr);
 }
@@ -50,8 +53,11 @@ Arc.prototype.computeParams = function () {
 }
 
 Arc.prototype.computePoints = function () {
-  // Start and end points
-  return [this.p1, this.p2];
+  return this.ends;
+};
+
+Arc.prototype.computeEnds = function () {
+  return this.ends;
 };
 
 Arc.prototype.computeBBox = function () {
@@ -70,12 +76,15 @@ Arc.prototype.computeExtent = function () {
     return this.curve.rx + this.curve.ry; // diameter-ish
   } else {
     // Small arc extent is the extent of the begin and end points
-    return this.points[0].distanceFrom(this.points[1]);
+    return this.chord;
   }
 };
 
 Arc.prototype.toPointObjects = function () {
-  return [{ x : this.p1.x, y : this.p1.y }, { x : this.p2.x, y : this.p2.y, curve : _.clone(this.curve) }];
+  return [
+    { x : this.ends[0].x, y : this.ends[0].y },
+    { x : this.ends[1].x, y : this.ends[1].y, curve : _.clone(this.curve) }
+  ];
 }
 
 Arc.prototype.deltaD = function (deltas) {
@@ -90,17 +99,17 @@ Arc.prototype.mover = function (isEdge, cursor) {
     return function (dx, dy) {
       return this.deltaD({ '0.x' : dx, '0.y' : dy, '1.x' : dx, '1.y' : dy });
     };
-  } else if (cursor.contains(this.p1)) {
+  } else if (cursor.contains(this.ends[0])) {
     // Move p1
     return function (dx, dy) {
-      var fd = this.p1.add(new Point(dx, dy)).distanceFrom(this.p2) / this.p1.distanceFrom(this.p2);
+      var fd = this.ends[0].add(new Point(dx, dy)).distanceFrom(this.ends[1]) / this.chord;
       function dr(r) { return r * fd; }
       return this.deltaD({ '0.x' : dx, '0.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr });
     };
-  } else if (cursor.contains(this.p2)) {
+  } else if (cursor.contains(this.ends[1])) {
     // Move p2
     return function (dx, dy) {
-      var fd = this.p2.add(new Point(dx, dy)).distanceFrom(this.p1) / this.p2.distanceFrom(this.p1);
+      var fd = this.ends[1].add(new Point(dx, dy)).distanceFrom(this.ends[0]) / this.chord;
       function dr(r) { return r * fd; }
       return this.deltaD({ '1.x' : dx, '1.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr });
     };
@@ -108,13 +117,13 @@ Arc.prototype.mover = function (isEdge, cursor) {
     // Re-arrange the world so that the arc still traverses p1, p2 and x,y (circumcentre)
     return function (dx, dy, x, y) {
       var p = new Point(x, y);
-      var r = Math.abs(this.p1.distanceFrom(this.p2) /
-        (2 * Math.sin(vector(p, this.p1).angleBetween(vector(p, this.p2)))));
+      var r = Math.abs(this.chord /
+        (2 * Math.sin(vector(p, this.ends[0]).angleBetween(vector(p, this.ends[1])))));
       return this.deltaD(_({
         '1.curve.rx' : r,
         '1.curve.ry': r,
-        '1.curve.largeArcFlag' : this.p1.lerp(this.p2, 0.5).distanceFrom(p) > r,
-        '1.curve.sweepFlag' : vector(this.p1, this.p2).angleBetween(vector(this.p1, p)) < 0
+        '1.curve.largeArcFlag' : this.ends[0].lerp(this.ends[1], 0.5).distanceFrom(p) > r,
+        '1.curve.sweepFlag' : this.pointAngle(p) < 0
       }).mapValues(Number).mapValues(_.constant).value());
     };
   }
@@ -130,6 +139,37 @@ Arc.prototype.close = function () {
       d : undefined, cx : this.curve.c.x, cy : this.curve.c.y, rx : this.curve.rx, ry : this.curve.ry
     });
   }
+};
+
+Arc.prototype.pointAngle = function (p) {
+  return vector(this.ends[0], this.ends[1]).angleBetween(vector(this.ends[0], p));
+};
+
+Arc.segmentAngle = function (c, p1, p2) {
+  return vector(c, p1).angleBetween(vector(c, p2));
+};
+
+Arc.prototype.minus = function (that) {
+  var points = _.sortBy(this.pointsMinus(that), _.bind(function (p) {
+    // Point angle reduces as you go from p1 to p2
+    return -Math.abs(p.equals(this.ends[0]) ? Math.PI : this.pointAngle(p));
+  }, this));
+  var thisAngle = Arc.segmentAngle(this.curve.c, this.ends[0], this.ends[1]);
+
+  return _.reduce(points, _.bind(function (arcs, p2, i) {
+    if (i % 2) {
+      var p1 = points[i - 1], angle = Arc.segmentAngle(this.curve.c, p1, p2);
+      if (!p1.equals(p2)) {
+        arcs.push(Arc.fromPoints(p1, p2, {
+          rx : this.curve.rx,
+          ry : this.curve.ry,
+          largeArcFlag : !!this.curve.largeArcFlag && Math.sign(thisAngle) === Math.sign(angle),
+          sweepFlag : !!this.curve.sweepFlag
+        }));
+      }
+    }
+    return arcs;
+  }, this), []);
 };
 
 module.exports = Arc;

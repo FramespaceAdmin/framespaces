@@ -21,7 +21,7 @@ module.exports = function suggestSnap(picture, element) {
 
     if (shape.close) {
       snaps.push(_.assign(picture.action.replacement(element, shape.close()), {
-        confidence : getConfidence(_.first(shape.points), _.last(shape.points), shape)
+        confidence : getConfidence(shape.ends[0], shape.ends[1], shape)
       }));
     }
     picture.paper.selectAll('[id]:not(#' + shape.attr.id + ')').forEach(function (oldElement) {
@@ -32,7 +32,7 @@ module.exports = function suggestSnap(picture, element) {
           var sFinal = sOld.add(sNew); // carrying forward old shape
           if (sFinal) {
             snaps.push(_.assign(removeNew.and(replaceOldWith(sFinal)), {
-              confidence : getConfidence(_.first(sNew.points), _.last(sOld.points), sNew, sOld)
+              confidence : getConfidence(sNew.ends[0], sOld.ends[1], sNew, sOld)
             }));
           }
         }

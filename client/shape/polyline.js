@@ -30,6 +30,10 @@ Polyline.prototype.computeParams = function () {
   }));
 };
 
+Polyline.prototype.computeEnds = function () {
+  return [_.first(this.points), _.last(this.points)];
+};
+
 Polyline.prototype.mover = function (isEdge, cursor) {
   var factors;
   if (isEdge) {
@@ -78,12 +82,12 @@ Polyline.prototype.add = function (that) {
   }
 };
 
-Polyline.prototype.erase = function (cursor) {
+Polyline.prototype.minus = function (cursor) {
   // Consider each line segment in turn
   return _.flatten(_.reduce(Line.linesBetween(this.points), function (fragments, line, i) {
     var prevFragment = _.last(fragments),
         prevPoint = _.last(_.get(prevFragment, 'points')),
-        lineFragments = line.erase(cursor);
+        lineFragments = line.minus(cursor);
 
     if (prevPoint && lineFragments.length && prevPoint.equals(lineFragments[0].points[0])) {
       // Extend the previous fragment with the new line (consumes first line fragment)

@@ -42,7 +42,7 @@ module.exports = function suggestSimplify(picture, element) {
       }
       return segments;
     }, []);
-    var points = _.map(segments, 'startPoint').concat(_.last(shape.points));
+    var points = _.map(segments, 'startPoint').concat(shape.ends[1]);
     if (points.length < shape.points.length) {
       return _.assign(points.length > 2 ? picture.action.mutation(element, shape.delta({
         points : Shape.pointStr(points)

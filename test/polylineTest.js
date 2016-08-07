@@ -22,7 +22,7 @@ describe('Polyline', function () {
     describe('when being erased', function () {
       it('should be unaffected by a non-overlapping cursor', function () {
         var polyline = new Polyline({ points : '0,0,2,0,2,2' });
-        var fragments = polyline.erase(new Circle({ cx : 0, cy : 2, r : 0.5 }));
+        var fragments = polyline.minus(new Circle({ cx : 0, cy : 2, r : 0.5 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 1);
         assert.deepEqual(fragments[0].attr, polyline.attr);
@@ -30,14 +30,14 @@ describe('Polyline', function () {
 
       it('should be removed by an occluding cursor', function () {
         var polyline = new Polyline({ points : '0,0,2,0,2,2' });
-        var fragments = polyline.erase(new Circle({ cx : 1, cy : 1, r : 2 }));
+        var fragments = polyline.minus(new Circle({ cx : 1, cy : 1, r : 2 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 0);
       });
 
       it('should have its head removed', function () {
         var polyline = new Polyline({ points : '0,0,2,0,2,2' });
-        var fragments = polyline.erase(new Circle({ cx : 0, cy : 0, r : 1 }));
+        var fragments = polyline.minus(new Circle({ cx : 0, cy : 0, r : 1 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 1);
         assert.equal(fragments[0].attr.points, '1,0,2,0,2,2');
@@ -45,7 +45,7 @@ describe('Polyline', function () {
 
       it('should have its tail removed', function () {
         var polyline = new Polyline({ points : '0,0,2,0,2,2' });
-        var fragments = polyline.erase(new Circle({ cx : 2, cy : 2, r : 1 }));
+        var fragments = polyline.minus(new Circle({ cx : 2, cy : 2, r : 1 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 1);
         assert.equal(fragments[0].attr.points, '0,0,2,0,2,1');
@@ -53,7 +53,7 @@ describe('Polyline', function () {
 
       it('should have an intermediate point removed', function () {
         var polyline = new Polyline({ points : '0,0,2,0,2,2' });
-        var fragments = polyline.erase(new Circle({ cx : 2, cy : 0, r : 1 }));
+        var fragments = polyline.minus(new Circle({ cx : 2, cy : 0, r : 1 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 2);
         assert.instanceOf(fragments[0], Line);
@@ -64,7 +64,7 @@ describe('Polyline', function () {
 
       it('should have the middle of an intermediate line removed', function () {
         var polyline = new Polyline({ points : '0,0,2,0,2,2' });
-        var fragments = polyline.erase(new Circle({ cx : 1, cy : 0, r : 0.5 }));
+        var fragments = polyline.minus(new Circle({ cx : 1, cy : 0, r : 0.5 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 2);
         assert.instanceOf(fragments[0], Line);

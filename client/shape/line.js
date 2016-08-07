@@ -23,15 +23,19 @@ Line.prototype.computePoints = function () {
   return this.params.params;
 };
 
+Line.prototype.computeEnds = function () {
+  return this.points;
+};
+
 Line.prototype.transform = function (m) {
   // Lines are implicitly rotated by their angle
   return (m || Matrix.IDENTITY).scale(this.extent).rotateFromVector(this.vector);
 };
 
 Line.prototype.mover = function (isEdge, cursor) {
-  if (cursor.contains(_.first(this.points))) {
+  if (cursor.contains(this.ends[0])) {
     return function (dx, dy) { return this.delta({ x1 : dx, y1 : dy }); };
-  } else if (cursor.contains(_.last(this.points))) {
+  } else if (cursor.contains(this.ends[1])) {
     return function (dx, dy) { return this.delta({ x2 : dx, y2 : dy }); };
   } else {
     return function (dx, dy) { return this.delta({ x1 : dx, y1 : dy, x2 : dx, y2 : dy }); };
@@ -61,18 +65,17 @@ Line.prototype.pointOrder = function (axis) {
   };
 }
 
-Line.prototype.erase = function (cursor) {
-  var points = this.points.concat(this.intersect(cursor));
-  points = _.sortBy(points, this.pointOrder('x'), this.pointOrder('y'));
-  points = cursor.contains(this.points[0]) ? _.tail(points) : points;
+Line.prototype.minus = function (that) {
+  var points = _.sortBy(this.pointsMinus(that), this.pointOrder('x'), this.pointOrder('y'));
   return Line.linesBetween(points, function (i) { return i % 2 });
 };
 
 Line.linesBetween = function (points, filterIndex) {
   filterIndex || (filterIndex = _.identity);
-  return _.reduce(points, function (lines, p, i) {
-    if (i && filterIndex(i)) {
-      lines.push(new Line({ x1 : points[i - 1].x, y1 : points[i - 1].y, x2 : p.x, y2 : p.y }));
+  return _.reduce(points, function (lines, p2, i) {
+    var p1 = points[i - 1];
+    if (p1 && !p1.equals(p2) && filterIndex(i)) {
+      lines.push(new Line({ x1 : p1.x, y1 : p1.y, x2 : p2.x, y2 : p2.y }));
     }
     return lines;
   }, []);

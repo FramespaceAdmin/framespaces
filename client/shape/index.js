@@ -28,6 +28,7 @@ function Shape(name, attr, children, bbox) {
   // Computed properties
   this.params = this.computeParams();
   this.points = _.map(this.computePoints(), strongPoint);
+  this.ends = this.computeEnds();
   this.bbox = this.bbox || strongBBox(this.computeBBox());
   this.extent = this.computeExtent();
 }
@@ -97,6 +98,15 @@ Shape.prototype.computeParams = function () {
  */
 Shape.prototype.computePoints = function () {
   return this.params.params[0];
+};
+
+/**
+ * Default ends computation. Override to specialise.
+ * This is a pair (array) with the ends of an open shape. Default is closed shape.
+ * Called after the points have been computed.
+ */
+Shape.prototype.computeEnds = function () {
+  return [];
 };
 
 /**
@@ -249,6 +259,15 @@ Shape.deltaAttr = function (attr, dAttr) {
 };
 
 /**
+ * Utility to return any points from this shape that are outside of the given other shape,
+ * plus intersection points.
+ * Note that the return will not be ordered.
+ */
+Shape.prototype.pointsMinus = function (that) {
+  return _.reject(this.points, _.bind(that.contains, that)).concat(this.intersect(that));
+};
+
+/**
  * Returns a function for moving the shape based on the given parameters
  * @param isEdge whether the cursor is on the edge of the shape
  * @param cursor Shape
@@ -258,11 +277,11 @@ Shape.deltaAttr = function (attr, dAttr) {
 Shape.prototype.mover = null;
 
 /**
- * Erases the part of the shape occluded by the given eraser cursor
- * @param cursor Shape
- * @returns an array of resulting shapes. Empty if the shape is completely erased.
+ * Removes the part of the shape occluded by the given shape
+ * @param that Shape
+ * @returns an array of resulting shapes. Empty if this shape is completely occluded.
  */
-Shape.prototype.erase = null;
+Shape.prototype.minus = null;
 
 /**
  * If truthy, then a function that closes an open shape

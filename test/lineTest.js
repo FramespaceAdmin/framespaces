@@ -43,44 +43,53 @@ describe('Line', function () {
       });
     });
 
-    describe('when being erased', function () {
-      it('should be unchanged with a non-overlapping cursor', function () {
+    describe('when being minused', function () {
+      it('should be unchanged by a non-overlapping shape', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
-        var fragments = line.erase(new Circle({ cx : 2, cy : 2, r : 0.5 }));
+        var fragments = line.minus(new Circle({ cx : 2, cy : 2, r : 0.5 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 1);
         assert.instanceOf(fragments[0], Line);
         assert.deepEqual(fragments[0].attr, line.attr);
       });
 
-      it('should be removed by an occluding cursor', function () {
+      it('should be unchanged by a shape touching its head', function () {
+        var line = new Line({ x1 : 1, y1 : 0, x2 : 2, y2 : 0 });
+        var fragments = line.minus(new Circle({ cx : 0, cy : 0, r : 1 }));
+        assert.isOk(fragments);
+        assert.lengthOf(fragments, 1);
+        assert.instanceOf(fragments[0], Line);
+        assert.deepEqual(fragments[0].attr, line.attr);
+      });
+
+      it('should be removed by an occluding shape', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
-        var fragments = line.erase(new Circle({ cx : 0.5, cy : 0, r : 2 }));
+        var fragments = line.minus(new Circle({ cx : 0.5, cy : 0, r : 2 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 0);
       });
 
-      it('should have its tail erased', function () {
+      it('should have its tail minused', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 2, y2 : 0 });
-        var fragments = line.erase(new Circle({ cx : 2, cy : 0, r : 0.5 }));
+        var fragments = line.minus(new Circle({ cx : 2, cy : 0, r : 0.5 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 1);
         assert.instanceOf(fragments[0], Line);
         assert.deepEqual(fragments[0].attr, { x1 : 0, y1 : 0, x2 : 1.5, y2 : 0 });
       });
 
-      it('should have its head erased', function () {
+      it('should have its head minused', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 2, y2 : 0 });
-        var fragments = line.erase(new Circle({ cx : 0, cy : 0, r : 0.5 }));
+        var fragments = line.minus(new Circle({ cx : 0, cy : 0, r : 0.5 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 1);
         assert.instanceOf(fragments[0], Line);
         assert.deepEqual(fragments[0].attr, { x1 : 0.5, y1 : 0, x2 : 2, y2 : 0 });
       });
 
-      it('should have its middle erased', function () {
+      it('should have its middle minused', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 2, y2 : 0 });
-        var fragments = line.erase(new Circle({ cx : 1, cy : 0, r : 0.5 }));
+        var fragments = line.minus(new Circle({ cx : 1, cy : 0, r : 0.5 }));
         assert.isOk(fragments);
         assert.lengthOf(fragments, 2);
         assert.instanceOf(fragments[0], Line);
