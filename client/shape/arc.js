@@ -3,42 +3,58 @@ var _ = require('lodash'),
     vector = require('kld-affine').Vector2D.fromPoints,
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
-    Circle = require('./circle'),
     Ellipse = require('./ellipse');
 
+/**
+ * Prototype object for a curve, as used for 'curve' member.
+ * Note that an svg-points 'curve' is all-numeric, and does not have a c or an angle.
+ */
+var CURVE = {
+  c : null, // Point2D
+  rx : 0.0,
+  ry : 0.0,
+  angle : 0.0,
+  sweepFlag : false,
+  largeArcFlag : false
+};
+
 function Arc(attr) {
-  var pointObjects = toPointObjects(attr.d);
+  var pointObjects = pathToPointObjects(attr.d);
   this.ends = [
     new Point(pointObjects[0].x, pointObjects[0].y),
     new Point(pointObjects[1].x, pointObjects[1].y)
   ];
-  this.curve = pointObjects[1].curve;
+  this.curve = _(pointObjects[1].curve).mapValues(function (v, k) {
+    return _.isBoolean(CURVE[k]) ? Boolean(v) : v;
+  }).defaults(CURVE).value();
   this.chord = this.ends[0].distanceFrom(this.ends[1]);
 
   Shape.call(this, 'path', attr);
 }
 
-function toPointObjects(d) {
+function pathToPointObjects(d) {
   var svgp = _svgp.toPoints({ type : 'path', d : d });
   return svgp.length === 2 && _.get(svgp, '1.curve.type') === 'arc' && svgp;
 }
 
+function pointsToPointObjects(p1, p2, curve) {
+  return [{ x : p1.x, y : p1.y }, {
+    // Coerce all parameters to be numbers (avoiding 'true' & 'false')
+    x : p2.x, y : p2.y, curve : _.set(_.mapValues(curve, Number), 'type', 'arc')
+  }];
+}
+
 Arc.fromJSON = function (data) {
-  return data.name === 'path' && toPointObjects(data.attr.d) && new Arc(data.attr);
+  return data.name === 'path' && pathToPointObjects(data.attr.d) && new Arc(data.attr);
 };
 
 Arc.of = function (e) {
-  return e.node.nodeName === 'path' && toPointObjects(e.attr('d')) && new Arc(Shape.strongAttr(e));
+  return e.node.nodeName === 'path' && pathToPointObjects(e.attr('d')) && new Arc(Shape.strongAttr(e));
 };
 
-Arc.fromPoints = function (p1, p2, params) {
+Arc.fromPoints = function (p1, p2, curve) {
   // Allow omission of curve type
-  return new Arc({
-    d : _svgp.toPath([{ x : p1.x, y : p1.y }, {
-      // Coerce all parameters to be numbers (avoiding 'true' & 'false')
-      x : p2.x, y : p2.y, curve : _.set(_.mapValues(params, Number), 'type', 'arc')
-    }])
-  });
+  return new Arc({ d : _svgp.toPath(pointsToPointObjects(p1, p2, curve)) });
 }
 
 Arc.prototype = Object.create(Shape.prototype);
@@ -49,6 +65,7 @@ Arc.prototype.computeParams = function () {
   // Intersection params have calculated the centre as a point
   var pathParams = params.params[0], arcParams = pathParams[0];
   this.curve.c = arcParams.params[0];
+  this.curve.angle = Arc.segmentAngle(this.curve.c, this.ends[0], this.ends[1]);
   return params;
 }
 
@@ -81,10 +98,7 @@ Arc.prototype.computeExtent = function () {
 };
 
 Arc.prototype.toPointObjects = function () {
-  return [
-    { x : this.ends[0].x, y : this.ends[0].y },
-    { x : this.ends[1].x, y : this.ends[1].y, curve : _.clone(this.curve) }
-  ];
+  return pointsToPointObjects(this.ends[0], this.ends[1], this.curve);
 }
 
 Arc.prototype.deltaD = function (deltas) {
@@ -131,7 +145,7 @@ Arc.prototype.mover = function (isEdge, cursor) {
 
 Arc.prototype.close = function () {
   if (this.curve.rx === this.curve.ry) {
-    return this.cloneAs(Circle, {
+    return this.cloneAs(require('./circle'), {
       d : undefined, cx : this.curve.c.x, cy : this.curve.c.y, r : this.curve.rx
     });
   } else {
@@ -154,22 +168,25 @@ Arc.prototype.minus = function (that) {
     // Point angle reduces as you go from p1 to p2
     return -Math.abs(p.equals(this.ends[0]) ? Math.PI : this.pointAngle(p));
   }, this));
-  var thisAngle = Arc.segmentAngle(this.curve.c, this.ends[0], this.ends[1]);
+  return Arc.arcsBetween(points, this.curve);
+};
 
-  return _.reduce(points, _.bind(function (arcs, p2, i) {
+Arc.arcsBetween = function (points, curve) {
+  return _.reduce(points, function (arcs, p2, i) {
     if (i % 2) {
-      var p1 = points[i - 1], angle = Arc.segmentAngle(this.curve.c, p1, p2);
+      var p1 = points[i - 1];
       if (!p1.equals(p2)) {
         arcs.push(Arc.fromPoints(p1, p2, {
-          rx : this.curve.rx,
-          ry : this.curve.ry,
-          largeArcFlag : !!this.curve.largeArcFlag && Math.sign(thisAngle) === Math.sign(angle),
-          sweepFlag : !!this.curve.sweepFlag
+          rx : curve.rx,
+          ry : curve.ry,
+          largeArcFlag : curve.largeArcFlag &&
+            Math.sign(curve.angle) === Math.sign(Arc.segmentAngle(curve.c, p1, p2)),
+          sweepFlag : curve.sweepFlag
         }));
       }
     }
     return arcs;
-  }, this), []);
+  }, []);
 };
 
 module.exports = Arc;

@@ -1,5 +1,11 @@
-var Shape = require('../shape'),
-    Ellipse = require('./ellipse');
+var _ = require('lodash'),
+    Vector = require('kld-affine').Vector2D,
+    Point = require('kld-affine').Point2D,
+    Shape = require('../shape'),
+    Ellipse = require('./ellipse'),
+    Arc = require('./arc');
+
+var DOWN = new Vector(0, 1);
 
 function Circle(attr) {
   Shape.call(this, 'circle', attr);
@@ -40,6 +46,32 @@ Circle.prototype.mover = function (isEdge, cursor) {
       var c = new Point(this.attr.cx, this.attr.cy), p = new Point(x, y);
       return new Circle(_.assign(this.attr, { r : p.distanceFrom(c) }));
     };
+  }
+};
+
+Circle.prototype.minus = function (that) {
+  // Ordering clockwise from top-dead-centre
+  var centre = this.bbox.c, tdc = new Point(this.attr.cx, this.attr.cy - this.attr.r);
+  var points = _.sortBy(this.intersect(that), function (p) {
+    var angle = DOWN.angleBetween(Vector.fromPoints(centre, p));
+    // TDC needs to be ordered first
+    return angle === Math.PI ? -Math.PI : angle;
+  });
+  if (points.length || that.contains(tdc)) {
+    // If TDC is outside that shape, rotate the array by one
+    if (points.length && !that.contains(tdc)) {
+      points = _.tail(points).concat(_.first(points));
+    }
+    return Arc.arcsBetween(points, {
+      c : this.bbox.c,
+      rx : this.attr.r,
+      ry : this.attr.r,
+      angle : -Number.MIN_VALUE, // Can't be zero
+      largeArcFlag : true,
+      sweepFlag : true
+    });
+  } else {
+    return [this]; // not overlapping, no change
   }
 };
 
