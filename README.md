@@ -23,9 +23,9 @@ Browser tabs I have permanently open:
 
 Also used:
 
-- https://www.npmjs.com/package/kld-affine (mostly for Point2D)
-- https://www.npmjs.com/package/jstat (for means and standard deviations)
-- https://www.npmjs.com/package/keycode (for translating keyboard events)
+- https://www.npmjs.com/package/kld-affine for Point2D and Vector2D
+- https://www.npmjs.com/package/keycode for translating keyboard events
+- https://www.npmjs.com/package/svg-intersections for intersecting SVG shapes
 
 ##Conventions
 - A leading underscore on a required var denotes a library of functions, e.g. `_` (lodash), `_stat` (jStat)
