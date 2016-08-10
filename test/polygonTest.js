@@ -37,7 +37,7 @@ describe('Polygon', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
       assert.instanceOf(fragments[0], Polyline);
-      assert.deepEqual(fragments[0].points, Shape.points('1,0,2,0,2,2,0,2,0,1'));
+      assert.deepEqual(fragments[0].points, Polyline.points('1,0,2,0,2,2,0,2,0,1'));
     });
 
     it('should become a polyline when minused with shape over a point', function () {
@@ -46,7 +46,7 @@ describe('Polygon', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
       assert.instanceOf(fragments[0], Polyline);
-      assert.deepEqual(fragments[0].points, Shape.points('2,1,2,2,0,2,0,0,1,0'));
+      assert.deepEqual(fragments[0].points, Polyline.points('2,1,2,2,0,2,0,0,1,0'));
     });
   });
 

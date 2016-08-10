@@ -10,7 +10,7 @@ var _ = require('lodash'),
 
 module.exports = function suggestArcify(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
-  if (shape && shape instanceof Polyline && shape.points.length > 3) {
+  if (shape && shape instanceof Polyline && shape.points.length > 3 && shape.ends.length) {
     // The centroid, C, of the shape will indicate the direction of the arc
     var p1 = shape.ends[0], p2 = shape.ends[1],
         C = new Point(mean(_.map(shape.points, 'x')), mean(_.map(shape.points, 'y'))),
@@ -21,7 +21,7 @@ module.exports = function suggestArcify(picture, element) {
     var i = _.maxBy(shape.intersect(new Line({
       x1 : m.x, y1 : m.y, x2 : m.x + rv.x, y2 : m.y + rv.y
     })), _.method('distanceFrom', m));
-    if (i) {
+    if (i && !m.equals(i)) {
       // Sagitta, half-chord and so radius (see http://liutaiomottola.com/formulae/sag.htm)
       var s = i.distanceFrom(m), l = p1.distanceFrom(m), r = (s*s + l*l) / (2*s);
       // Work from the intersect back to find the centre

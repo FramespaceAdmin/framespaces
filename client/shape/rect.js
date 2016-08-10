@@ -17,6 +17,8 @@ Rect.of = function (e) {
 Rect.prototype = Object.create(Polygon.prototype);
 Rect.prototype.constructor = Rect;
 
+Rect.prototype.computePoints = Shape.prototype.computePoints;
+
 Rect.prototype.contains = function (point) {
   return point.x >= this.bbox.x && point.x <= this.bbox.x2 &&
          point.y >= this.bbox.y && point.y <= this.bbox.y2;

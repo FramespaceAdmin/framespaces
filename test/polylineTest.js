@@ -2,6 +2,7 @@ var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
     Circle = require('../client/shape/circle'),
+    Rect = require('../client/shape/rect'),
     Line = require('../client/shape/line'),
     Polyline = require('../client/shape/polyline'),
     MockPaper = require('./mockPaper');
@@ -17,6 +18,77 @@ describe('Polyline', function () {
       assert.equal(polyline.points[1].x, 1);
       assert.equal(polyline.points[1].y, 1);
       assert.equal(polyline.extent, Math.sqrt(2));
+    });
+
+    describe('when recty', function () {
+      it('should have expected properties', function () {
+        var polyline = new Polyline({ points : '0,0,0,2,2,2' });
+        assert.equal(polyline.axis, 'y');
+      });
+
+      it('should stay recty when a point is dragged', function () {
+        var polyline = new Polyline({ points : '0,0,0,2,2,2' });
+        var move = polyline.mover(true, new Circle({ cx : 0, cy : 2, r : 0.5 }));
+        polyline = move.call(polyline, 1, 1);
+        assert.equal(polyline.points[0].x, 1);
+        assert.equal(polyline.points[0].y, 0);
+        assert.equal(polyline.points[1].x, 1);
+        assert.equal(polyline.points[1].y, 3);
+        assert.equal(polyline.points[2].x, 2);
+        assert.equal(polyline.points[2].y, 3);
+      });
+
+      it('should stay recty when a segment is dragged', function () {
+        var polyline = new Polyline({ points : '0,0,0,2,2,2' });
+        var move = polyline.mover(true, new Circle({ cx : 0, cy : 1, r : 0.5 }));
+        polyline = move.call(polyline, 1, 1);
+        assert.equal(polyline.points[0].x, 1);
+        assert.equal(polyline.points[0].y, 0);
+        assert.equal(polyline.points[1].x, 1);
+        assert.equal(polyline.points[1].y, 2);
+        assert.equal(polyline.points[2].x, 2);
+        assert.equal(polyline.points[2].y, 2);
+      });
+
+      it('should close to a rectangle if three points', function () {
+        var polyline = new Polyline({ points : '0,0,0,2,2,2' });
+        rect = polyline.close();
+        assert.instanceOf(rect, Rect);
+        assert.equal(rect.attr.x, 0);
+        assert.equal(rect.attr.y, 0);
+        assert.equal(rect.attr.width, 2);
+        assert.equal(rect.attr.height, 2);
+      });
+
+      it('should close to a rectangle if four points', function () {
+        var polyline = new Polyline({ points : '0,0,0,2,2,2,2,0' });
+        rect = polyline.close();
+        assert.instanceOf(rect, Rect);
+        assert.equal(rect.attr.x, 0);
+        assert.equal(rect.attr.y, 0);
+        assert.equal(rect.attr.width, 2);
+        assert.equal(rect.attr.height, 2);
+      });
+
+      it('should favour the first point when closing to a rectangle', function () {
+        var polyline = new Polyline({ points : '0,0,0,2,2,2,2,-1' });
+        rect = polyline.close();
+        assert.instanceOf(rect, Rect);
+        assert.equal(rect.attr.x, 0);
+        assert.equal(rect.attr.y, 0);
+        assert.equal(rect.attr.width, 2);
+        assert.equal(rect.attr.height, 2);
+      });
+
+      it('should close to a rectangle if five points', function () {
+        var polyline = new Polyline({ points : '0,0,0,2,2,2,2,-1,1,-1' });
+        rect = polyline.close();
+        assert.instanceOf(rect, Rect);
+        assert.equal(rect.attr.x, 0);
+        assert.equal(rect.attr.y, 0);
+        assert.equal(rect.attr.width, 2);
+        assert.equal(rect.attr.height, 2);
+      });
     });
 
     describe('when being erased', function () {

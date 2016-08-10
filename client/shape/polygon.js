@@ -1,9 +1,6 @@
 var _ = require('lodash'),
     Shape = require('../shape'),
-    Polyline = require('./polyline'),
-    Line = require('./line'),
-    Point = require('kld-affine').Point2D,
-    _cap = require('svg-intersections');
+    Polyline = require('./polyline');
 
 function Polygon(attr) {
   Shape.call(this, 'polygon', attr);
@@ -17,10 +14,18 @@ Polygon.of = function (e) {
   return e.node.nodeName === 'polygon' && new Polygon(Shape.strongAttr(e));
 };
 
-Polygon.prototype = Object.create(Shape.prototype);
+Polygon.prototype = Object.create(Polyline.prototype);
 Polygon.prototype.constructor = Polygon;
 
-Polygon.prototype.mover = Polyline.prototype.mover; // TODO: No good when dragging first/last point
+Shape.closed(Polygon.prototype);
+
+Polygon.prototype.nextPointIndex = function (i) {
+  return i < this.points.length ? i - 1 : 0;
+};
+
+Polygon.prototype.prevPointIndex = function (i) {
+  return i ? i - 1 : this.points.length - 1;
+};
 
 Polygon.prototype.minus = function (that) {
   var fragments = Polyline.pointsMinus(this.points.concat(_.first(this.points)), that),

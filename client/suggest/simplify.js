@@ -32,7 +32,7 @@ function candidateSegment(points) {
 
 module.exports = function suggestSimplify(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
-  if (shape && shape instanceof Polyline && shape.points.length > 2) {
+  if (shape && shape instanceof Polyline && shape.points.length > 2 && shape.ends.length) {
     var segments = _.reduce(shape.points, function (segments, p, i, points) {
       var prev = _.last(segments);
       if (i < points.length - 1 && (!prev || i === prev.startIndex + prev.count)) {
@@ -45,7 +45,7 @@ module.exports = function suggestSimplify(picture, element) {
     var points = _.map(segments, 'startPoint').concat(shape.ends[1]);
     if (points.length < shape.points.length) {
       return _.assign(points.length > 2 ? picture.action.mutation(element, shape.delta({
-        points : Shape.pointStr(points)
+        points : Polyline.pointStr(points)
       })) : picture.action.replacement(element, new Line({
         x1 : points[0].x, y1 : points[0].y, x2 : points[1].x, y2 : points[1].y
       })), {

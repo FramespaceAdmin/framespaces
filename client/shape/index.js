@@ -28,7 +28,7 @@ function Shape(name, attr, children, bbox) {
   // Computed properties
   this.params = this.computeParams();
   this.points = _.map(this.computePoints(), strongPoint);
-  this.ends = this.computeEnds();
+  this.ends = this.computeEnds ? this.computeEnds() : [];
   this.bbox = this.bbox || strongBBox(this.computeBBox());
   this.extent = this.computeExtent();
 }
@@ -45,7 +45,6 @@ Shape.constructors = _.once(function () {
     require('./label'), // Before text
     require('./linkline'), // Before line
     require('./line'),
-    require('./rectline'), // Before polyline
     require('./polyline'),
     require('./polygon'),
     require('./rect'),
@@ -53,6 +52,36 @@ Shape.constructors = _.once(function () {
     require('./text').Span
   ];
 });
+
+/**
+ * Mixin for closed shapes (implement/override these methods for open shapes)
+ */
+Shape.closed = function (prototype) {
+  /**
+   * Returns a pair (array) with the ends of an open shape.
+   * Called after the points have been computed.
+   */
+  prototype.computeEnds = undefined;
+
+  /**
+   * If truthy, then a function that closes an open shape
+   * @returns a closed shape
+   */
+  prototype.close = undefined;
+
+  /**
+   * If truthy, then a function that reverses this shape
+   * @returns the same shape with the ends reversed
+   */
+  prototype.reverse = undefined;
+
+  /**
+   * If truthy, then a function that adds the other shape onto this shape
+   * @param that a shape to add
+   * @returns a compound shape, begin = this.begin, end = that.end
+   */
+  prototype.add = undefined;
+};
 
 /**
  * Returns JSONable data for this Shape
@@ -88,14 +117,7 @@ Shape.of = function (element) {
  * This is for the svg-intersections library.
  */
 Shape.prototype.computeParams = function () {
-  return _cap.shape(this.name, _.mapValues(this.attr, function (value, key) {
-    if (key === 'points') {
-      // svg-intersections requires space-delimited points
-      return _.map(Shape.points(value), Shape.pointStr).join(' ');
-    } else {
-      return value;
-    }
-  }));
+  return _cap.shape(this.name, this.attr);
 };
 
 /**
@@ -105,15 +127,6 @@ Shape.prototype.computeParams = function () {
  */
 Shape.prototype.computePoints = function () {
   return this.params.params[0];
-};
-
-/**
- * Default ends computation. Override to specialise.
- * This is a pair (array) with the ends of an open shape. Default is closed shape.
- * Called after the points have been computed.
- */
-Shape.prototype.computeEnds = function () {
-  return [];
 };
 
 /**
@@ -291,25 +304,6 @@ Shape.prototype.mover = null;
 Shape.prototype.minus = null;
 
 /**
- * If truthy, then a function that closes an open shape
- * @returns a closed shape
- */
-Shape.prototype.close = null;
-
-/**
- * If truthy, then a function that reverses this shape
- * @returns the same shape with the ends reversed
- */
-Shape.prototype.reverse = null;
-
-/**
- * If truthy, then a function that adds the other shape onto this shape
- * @param that a shape to add
- * @returns a compound shape, begin = this.begin, end = that.end
- */
-Shape.prototype.add = null;
-
-/**
  * Returns strongly typed attributes for the given element
  */
 Shape.strongAttr = function (e) {
@@ -325,26 +319,6 @@ Shape.strongAttr = function (e) {
     }
   }
   return attr;
-}
-
-/**
- * Returns an array of points from a polygon or polyline points attribute string
- */
-Shape.points = function (pointsStr) {
-  return _(pointsStr.split(',')).chunk(2).map(function (p) {
-    return new Point(Number(p[0]), Number(p[1]));
-  }).value();
-};
-
-/**
- * Returns a polygon or polyline points attribute string from a point or array of points
- */
-Shape.pointStr = function (p) {
-  if (_.isArray(p)) {
-    return _.map(p, Shape.pointStr).join(',');
-  } else {
-    return [p.x, p.y].join(',');
-  }
 };
 
 function strongPoint(point) {

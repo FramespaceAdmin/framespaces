@@ -57,7 +57,7 @@ Line.prototype.add = function (that) {
     return this.cloneAs(require('./polyline'), {
       x1 : undefined, y1 : undefined, x2 : undefined, y2 : undefined,
       // Lose our second point
-      points : Shape.pointStr(_.initial(this.points).concat(that.points))
+      points : require('./polyline').pointStr(_.initial(this.points).concat(that.points))
     });
   }
 };
