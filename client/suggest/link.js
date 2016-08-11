@@ -4,38 +4,26 @@ var _ = require('lodash')
     Shape = require('../shape'),
     mean = require('compute-mean');
 
-module.exports = function suggestLink(picture, line) {
-  var shape = line && !line.removed && Shape.of(line);
-  if (shape && shape instanceof Line && !shape.hasClass('link')) {
-    // Look for candidate circles and rectangles to connect
-    var elements = picture.paper.selectAll('rect,circle');
-
-    if (elements.length) {
-      function suggestEnd(point) {
-        return _.last(_.sortBy(_.reduce(elements, function (results, e) {
-          // If the point is actually in the bbox, we are 90% sure
-          var bbox = e.getBBox(), factor = Snap.path.isPointInsideBBox(bbox, point.x, point.y) ? 10 : 1;
-          return results.concat([{
-            confidence : 1 - (Math.abs(point.x - bbox.x) / (bbox.width * factor)), e : e
-          }, {
-            confidence : 1 - (Math.abs(point.y - bbox.y) / (bbox.height * factor)), e : e
-          }, {
-            confidence : 1 - (Math.abs(point.x - bbox.x2) / (bbox.width * factor)), e : e
-          }, {
-            confidence : 1 - (Math.abs(point.y - bbox.y2) / (bbox.height * factor)), e : e
-          }]);
-        }, []), 'confidence'));
-      }
-      var from = suggestEnd(shape.ends[0]), to = suggestEnd(shape.ends[1]);
-      if (from.e !== to.e) {
-        return _.assign(picture.action.mutation(line, shape.delta({
-          from : from.e.attr('id'),
-          to : to.e.attr('id'),
-          class : 'link'
-        })), {
-          confidence : mean([from.confidence, to.confidence])
-        });
-      } // TODO: sow's ear!
+module.exports = function suggestLink(picture, element) {
+  var line = (element && !element.removed && Shape.of(element));
+  if (line && line instanceof Line && !line.hasClass('link')) {
+    function suggestEnd(point) {
+      return _.maxBy(_.map(picture.allElements(), function (e) {
+        // Confidence is based on the distance of the point from the shape centre or nearest intersect
+        var shape = Shape.of(e), points = line.intersect(shape).concat(shape.bbox.c),
+            d = _.min(_.map(points, _.bind(point.distanceFrom, point)));
+        return { e : e, confidence : 1 - (d / shape.extent) };
+      }), 'confidence');
     }
+    var from = suggestEnd(line.ends[0]), to = suggestEnd(line.ends[1]);
+    if (from.e !== to.e) {
+      return _.assign(picture.action.mutation(element, line.delta({
+        from : from.e.attr('id'),
+        to : to.e.attr('id'),
+        class : 'link'
+      })), {
+        confidence : mean([from.confidence, to.confidence])
+      });
+    } // TODO: sow's ear!
   }
 }
