@@ -1,35 +1,38 @@
 var _ = require('lodash'),
     Shape = require('../shape'),
-    Line = require('./line');
+    Line = require('./line'),
+    _kld = require('kld-affine'),
+    Point = _kld.Point2D,
+    Vector = _kld.Vector2D,
+    vector = Vector.fromPoints,
+    rotate = _.bind(_kld.Matrix2D.prototype.rotate, _kld.Matrix2D.IDENTITY);
+
+function closest(points, toPoint) {
+  return _.minBy(points, _.bind(toPoint.distanceFrom, toPoint));
+}
+
+function end(shape, other, angle) {
+  // Throw out a ray from the shape centre, along the specified angle from the centre-centre line.
+  var cc = vector(shape.bbox.c, other.bbox.c),
+      ray = cc.transform(rotate(angle || 0)).unit().multiply(shape.extent),
+      intersects = Line.fromPoints(shape.bbox.c, shape.bbox.c.add(ray)).intersect(shape);
+  // Point is the ray intersect
+  return closest(intersects, other.bbox.c) || shape.bbox.c;
+}
+
+function angle(shape, other, end) {
+  return vector(shape.bbox.c, other.bbox.c).angleBetween(vector(shape.bbox.c, end));
+}
 
 function Linkline(line, from, to) {
-  var ox = line.attr.ox || 0, oy = line.attr.oy || 0,
-      cx1 = from.bbox.cx, cy1 = from.bbox.cy, cx2 = to.bbox.cx, cy2 = to.bbox.cy;
-  // Offset centre to centre line
-  var cc = new Line({ x1 : cx1 + ox, y1 : cy1 + oy, x2 : cx2 + ox, y2 : cy2 + oy });
-  // "from" centre to ox, oy
-  var c1o = new Line({ x1 : cx1, y1 : cy1, x2 : cx1 + ox, y2 : cy1 + oy });
-  // "to" centre to ox, oy
-  var c2o = new Line({ x1 : cx2, y1 : cy2, x2 : cx2 + ox, y2 : cy2 + oy });
-  // For each shape, identify candidate link ends
-  function intersects(shape, intersects, line) {
-    return intersects.length ? intersects : line.intersect(shape);
-  }
-  var p1s = _.reduce([cc, c1o], _.partial(intersects, from), []);
-  var p2s = _.reduce([cc, c2o], _.partial(intersects, to), []);
-  // Use the closest link ends
-  var ends = _.reduce(p1s, function (ends, p1) {
-    return _.reduce(p2s, function (ends, p2) {
-      var d = p1.distanceFrom(p2);
-      return d < ends.d ? { p1 : p1, p2 : p2, d : d } : ends;
-    }, ends);
-  }, { p1 : null, p2 : null, d : Number.MAX_VALUE });
-
-  // If we still don't have a begin and end, give up and use the centres
-  Line.call(this, _.defaults({
-    x1 : ends.p1 ? ends.p1.x : cx1, y1 : ends.p1 ? ends.p1.y : cy1,
-    x2 : ends.p2 ? ends.p2.x : cx2, y2 : ends.p2 ? ends.p2.y : cy2
-  }, line.deltaAttr({ class : 'link' })));
+  var p1 = end(from, to, line.attr.a1), p2 = end(to, from, line.attr.a2);
+  Line.call(this, line.clone({
+    x1 : p1.x, y1 : p1.y,
+    x2 : p2.x, y2 : p2.y,
+    from : from.attr.id,
+    to : to.attr.id,
+    class : 'link'
+  }).attr);
 }
 
 // Duplicate the line constructor for private use (see Linkline.fromJSON & Linkline.of)
@@ -48,19 +51,37 @@ Linkline.of = function (e) {
 Linkline.prototype = _Linkline.prototype = Object.create(Line.prototype);
 Linkline.prototype.constructor = Linkline;
 
+Linkline.prototype.clone = function () {
+  return this.cloneAs.apply(this, [_Linkline].concat(_.toArray(arguments)));
+};
+
 Linkline.prototype.delta = function (dAttr) {
   return new _Linkline(this.deltaAttr(dAttr));
 };
 
-Linkline.prototype.mover = function () {
-  return function (dx, dy) {
-    // ox and oy are horizontal and vertical offsets from linked shape centre
-    return this.delta({ ox : dx, oy : dy });
-  };
+Linkline.prototype.mover = function (isEdge, cursor, getShapeById) {
+  var from = getShapeById(this.attr.from), to = getShapeById(this.attr.to);
+  if (cursor.contains(this.ends[0])) {
+    return function (dx, dy, x, y) {
+      return new Linkline(this.clone({ a1 : angle(from, to, new Point(x, y)) }), from, to);
+    };
+  } else if (cursor.contains(this.ends[1])) {
+    return function (dx, dy, x, y) {
+      return new Linkline(this.clone({ a2 : angle(to, from, new Point(x, y)) }), from, to);
+    };
+  } else {
+    return function (dx, dy) {
+      var d = new Vector(dx, dy);
+      return new Linkline(this.clone({
+        a1 : angle(from, to, this.ends[0].add(d)),
+        a2 : angle(to, from, this.ends[1].add(d))
+      }), from, to);
+    };
+  }
 };
 
 Linkline.prototype.reverse = function () {
-  return this.cloneAs(_Linkline, {
+  return this.clone({
     x1 : this.attr.x2, y1 : this.attr.y2, x2 : this.attr.x1, y2 : this.attr.y1,
     from : this.attr.to, to : this.attr.from
   });

@@ -135,7 +135,7 @@ module.exports = function Picture(paper) {
 
   function getElement(filter) {
     if (_.isFunction(filter)) {
-      return _.find(allElements(), filter);
+      return _.findLast(allElements(), filter);
     } else {
       return paper.select('#' + filter);
     }
@@ -167,6 +167,7 @@ module.exports = function Picture(paper) {
         var from = getElement(element.attr('from')), to = getElement(element.attr('to'));
         if (from && to) {
           new Linkline(Shape.of(element), Shape.of(from), Shape.of(to)).applyTo(element);
+          ensureOrder(from, to, element); // Ensure sensible Z-ordering for a link
         } else {
           linkRemoved(element).applyTo(element);
         }
@@ -174,7 +175,7 @@ module.exports = function Picture(paper) {
         var on = getElement(element.attr('on'));
         if (on) {
           new Label(Shape.of(element), Shape.of(on)).applyTo(element);
-          on.after(element); // Ensure sensible Z-ordering for a label
+          ensureOrder(on, element); // Ensure sensible Z-ordering for a label
         } else {
           labelRemoved(element).applyTo(element);
         }
@@ -184,6 +185,18 @@ module.exports = function Picture(paper) {
     _.each(linksFrom(element.attr('id')), adjust);
     _.each(labelsOn(element.attr('id')), adjust);
     return element;
+  }
+
+  function ensureOrder(e1, e2/*, ...*/) {
+    function indexOf(e) {
+      return _.indexOf(paper.node.childNodes, e.node);
+    }
+    var elements = _.toArray(arguments);
+    _.each(_.tail(elements), function (e, i) {
+      if (indexOf(e) < indexOf(elements[i])) {
+        elements[i].after(e);
+      }
+    });
   }
 
   function changed(element) {

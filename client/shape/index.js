@@ -3,7 +3,7 @@ var _ = require('lodash'),
     Matrix = require('kld-affine').Matrix2D,
     Vector = require('kld-affine').Vector2D,
     _cap = require('svg-intersections'),
-    NUMERIC_ATTR = /^([xyr]|[orcd][xy]|[xy][12]|width|height|font-size)$/,
+    NUMERIC_ATTR = /^([xyr]|[orcd][xy]|[xya][12]|width|height|font-size)$/,
     STRING_ATTR = /^(points|d|id|from|to|on|class)$/,
     NUMERIC_STYLE_ATTR = /^(font-size)$/;
 
