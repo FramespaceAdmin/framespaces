@@ -3,38 +3,34 @@ var _ = require('lodash'),
     Shape = require('../shape'),
     Text = require('./text');
 
-function Label(text, on) {
-  var matrix = text.transform(on.transform()),
-      offset = new Point(text.attr.ox || 0, text.attr.oy || 0).transform(matrix);
-
-  Text.call(this, _.defaults({
-    x : on.bbox.cx - text.bbox.width/2 + offset.x,
-    // NOTE y position of text is the baseline of the first line
-    y : on.bbox.cy - text.bbox.height/2 + text.attr['font-size'] + offset.y,
-    'font-size' : text.attr['font-size']
-  }, text.deltaAttr({ class : 'label' })), text.children, text.bbox);
-}
-
-// Support Text constructor arguments for private use (see Label.fromJSON & Label.of)
-function _Label() {
-  Text.apply(this, arguments);
+function Label(attr, spans, bbox) {
+  // Allow attr to not have its x and y position specified
+  Text.call(this, Shape.deltaAttr(_.defaults(attr, { x : 0, y : 0 }), { class : 'label' }), spans, bbox);
 }
 
 Label.fromJSON = function (data) {
   return data.name === 'text' && Shape.hasClass(data.attr, 'label') &&
-    new _Label(data.attr, _.map(data.children, Text.Span.fromJSON));
+    new Label(data.attr, _.map(data.children, Text.Span.fromJSON));
 };
 
 Label.of = function (e) {
   return e.node.nodeName === 'text' && e.hasClass('label') &&
-    new _Label(Shape.strongAttr(e), _.map(e.selectAll('tspan'), Text.Span.of), e.getBBox());
+    new Label(Shape.strongAttr(e), _.map(e.selectAll('tspan'), Text.Span.of), e.getBBox());
 };
 
-Label.prototype = _Label.prototype = Object.create(Text.prototype);
+Label.prototype = Object.create(Text.prototype);
 Label.prototype.constructor = Label;
 
-Label.prototype.delta = function (dAttr) {
-  return new _Label(this.deltaAttr(dAttr), this.children, this.bbox);
+Label.prototype.label = function (on) {
+  var matrix = this.transform(on.transform()),
+      offset = new Point(this.attr.ox || 0, this.attr.oy || 0).transform(matrix);
+
+  return this.clone({
+    x : on.bbox.cx - this.bbox.width/2 + offset.x,
+    // NOTE y position of text is the baseline of the first line
+    y : on.bbox.cy - this.bbox.height/2 + this.attr['font-size'] + offset.y,
+    on : on.attr.id
+  });
 };
 
 Label.prototype.mover = function (isEdge, cursor, getShapeById) {
@@ -44,11 +40,11 @@ Label.prototype.mover = function (isEdge, cursor, getShapeById) {
 Label.prototype.offsetter = function (isEdge, cursor, getShapeById) {
   if (!isEdge) {
     // ox and oy are transformed relative offsets from labelled shape centre
-    var labelled = getShapeById && getShapeById(this.attr.on),
-        matrix = labelled && this.transform(labelled.transform()).inverse();
+    var on = getShapeById && getShapeById(this.attr.on),
+        matrix = on && this.transform(on.transform()).inverse();
     return matrix && function (dx, dy) {
       var offset = new Point(dx, dy).transform(matrix);
-      return this.delta({ ox : offset.x, oy : offset.y });
+      return this.delta({ ox : offset.x, oy : offset.y }).label(on);
     };
   }
 };

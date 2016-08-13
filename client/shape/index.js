@@ -200,13 +200,20 @@ Shape.prototype.clone = function (attr/*, ...*/) {
 
 /**
  * returns a new shape of the given type, optionally with new attributes as given.
- * Will remove any attributes set to 'undefined' in the parameter.
  * Default implementation assumes a one-arg constructor.
  */
 Shape.prototype.cloneAs = function (constructor, attr/*, ...*/) {
-  attr = _.isArray(attr) ? attr : _.tail(_.toArray(arguments));
+  return new (constructor)(this.cloneAttr(_.isArray(attr) ? attr : _.tail(_.toArray(arguments))));
+};
+
+/**
+ * Utility to merge an arg-list of attrs with this shape's attrs.
+ * Will remove any attributes set to 'undefined' in the parameter.
+ */
+Shape.prototype.cloneAttr = function (attr/*, ...*/) {
+  attr = _.isArray(attr) ? attr : _.toArray(arguments);
   var assigns = [_.clone(this.attr)].concat(attr); // _.assign can't take an array
-  return new (constructor)(_.omitBy(_.assign.apply(_, assigns), _.isUndefined));
+  return _.omitBy(_.assign.apply(_, assigns), _.isUndefined);
 };
 
 /**

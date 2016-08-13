@@ -20,62 +20,55 @@ function end(shape, other, angle) {
   return closest(intersects, other.bbox.c) || shape.bbox.c;
 }
 
-function angle(shape, other, end) {
-  return vector(shape.bbox.c, other.bbox.c).angleBetween(vector(shape.bbox.c, end));
-}
-
-function Linkline(line, from, to) {
-  var p1 = end(from, to, line.attr.a1), p2 = end(to, from, line.attr.a2);
-  Line.call(this, line.clone({
-    x1 : p1.x, y1 : p1.y,
-    x2 : p2.x, y2 : p2.y,
-    from : from.attr.id,
-    to : to.attr.id,
-    class : 'link'
-  }).attr);
-}
-
-// Duplicate the line constructor for private use (see Linkline.fromJSON & Linkline.of)
-function _Linkline() {
-  Line.apply(this, arguments);
+function Linkline(attr) {
+  // Allow attr to not have its start and end points specified
+  Line.call(this, Shape.deltaAttr(_.defaults(attr, {
+    x1 : 0, y1 : 0, x2 : 0, y2 : 0
+  }), { class : 'link' }));
 }
 
 Linkline.fromJSON = function (data) {
-  return data.name === 'line' && Shape.hasClass(data.attr, 'link') && new _Linkline(data.attr);
+  return data.name === 'line' && Shape.hasClass(data.attr, 'link') && new Linkline(data.attr);
 };
 
 Linkline.of = function (e) {
-  return e.node.nodeName === 'line' && e.hasClass('link') && new _Linkline(Shape.strongAttr(e));
+  return e.node.nodeName === 'line' && e.hasClass('link') && new Linkline(Shape.strongAttr(e));
 };
 
-Linkline.prototype = _Linkline.prototype = Object.create(Line.prototype);
+Linkline.angle = function (shape, other, end) {
+  return vector(shape.bbox.c, other.bbox.c).angleBetween(vector(shape.bbox.c, end));
+};
+
+Linkline.prototype = Object.create(Line.prototype);
 Linkline.prototype.constructor = Linkline;
 
-Linkline.prototype.clone = function () {
-  return this.cloneAs.apply(this, [_Linkline].concat(_.toArray(arguments)));
-};
-
-Linkline.prototype.delta = function (dAttr) {
-  return new _Linkline(this.deltaAttr(dAttr));
+Linkline.prototype.link = function (from, to) {
+  var p1 = end(from, to, this.attr.a1), p2 = end(to, from, this.attr.a2);
+  return this.clone({
+    x1 : p1.x, y1 : p1.y,
+    x2 : p2.x, y2 : p2.y,
+    from : from.attr.id,
+    to : to.attr.id
+  });
 };
 
 Linkline.prototype.mover = function (isEdge, cursor, getShapeById) {
   var from = getShapeById(this.attr.from), to = getShapeById(this.attr.to);
   if (cursor.contains(this.ends[0])) {
     return function (dx, dy, x, y) {
-      return new Linkline(this.clone({ a1 : angle(from, to, new Point(x, y)) }), from, to);
+      return this.clone({ a1 : Linkline.angle(from, to, new Point(x, y)) }).link(from, to);
     };
   } else if (cursor.contains(this.ends[1])) {
     return function (dx, dy, x, y) {
-      return new Linkline(this.clone({ a2 : angle(to, from, new Point(x, y)) }), from, to);
+      return this.clone({ a2 : Linkline.angle(to, from, new Point(x, y)) }).link(from, to);
     };
   } else {
     return function (dx, dy) {
       var d = new Vector(dx, dy);
-      return new Linkline(this.clone({
-        a1 : angle(from, to, this.ends[0].add(d)),
-        a2 : angle(to, from, this.ends[1].add(d))
-      }), from, to);
+      return this.clone({
+        a1 : Linkline.angle(from, to, this.ends[0].add(d)),
+        a2 : Linkline.angle(to, from, this.ends[1].add(d))
+      }).link(from, to);
     };
   }
 };

@@ -89,11 +89,11 @@ module.exports = function Picture(paper) {
     if (shape.hasClass('link')) {
       var fromShape = Shape.of(getElement(shape.attr.from)),
           toShape = Shape.of(getElement(shape.attr.to)),
-          linkShape = new Linkline(shape, fromShape, toShape);
+          linkShape = shape.link(fromShape, toShape);
       mutation.preview = previewer(fromShape, toShape, linkShape);
     } else if (shape.hasClass('label')) {
       var onShape = Shape.of(getElement(shape.attr.on)),
-          labelShape = new Label(shape, onShape);
+          labelShape = shape.label(onShape);
       mutation.preview = previewer(onShape, labelShape);
     } else {
       mutation.preview = previewer(shape);
@@ -166,7 +166,7 @@ module.exports = function Picture(paper) {
       if (element.hasClass('link')) {
         var from = getElement(element.attr('from')), to = getElement(element.attr('to'));
         if (from && to) {
-          new Linkline(Shape.of(element), Shape.of(from), Shape.of(to)).applyTo(element);
+          Shape.of(element).link(Shape.of(from), Shape.of(to)).applyTo(element);
           ensureOrder(from, to, element); // Ensure sensible Z-ordering for a link
         } else {
           linkRemoved(element).applyTo(element);
@@ -174,7 +174,7 @@ module.exports = function Picture(paper) {
       } else if (element.hasClass('label')) {
         var on = getElement(element.attr('on'));
         if (on) {
-          new Label(Shape.of(element), Shape.of(on)).applyTo(element);
+          Shape.of(element).label(Shape.of(on)).applyTo(element);
           ensureOrder(on, element); // Ensure sensible Z-ordering for a label
         } else {
           labelRemoved(element).applyTo(element);

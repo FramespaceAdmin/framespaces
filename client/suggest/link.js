@@ -1,6 +1,7 @@
 var _ = require('lodash')
     Point = require('kld-affine').Point2D,
     Line = require('../shape/line'),
+    Linkline = require('../shape/linkline'),
     Shape = require('../shape'),
     mean = require('compute-mean');
 
@@ -12,15 +13,16 @@ module.exports = function suggestLink(picture, element) {
         // Confidence is based on the distance of the point from the shape centre or nearest intersect
         var shape = Shape.of(e), points = line.intersect(shape).concat(shape.bbox.c),
             d = _.min(_.map(points, _.bind(point.distanceFrom, point)));
-        return { e : e, confidence : 1 - (d / shape.extent) };
+        return { e : e, shape : shape, confidence : 1 - (d / shape.extent) };
       }), 'confidence');
     }
     var from = suggestEnd(line.ends[0]), to = suggestEnd(line.ends[1]);
     if (from.e !== to.e) {
-      return _.assign(picture.action.mutation(element, line.delta({
+      return _.assign(picture.action.mutation(element, line.cloneAs(Linkline, {
         from : from.e.attr('id'),
         to : to.e.attr('id'),
-        class : 'link'
+        a1 : Linkline.angle(from.shape, to.shape, line.ends[0]),
+        a2 : Linkline.angle(to.shape, from.shape, line.ends[1])
       })), {
         confidence : mean([from.confidence, to.confidence])
       });

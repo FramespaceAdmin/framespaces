@@ -30,8 +30,7 @@ describe('Linkline', function () {
 
   it('should work out its ends from given angles', function () {
     // Prototype line begin and end are ignored
-    var line = new Line({ x1 : 0, y1 : 0, x2 : 0, y2 : 0, a1 : 0, a2 : 0 }),
-        linkline = new Linkline(line, linked.from, linked.to);
+    var linkline = new Linkline({ a1 : 0, a2 : 0 }).link(linked.from, linked.to);
 
     assert.equal(linkline.attr.x1, 4);
     assert.equal(linkline.attr.y1, 2);
@@ -40,8 +39,7 @@ describe('Linkline', function () {
   });
 
   it('should move its "from" end', function () {
-    var line = new Line({ x1 : 0, y1 : 0, x2 : 0, y2 : 0, a1 : 0, a2 : 0 }),
-        linkline = new Linkline(line, linked.from, linked.to);
+    var linkline = new Linkline({ a1 : 0, a2 : 0 }).link(linked.from, linked.to);
 
     var move = linkline.mover(true, new Rect({ x : 3, y : 1, width : 2, height : 2 }), _.propertyOf(linked));
     linkline = move.call(linkline, 0, -1, 4, 1);
@@ -51,8 +49,7 @@ describe('Linkline', function () {
   });
 
   it('should move its "to" end', function () {
-    var line = new Line({ x1 : 0, y1 : 0, x2 : 0, y2 : 0, a1 : 0, a2 : 0 }),
-        linkline = new Linkline(line, linked.from, linked.to);
+    var linkline = new Linkline({ a1 : 0, a2 : 0 }).link(linked.from, linked.to);
 
     var move = linkline.mover(true, new Rect({ x : 7, y : 1, width : 2, height : 2 }), _.propertyOf(linked));
     linkline = move.call(linkline, 0, -1, 8, 1);
@@ -62,8 +59,7 @@ describe('Linkline', function () {
   });
 
   it('should move both ends when moved by the middle', function () {
-    var line = new Line({ x1 : 0, y1 : 0, x2 : 0, y2 : 0, a1 : 0, a2 : 0 }),
-        linkline = new Linkline(line, linked.from, linked.to);
+    var linkline = new Linkline({ a1 : 0, a2 : 0 }).link(linked.from, linked.to);
 
     var move = linkline.mover(true, new Rect({ x : 5, y : 1, width : 2, height : 2 }), _.propertyOf(linked));
     linkline = move.call(linkline, 0, -1, 6, 1);
@@ -73,8 +69,7 @@ describe('Linkline', function () {
   });
 
   it('should move both ends when moved by the middle twice', function () {
-    var line = new Line({ x1 : 0, y1 : 0, x2 : 0, y2 : 0, a1 : 0, a2 : 0 }),
-        linkline = new Linkline(line, linked.from, linked.to);
+    var linkline = new Linkline({ a1 : 0, a2 : 0 }).link(linked.from, linked.to);
 
     var move = linkline.mover(true, new Rect({ x : 5, y : 1, width : 2, height : 2 }), _.propertyOf(linked));
     linkline = move.call(linkline, 0, -1, 6, 1);
