@@ -1,8 +1,10 @@
 var _ = require('lodash'),
     _svgp = require('svg-points'),
-    vector = require('kld-affine').Vector2D.fromPoints,
+    Vector = require('kld-affine').Vector2D,
+    vector = Vector.fromPoints,
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
+    Line = require('../shape/line'),
     Ellipse = require('./ellipse');
 
 /**
@@ -78,13 +80,11 @@ Arc.prototype.computeEnds = function () {
 };
 
 Arc.prototype.computeBBox = function () {
-  if (this.curve.largeArcFlag) {
-    // Large arc bbox is the bbox of the full ellipse
-    return Ellipse.computeBBox(this.curve.c, this.curve.rx, this.curve.ry);
-  } else {
-    // Small arc bbox is the bbox of the begin and end points
-    return Shape.prototype.computeBBox.call(this);
-  }
+  // Draw a cross and intersect with the arc to find north, south, east and west points
+  var xVec = new Vector(this.curve.rx, 0), yVec = new Vector(0, this.curve.ry),
+      xRay = Line.fromPoints(this.curve.c.subtract(xVec), this.curve.c.add(xVec)),
+      yRay = Line.fromPoints(this.curve.c.subtract(yVec), this.curve.c.add(yVec));
+  return Shape.computeBBox(this.ends.concat(this.intersect(xRay)).concat(this.intersect(yRay)));
 };
 
 Arc.prototype.computeExtent = function () {

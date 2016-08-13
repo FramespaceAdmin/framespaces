@@ -9,7 +9,7 @@ function Text(attr, spans, bbox) {
 
 Text.fromJSON = function (data) {
   return data.name === 'text' &&
-    new Text(data.attr, _.map(data.children, Text.Span.fromJSON));
+    new Text(data.attr, _.map(data.children, Text.Span.fromJSON), data.bbox);
 };
 
 Text.of = function (e) {
@@ -44,7 +44,7 @@ Text.Span = function(attr, text, bbox) {
 
 Text.Span.fromJSON = function (data) {
   return data.name ==='tspan' &&
-    new Text.Span(data.attr, data.text); // No bbox
+    new Text.Span(data.attr, data.text, data.bbox);
 };
 
 Text.Span.of = function (e) {

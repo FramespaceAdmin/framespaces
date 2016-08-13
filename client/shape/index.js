@@ -91,6 +91,7 @@ Shape.prototype.toJSON = function () {
   if (this.children) {
     json.children = _.map(this.children, _.method('toJSON'));
   }
+  json.bbox = _.pick(this.bbox, 'x', 'y', 'width', 'height');
   return json;
 };
 
@@ -205,7 +206,8 @@ Shape.prototype.cloneAs = function (name, attr/*, ...*/) {
     name : name,
     attr : this.cloneAttr.apply(this, _.tail(_.toArray(arguments))),
     text : this.text,
-    children : this.children
+    children : this.children,
+    bbox : this.bbox
   });
 };
 

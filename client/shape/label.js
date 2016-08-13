@@ -10,7 +10,7 @@ function Label(attr, spans, bbox) {
 
 Label.fromJSON = function (data) {
   return data.name === 'text' && Shape.hasClass(data.attr, 'label') &&
-    new Label(data.attr, _.map(data.children, Text.Span.fromJSON));
+    new Label(data.attr, _.map(data.children, Text.Span.fromJSON), data.bbox);
 };
 
 Label.of = function (e) {
