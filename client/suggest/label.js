@@ -16,7 +16,8 @@ module.exports = function suggestLabel(picture, e1) {
         var factor = _.every(ls.points, function (p) {
           return Snap.path.isPointInsideBBox(les.bbox, p.x, p.y);
         }) ? 10 : 1;
-        return candidates.concat(_.assign(picture.action.mutation(label, ls.cloneAs(Label, {
+        return candidates.concat(_.assign(picture.action.mutation(label, ls.clone({
+          class : 'label',
           // Don't set the ox and oy, so the user sees the suggestion happening
           // Some kind of animation be cool in future
           on : on.attr('id'),

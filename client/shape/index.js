@@ -184,26 +184,29 @@ Shape.prototype.contains = function (point) {
 };
 
 /**
- * returns a new shape with attributes changed by the given deltas, @see Shape.prototype.deltaAttr.
- * Default implementation assumes a one-arg constructor.
+ * Constructs a new shape with attributes changed by the given deltas, @see Shape.prototype.deltaAttr.
  */
 Shape.prototype.delta = function (dAttr) {
-  return new (this.constructor)(this.deltaAttr(dAttr));
+  return this.clone(this.deltaAttr(dAttr));
 };
 
 /**
  * Clones this shape with the given optional additional attributes
  */
 Shape.prototype.clone = function (attr/*, ...*/) {
-  return this.cloneAs(this.constructor, _.isArray(attr) ? attr : _.toArray(arguments));
+  return this.cloneAs.apply(this, [this.name].concat(_.toArray(arguments)));
 };
 
 /**
  * returns a new shape of the given type, optionally with new attributes as given.
- * Default implementation assumes a one-arg constructor.
  */
-Shape.prototype.cloneAs = function (constructor, attr/*, ...*/) {
-  return new (constructor)(this.cloneAttr(_.isArray(attr) ? attr : _.tail(_.toArray(arguments))));
+Shape.prototype.cloneAs = function (name, attr/*, ...*/) {
+  return Shape.fromJSON({
+    name : name,
+    attr : this.cloneAttr.apply(this, _.tail(_.toArray(arguments))),
+    text : this.text,
+    children : this.children
+  });
 };
 
 /**
@@ -211,8 +214,7 @@ Shape.prototype.cloneAs = function (constructor, attr/*, ...*/) {
  * Will remove any attributes set to 'undefined' in the parameter.
  */
 Shape.prototype.cloneAttr = function (attr/*, ...*/) {
-  attr = _.isArray(attr) ? attr : _.toArray(arguments);
-  var assigns = [_.clone(this.attr)].concat(attr); // _.assign can't take an array
+  var assigns = [_.clone(this.attr)].concat(_.toArray(arguments)); // _.assign can't take an array
   return _.omitBy(_.assign.apply(_, assigns), _.isUndefined);
 };
 

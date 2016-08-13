@@ -18,7 +18,8 @@ module.exports = function suggestLink(picture, element) {
     }
     var from = suggestEnd(line.ends[0]), to = suggestEnd(line.ends[1]);
     if (from.e !== to.e) {
-      return _.assign(picture.action.mutation(element, line.cloneAs(Linkline, {
+      return _.assign(picture.action.mutation(element, line.clone({
+        class : 'link',
         from : from.e.attr('id'),
         to : to.e.attr('id'),
         a1 : Linkline.angle(from.shape, to.shape, line.ends[0]),

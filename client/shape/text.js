@@ -26,18 +26,6 @@ Text.prototype.computeParams = function () {
   return _cap.shape('rect', this.bbox || {});
 }
 
-Text.prototype.clone = function (attr/*, ...*/) {
-  return new (this.constructor)(this.cloneAttr(_.isArray(attr) ? attr : _.toArray(arguments)), this.children, this.bbox);
-};
-
-Text.prototype.cloneAs = function (constructor, attr/*, ...*/) {
-  return new (constructor)(this.cloneAttr(_.isArray(attr) ? attr : _.tail(_.toArray(arguments))), this.children, this.bbox);
-};
-
-Text.prototype.delta = function (dAttr) {
-  return new (this.constructor)(this.deltaAttr(dAttr), this.children, this.bbox);
-}
-
 Text.prototype.mover = function (isEdge, cursor) {
   return this.resizer(isEdge, cursor) ||
     function (dx, dy) { return this.delta({ x : dx, y : dy }); };

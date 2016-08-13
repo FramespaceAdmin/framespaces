@@ -47,14 +47,14 @@ Line.prototype.mover = function (isEdge, cursor) {
 };
 
 Line.prototype.reverse = function () {
-  return this.cloneAs(Line, {
+  return this.clone({
     x1 : this.attr.x2, y1 : this.attr.y2, x2 : this.attr.x1, y2 : this.attr.y1
   });
 }
 
 Line.prototype.add = function (that) {
   if (that instanceof Line || that instanceof require('./polyline')) {
-    return this.cloneAs(require('./polyline'), {
+    return this.cloneAs('polyline', {
       x1 : undefined, y1 : undefined, x2 : undefined, y2 : undefined,
       // Lose our second point
       points : require('./polyline').pointStr(_.initial(this.points).concat(that.points))

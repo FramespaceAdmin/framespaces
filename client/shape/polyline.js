@@ -175,21 +175,21 @@ Polyline.prototype.close = function () {
     points = (points.length > 3 ? _.initial(points) : points).concat(new Point(end.x, end.y));
     if (points.length === 4) {
       // A recty polygon with exactly four points is a rect
-      return this.cloneAs(require('./rect'), { points : undefined }, Shape.computeBBox(points));
+      return this.cloneAs('rect', { points : undefined }, Shape.computeBBox(points));
     }
   }
-  return this.cloneAs(require('./polygon'), { points : Polyline.pointStr(points) });
+  return this.cloneAs('polygon', { points : Polyline.pointStr(points) });
 };
 
 Polyline.prototype.reverse = function () {
-  return this.cloneAs(Polyline, {
+  return this.cloneAs('polyline', {
     points : Polyline.pointStr(_.reverse(_.clone(this.points)))
   });
 }
 
 Polyline.prototype.add = function (that) {
   if (that instanceof Line || that instanceof Polyline) {
-    return this.cloneAs(Polyline, {
+    return this.cloneAs('polyline', {
       // Lose our last point
       points : Polyline.pointStr(_.initial(this.points).concat(that.points))
     });

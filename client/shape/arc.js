@@ -145,11 +145,11 @@ Arc.prototype.mover = function (isEdge, cursor) {
 
 Arc.prototype.close = function () {
   if (this.curve.rx === this.curve.ry) {
-    return this.cloneAs(require('./circle'), {
+    return this.cloneAs('circle', {
       d : undefined, cx : this.curve.c.x, cy : this.curve.c.y, r : this.curve.rx
     });
   } else {
-    return this.cloneAs(Ellipse, {
+    return this.cloneAs('ellipse', {
       d : undefined, cx : this.curve.c.x, cy : this.curve.c.y, rx : this.curve.rx, ry : this.curve.ry
     });
   }
