@@ -20,7 +20,13 @@ var _ = require('lodash'),
 exports.batch = function (actions) {
   function batch() {
     // Return the result of the last action to succeed
-    return _.reduce(actions, function (e, a) { return e && a(); }, true);
+    return _.reduce(actions, function (result, action) {
+      // We only apply OK actions, because inconsistency is possible by batching
+      if (result && (!action.isOK || action.isOK())) {
+        result = action();
+      }
+      return result;
+    }, true);
   }
   batch.isOK = function () {
     return _.first(actions).isOK(); // Can't tell if more is OK until action is run

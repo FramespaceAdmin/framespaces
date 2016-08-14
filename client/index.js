@@ -48,11 +48,11 @@ fsIO.on('connect', function () {
     var char = keycode(e);
     if (char === 'z' && (e.metaKey || e.ctrlKey)) {
       history[e.shiftKey ? 'next' : 'undo']();
-    } else if (['backspace', 'up', 'down', 'left', 'right', 'tab'].indexOf(char) > -1) {
+    } else if (/backspace|up|down|left|right|tab/.test(char)) {
       // Things that affect text but have default behaviours we don't want
       e.preventDefault();
     }
-    if (char.length > 1 && ['ctrl', 'shift', 'alt', 'command'].indexOf(char) == -1) {
+    if (char.length > 1 && !/ctrl|shift|alt|command/.test(char)) {
       // A control key, but not a modifier. Character keys are captured below.
       user.interacting({ active : true, char : char });
     }
