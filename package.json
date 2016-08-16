@@ -44,7 +44,7 @@
     "test": "./node_modules/.bin/mocha test",
     "start:dev": "npm run build:dev && LOG_LEVEL=DEBUG npm start",
     "restart:dev": "npm run build:dev && LOG_LEVEL=DEBUG npm restart",
-    "copy:dist": "cp -R web/* dist/",
+    "copy:dist": "mkdir -p dist && cp -R web/* dist/",
     "bundle:dev": "LOG_LEVEL=DEBUG ./node_modules/browserify/bin/cmd.js client/index.js -t envify > dist/bundle.js",
     "bundle:dist": "./node_modules/browserify/bin/cmd.js client/index.js -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] -t envify > dist/bundle.js",
     "build:dist": "npm run copy:dist && npm run bundle:dist",
