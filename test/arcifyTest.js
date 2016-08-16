@@ -18,10 +18,10 @@ describe('Arcify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.7);
     var arc = Shape.of(action());
     assert.instanceOf(arc, Arc);
-    assert.equal(arc.curve.rx, 1.625);
-    assert.equal(arc.curve.ry, 1.625);
-    assert.isNotOk(arc.curve.sweepFlag);
-    assert.isNotOk(arc.curve.largeArcFlag);
+    assert.equal(arc.path[1].curve.rx, 1.625);
+    assert.equal(arc.path[1].curve.ry, 1.625);
+    assert.isNotOk(arc.path[1].curve.sweepFlag);
+    assert.isNotOk(arc.path[1].curve.largeArcFlag);
   });
 
   it('should arcify a small arc with negative sweep', function () {
@@ -31,10 +31,10 @@ describe('Arcify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.7);
     var arc = Shape.of(action());
     assert.instanceOf(arc, Arc);
-    assert.equal(arc.curve.rx, 1.625);
-    assert.equal(arc.curve.ry, 1.625);
-    assert.isOk(arc.curve.sweepFlag);
-    assert.isNotOk(arc.curve.largeArcFlag);
+    assert.equal(arc.path[1].curve.rx, 1.625);
+    assert.equal(arc.path[1].curve.ry, 1.625);
+    assert.isOk(arc.path[1].curve.sweepFlag);
+    assert.isNotOk(arc.path[1].curve.largeArcFlag);
   });
 
   it('should arcify a large arc with positive sweep', function () {
@@ -45,11 +45,11 @@ describe('Arcify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.8);
     var arc = Shape.of(action());
     assert.instanceOf(arc, Arc);
-    assert.isAtLeast(arc.curve.rx, 1.5);
-    assert.isAtMost(arc.curve.rx, 1.6);
-    assert.isAtLeast(arc.curve.ry, 1.5);
-    assert.isAtMost(arc.curve.rx, 1.6);
-    assert.isNotOk(arc.curve.sweepFlag);
-    assert.isOk(arc.curve.largeArcFlag);
+    assert.isAtLeast(arc.path[1].curve.rx, 1.5);
+    assert.isAtMost(arc.path[1].curve.rx, 1.6);
+    assert.isAtLeast(arc.path[1].curve.ry, 1.5);
+    assert.isAtMost(arc.path[1].curve.rx, 1.6);
+    assert.isNotOk(arc.path[1].curve.sweepFlag);
+    assert.isOk(arc.path[1].curve.largeArcFlag);
   });
 });

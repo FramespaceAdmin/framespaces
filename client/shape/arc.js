@@ -1,110 +1,89 @@
 var _ = require('lodash'),
-    _svgp = require('svg-points'),
     Vector = require('kld-affine').Vector2D,
     vector = Vector.fromPoints,
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
+    Path = require('./path'),
     Line = require('../shape/line'),
     Ellipse = require('./ellipse');
 
-/**
- * Prototype object for a curve, as used for 'curve' member.
- * Note that an svg-points 'curve' is all-numeric, and does not have a c or an angle.
- */
-var CURVE = {
-  c : null, // Point2D
-  rx : 0.0,
-  ry : 0.0,
-  angle : 0.0,
-  sweepFlag : false,
-  largeArcFlag : false
+function Arc(attr) {
+  Path.call(this, attr);
+}
+
+function pointAngle(point, end1, end2) {
+  return vector(end1, end2).angleBetween(vector(end1, point));
 };
 
-function Arc(attr) {
-  var pointObjects = pathToPointObjects(attr.d);
-  this.ends = [
-    new Point(pointObjects[0].x, pointObjects[0].y),
-    new Point(pointObjects[1].x, pointObjects[1].y)
-  ];
-  this.curve = _(pointObjects[1].curve).mapValues(function (v, k) {
-    return _.isBoolean(CURVE[k]) ? Boolean(v) : v;
-  }).defaults(CURVE).value();
-  this.chord = this.ends[0].distanceFrom(this.ends[1]);
-
-  Shape.call(this, 'path', attr);
-}
-
-function pathToPointObjects(d) {
-  var svgp = _svgp.toPoints({ type : 'path', d : d });
-  return svgp.length === 2 && _.get(svgp, '1.curve.type') === 'arc' && svgp;
-}
-
-function pointsToPointObjects(p1, p2, curve) {
-  return [{ x : p1.x, y : p1.y }, {
-    // Coerce all parameters to be numbers (avoiding 'true' & 'false')
-    x : p2.x, y : p2.y, curve : _.set(_.mapValues(curve, Number), 'type', 'arc')
-  }];
-}
-
 Arc.fromJSON = function (data) {
-  return data.name === 'path' && pathToPointObjects(data.attr.d) && new Arc(data.attr);
+  return data.name === 'path' && Arc.isArc(data.attr.d) && new Arc(data.attr);
 };
 
 Arc.of = function (e) {
-  return e.node.nodeName === 'path' && pathToPointObjects(e.attr('d')) && new Arc(Shape.strongAttr(e));
+  return e.node.nodeName === 'path' && Arc.isArc(e.attr('d')) && new Arc(Shape.strongAttr(e));
 };
 
-Arc.fromPoints = function (p1, p2, curve) {
-  // Allow omission of curve type
-  return new Arc({ d : _svgp.toPath(pointsToPointObjects(p1, p2, curve)) });
+Arc.isArc = function (d) {
+  var path = Path.parse(d);
+  return path.length === 2 && _.get(path, '1.curve.type') === 'arc';
+};
+
+Arc.fromPoints = function (end1, end2, curve) {
+  return new Arc({ d : Path.toString([{ x : end1.x, y : end1.y }, {
+    // Allow omission of curve type
+    x : end2.x, y : end2.y, curve : _.set(curve, 'type', 'arc')
+  }]) });
 }
 
-Arc.prototype = Object.create(Shape.prototype);
+Arc.traversing = function (end1, point, end2) {
+  return Arc.fromPoints(end1, end2, Arc.curveTraversing(end1, point, end2));
+};
+
+Arc.curveTraversing = function (end1, point, end2) {
+  var r = Math.abs(end2.distanceFrom(end1) /
+    (2 * Math.sin(vector(point, end1).angleBetween(vector(point, end2)))));
+  return {
+    type : 'arc',
+    rx : r, ry: r,
+    largeArcFlag : end1.lerp(end2, 0.5).distanceFrom(point) > r,
+    sweepFlag : pointAngle(point, end1, end2) < 0
+  };
+};
+
+Arc.prototype = Object.create(Path.prototype);
 Arc.prototype.constructor = Arc;
 
 Arc.prototype.computeParams = function () {
   var params = Shape.prototype.computeParams.call(this);
   // Intersection params have calculated the centre as a point
   var pathParams = params.params[0], arcParams = pathParams[0];
-  this.curve.c = arcParams.params[0];
-  this.curve.angle = Arc.segmentAngle(this.curve.c, this.ends[0], this.ends[1]);
+  this.centre = arcParams.params[0];
   return params;
 }
 
-Arc.prototype.computePoints = function () {
-  return this.ends;
-};
-
 Arc.prototype.computeEnds = function () {
-  return this.ends;
+  var ends = Path.prototype.computeEnds.call(this);
+  this.chord = ends[0].distanceFrom(ends[1]);
+  this.angle = Arc.segmentAngle(this.centre, ends[0], ends[1]);
+  return ends;
 };
 
 Arc.prototype.computeBBox = function () {
   // Draw a cross and intersect with the arc to find north, south, east and west points
-  var xVec = new Vector(this.curve.rx, 0), yVec = new Vector(0, this.curve.ry),
-      xRay = Line.fromPoints(this.curve.c.subtract(xVec), this.curve.c.add(xVec)),
-      yRay = Line.fromPoints(this.curve.c.subtract(yVec), this.curve.c.add(yVec));
+  var xVec = new Vector(this.path[1].curve.rx, 0), yVec = new Vector(0, this.path[1].curve.ry),
+      xRay = Line.fromPoints(this.centre.subtract(xVec), this.centre.add(xVec)),
+      yRay = Line.fromPoints(this.centre.subtract(yVec), this.centre.add(yVec));
   return Shape.computeBBox(this.ends.concat(this.intersect(xRay)).concat(this.intersect(yRay)));
 };
 
 Arc.prototype.computeExtent = function () {
-  if (this.curve.largeArcFlag) {
+  if (this.path[1].curve.largeArcFlag) {
     // Large arc extent is the extent of the full ellipse
-    return this.curve.rx + this.curve.ry; // diameter-ish
+    return this.path[1].curve.rx + this.path[1].curve.ry; // diameter-ish
   } else {
     // Small arc extent is the extent of the begin and end points
     return this.chord;
   }
-};
-
-Arc.prototype.toPointObjects = function () {
-  return pointsToPointObjects(this.ends[0], this.ends[1], this.curve);
-}
-
-Arc.prototype.deltaD = function (deltas) {
-  return this.delta({ d : _svgp.toPath(_.reduce(deltas, function (svgp, d, path) {
-    return _.update(svgp, path, _.isNumber(d) ? function (v) { return (v || 0) + d; } : d);
-  }, this.toPointObjects())) });
 };
 
 Arc.prototype.mover = function (isEdge, cursor) {
@@ -130,33 +109,27 @@ Arc.prototype.mover = function (isEdge, cursor) {
   } else {
     // Re-arrange the world so that the arc still traverses p1, p2 and x,y (circumcentre)
     return function (dx, dy, x, y) {
-      var p = new Point(x, y);
-      var r = Math.abs(this.chord /
-        (2 * Math.sin(vector(p, this.ends[0]).angleBetween(vector(p, this.ends[1])))));
-      return this.deltaD(_({
-        '1.curve.rx' : r,
-        '1.curve.ry': r,
-        '1.curve.largeArcFlag' : this.ends[0].lerp(this.ends[1], 0.5).distanceFrom(p) > r,
-        '1.curve.sweepFlag' : this.pointAngle(p) < 0
-      }).mapValues(Number).mapValues(_.constant).value());
+      return this.deltaD({
+        '1.curve' : Arc.curveTraversing(this.ends[0], new Point(x, y), this.ends[1])
+      });
     };
   }
 };
 
 Arc.prototype.close = function () {
-  if (this.curve.rx === this.curve.ry) {
+  if (this.path[1].curve.rx === this.path[1].curve.ry) {
     return this.cloneAs('circle', {
-      d : undefined, cx : this.curve.c.x, cy : this.curve.c.y, r : this.curve.rx
+      d : undefined, cx : this.centre.x, cy : this.centre.y, r : this.path[1].curve.rx
     });
   } else {
     return this.cloneAs('ellipse', {
-      d : undefined, cx : this.curve.c.x, cy : this.curve.c.y, rx : this.curve.rx, ry : this.curve.ry
+      d : undefined, cx : this.centre.x, cy : this.centre.y, rx : this.path[1].curve.rx, ry : this.path[1].curve.ry
     });
   }
 };
 
 Arc.prototype.pointAngle = function (p) {
-  return vector(this.ends[0], this.ends[1]).angleBetween(vector(this.ends[0], p));
+  return pointAngle(p, this.ends[0], this.ends[1]);
 };
 
 Arc.segmentAngle = function (c, p1, p2) {
@@ -168,10 +141,11 @@ Arc.prototype.minus = function (that) {
     // Point angle reduces as you go from p1 to p2
     return -Math.abs(p.equals(this.ends[0]) ? Math.PI : this.pointAngle(p));
   }, this));
-  return Arc.arcsBetween(points, this.curve);
+  return Arc.arcsBetween(points, this.path[1].curve, this.centre, this.angle);
 };
 
-Arc.arcsBetween = function (points, curve) {
+Arc.arcsBetween = function (points, curve, centre, angle) {
+  angle = angle || -Number.MIN_VALUE; // Connot be zero
   return _.reduce(points, function (arcs, p2, i) {
     if (i % 2) {
       var p1 = points[i - 1];
@@ -180,7 +154,7 @@ Arc.arcsBetween = function (points, curve) {
           rx : curve.rx,
           ry : curve.ry,
           largeArcFlag : curve.largeArcFlag &&
-            Math.sign(curve.angle) === Math.sign(Arc.segmentAngle(curve.c, p1, p2)),
+            Math.sign(angle) === Math.sign(Arc.segmentAngle(centre, p1, p2)),
           sweepFlag : curve.sweepFlag
         }));
       }

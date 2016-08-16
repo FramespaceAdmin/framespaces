@@ -63,13 +63,11 @@ Circle.prototype.minus = function (that) {
       points = _.tail(points).concat(_.first(points));
     }
     return Arc.arcsBetween(points, {
-      c : this.bbox.c,
       rx : this.attr.r,
       ry : this.attr.r,
-      angle : -Number.MIN_VALUE, // Can't be zero
       largeArcFlag : true,
       sweepFlag : true
-    });
+    }, this.bbox.c);
   } else {
     return [this]; // not overlapping, no change
   }

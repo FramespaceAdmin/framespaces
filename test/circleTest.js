@@ -38,9 +38,9 @@ describe('Circle', function () {
       assert.instanceOf(fragments[0], Arc);
       assert.deepEqual(fragments[0].ends[0], new Point(1, 0));
       assert.deepEqual(fragments[0].ends[1], new Point(0, 1));
-      assert.deepEqual(fragments[0].curve.c, new Point(1, 1));
-      assert.isTrue(fragments[0].curve.largeArcFlag);
-      assert.isTrue(fragments[0].curve.sweepFlag);
+      assert.deepEqual(fragments[0].centre, new Point(1, 1));
+      assert.isTrue(fragments[0].path[1].curve.largeArcFlag);
+      assert.isTrue(fragments[0].path[1].curve.sweepFlag);
     });
 
     it('should minus to a small arc when a half is removed', function () {
@@ -51,9 +51,9 @@ describe('Circle', function () {
       assert.instanceOf(fragments[0], Arc);
       assert.deepEqual(fragments[0].ends[0], new Point(1, 0));
       assert.deepEqual(fragments[0].ends[1], new Point(1, 2));
-      assert.deepEqual(fragments[0].curve.c, new Point(1, 1));
-      assert.isFalse(fragments[0].curve.largeArcFlag);
-      assert.isTrue(fragments[0].curve.sweepFlag);
+      assert.deepEqual(fragments[0].centre, new Point(1, 1));
+      assert.isFalse(fragments[0].path[1].curve.largeArcFlag);
+      assert.isTrue(fragments[0].path[1].curve.sweepFlag);
     });
 
     it('should minus to nothing when occluded', function () {

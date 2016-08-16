@@ -25,7 +25,7 @@ describe('Arc', function () {
       assert.equal(arc.bbox.width, 1);
       assert.equal(arc.bbox.height, 1);
       assert.equal(arc.extent, Math.sqrt(2));
-      assert.isNotOk(arc.curve.sweepFlag);
+      assert.isNotOk(arc.path[1].curve.sweepFlag);
     });
 
     it('should have expected properties for large arc and negative angle', function () {
@@ -56,7 +56,7 @@ describe('Arc', function () {
       assert.equal(arc.bbox.width, 1);
       assert.equal(arc.bbox.height, 1);
       assert.equal(arc.extent, Math.sqrt(2));
-      assert.isOk(arc.curve.sweepFlag);
+      assert.isOk(arc.path[1].curve.sweepFlag);
     });
 
     it('should have expected properties for large arc and positive angle', function () {
@@ -82,8 +82,8 @@ describe('Arc', function () {
       assert.equal(arc.ends[0].y, 0);
       assert.equal(arc.ends[1].x, 2);
       assert.equal(arc.ends[1].y, 2);
-      assert.equal(arc.curve.rx, 2);
-      assert.equal(arc.curve.ry, 2);
+      assert.equal(arc.path[1].curve.rx, 2);
+      assert.equal(arc.path[1].curve.ry, 2);
     });
 
     it('should sweep the other way when the line is moved to the opposite side', function () {
@@ -94,7 +94,7 @@ describe('Arc', function () {
       assert.equal(arc.ends[0].y, 0);
       assert.equal(arc.ends[1].x, 1);
       assert.equal(arc.ends[1].y, 1);
-      assert.equal(arc.curve.sweepFlag, 1);
+      assert.equal(arc.path[1].curve.sweepFlag, 1);
     });
 
     it('should become large when the line is moved further than the radius', function () {
@@ -105,7 +105,7 @@ describe('Arc', function () {
       assert.equal(arc.ends[0].y, 0);
       assert.equal(arc.ends[1].x, 1);
       assert.equal(arc.ends[1].y, 1);
-      assert.equal(arc.curve.largeArcFlag, 1);
+      assert.equal(arc.path[1].curve.largeArcFlag, 1);
     });
 
     it('should be unaffected by an non-overlapping minus shape', function () {
@@ -162,7 +162,7 @@ describe('Arc', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
       assert.instanceOf(fragments[0], Arc);
-      assert.isOk(fragments[0].curve.largeArcFlag);
+      assert.isOk(fragments[0].path[1].curve.largeArcFlag);
     });
   });
 
