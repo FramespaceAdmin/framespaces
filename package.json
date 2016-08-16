@@ -38,6 +38,7 @@
     "mocha": "^2"
   },
   "scripts": {
+    "postinstall": "npm run build:dist",
     "start": "node server/index.js",
     "stop": "pkill -SIGINT Framespaces",
     "test": "./node_modules/.bin/mocha test",
