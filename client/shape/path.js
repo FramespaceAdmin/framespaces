@@ -33,6 +33,20 @@ Path.toString = function (path) {
   return _svgp.toPath(svgp);
 };
 
+Path.delta = function (deltas) {
+  return function (d) {
+    return Path.toString(_.reduce(deltas, function (path, delta, key) {
+      return _.update(path, key, _.isNumber(delta) ? function (v) {
+        return (v || 0) + delta;
+      } : _.isFunction(delta) ? delta : _.constant(delta));
+    }, Path.parse(d)));
+  };
+};
+
+Path.clone = function (path) {
+  return Path.delta(_.mapValues(path, _.constant));
+};
+
 Path.prototype = Object.create(Shape.prototype);
 Path.prototype.constructor = Path;
 
@@ -44,14 +58,6 @@ Path.prototype.computePoints = function () {
 
 Path.prototype.computeEnds = function () {
   return [_.first(this.points), _.last(this.points)];
-};
-
-Path.prototype.deltaD = function (deltas) {
-  return this.delta({ d : Path.toString(_.reduce(deltas, function (path, delta, key) {
-    return _.update(path, key, _.isNumber(delta) ? function (v) {
-      return (v || 0) + delta;
-    } : _.isFunction(delta) ? delta : _.constant(delta));
-  }, this.path)) });
 };
 
 module.exports = Path;

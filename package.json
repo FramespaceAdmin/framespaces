@@ -19,7 +19,7 @@
     "express": "^4.13.4",
     "html.js": "^0.12.1",
     "keycode": "^2.1.1",
-    "kld-affine": "^0.1.0",
+    "kld-affine": "git+https://github.com/framespaces/kld-affine.git#development",
     "lodash": "^4",
     "loglevel": "^1.4.1",
     "minifyify": "^7.3.3",
@@ -27,7 +27,7 @@
     "request": "^2.72.0",
     "snapsvg": "^0.4",
     "socket.io": "^1.4.6",
-    "svg-intersections": "https://github.com/framespaces/svg-intersections.git",
+    "svg-intersections": "git+https://github.com/framespaces/svg-intersections.git",
     "svg-points": "^2.0.1",
     "taffydb": "^2.7.2"
   },

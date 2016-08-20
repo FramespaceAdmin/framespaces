@@ -7,17 +7,13 @@ var _ = require('lodash'),
     vector = Vector.fromPoints,
     rotate = _.bind(_kld.Matrix2D.prototype.rotate, _kld.Matrix2D.IDENTITY);
 
-function closest(points, toPoint) {
-  return _.minBy(points, _.bind(toPoint.distanceFrom, toPoint));
-}
-
 function end(shape, other, angle) {
   // Throw out a ray from the shape centre, along the specified angle from the centre-centre line.
   var cc = vector(shape.bbox.c, other.bbox.c),
       ray = cc.transform(rotate(angle || 0)).unit().multiply(shape.extent),
       intersects = Line.fromPoints(shape.bbox.c, shape.bbox.c.add(ray)).intersect(shape);
   // Point is the ray intersect
-  return closest(intersects, other.bbox.c) || shape.bbox.c;
+  return Shape.closest(intersects, other.bbox.c) || shape.bbox.c;
 }
 
 function Linkline(attr) {

@@ -7,6 +7,10 @@ var _ = require('lodash'),
     Point = require('kld-affine').Point2D,
     MockPaper = require('./mockPaper');
 
+var dPattern = exports.dPattern = function (d) {
+  return new RegExp(d.replace(/~([0-9\.]+)/g, '$1[0-9]+').replace(/,?\s+/g, ',?\\s*'));
+};
+
 describe('Arc', function () {
   describe('with raw attributes', function () {
     // Examples simplified from Mozilla tutorial
@@ -113,7 +117,8 @@ describe('Arc', function () {
       var fragments = arc.minus(new Rect({ x : 0.5, y : 0, width : 1, height : 0.5 }));
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
-      assert.match(fragments[0].attr.d, dPattern('M0 0 A 1 1, 0, 0, 0, 2 0'));
+      // Note large arc flag doesn't matter for a semi-circle
+      assert.match(fragments[0].attr.d, dPattern('M0 0 A 1 1, 0, [01], 0, 2 0'));
     });
 
     it('should be completely minused by an occluding shape', function () {
@@ -122,10 +127,6 @@ describe('Arc', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 0);
     });
-
-    function dPattern(d) {
-      return new RegExp(d.replace(/,?\s+/g, ',?\\s*'));
-    }
 
     it('should have its head minused', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 2 0' }); // Semicircle below x axis
@@ -151,9 +152,9 @@ describe('Arc', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 2);
       assert.instanceOf(fragments[0], Arc);
-      assert.match(fragments[0].attr.d, dPattern('M0 0 A 1 1, 0, 0, 0, 0.5 0.86[0-9]+'));
+      assert.match(fragments[0].attr.d, dPattern('M0 0 A 1 1, 0, 0, 0, 0.5 ~0.86'));
       assert.instanceOf(fragments[1], Arc);
-      assert.match(fragments[1].attr.d, dPattern('M1.5 0.86[0-9]+ A 1 1, 0, 0, 0, 2 0'));
+      assert.match(fragments[1].attr.d, dPattern('M1.5 ~0.86 A 1 1, 0, 0, 0, 2 0'));
     });
 
     it('should stay large if angle > 180', function () {

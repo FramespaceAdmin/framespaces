@@ -41,6 +41,7 @@ Shape.constructors = _.once(function () {
   return [
     require('./circle'),
     require('./ellipse'),
+    require('./linkarc'), // Before arc
     require('./arc'),
     require('./label'), // Before text
     require('./linkline'), // Before line
@@ -192,6 +193,37 @@ Shape.prototype.delta = function (dAttr) {
 };
 
 /**
+ * Utility for use in @see Shape.prototype.delta. Just returns the delta'd attributes
+ * without creating a new Shape.
+ * @see Shape.deltaAttr.
+ */
+Shape.prototype.deltaAttr = function (dAttr) {
+  return Shape.deltaAttr(_.clone(this.attr), dAttr);
+};
+
+/**
+ * Returns the mutated attributes according to the given deltas.
+ * For numeric attributes, the given amounts are numeric deltas.
+ * For the class attribute, a space-delimited list of classes. Suffix minus to remove (e.g. '-link').
+ */
+Shape.deltaAttr = function (attr, dAttr) {
+  return _.assignWith(attr, dAttr, function (value, delta, key) {
+    if (_.isFunction(delta)) {
+      return delta(value);
+    } else if (NUMERIC_ATTR.test(key)) {
+      return (value || 0) + delta;
+    } else if (key === 'class') {
+      var classes = (value ? [value.split(' ')] : []),
+          changes = _.partition(delta.split(' '), function (c) { return c.charAt(0) === '-' }),
+          removals = _.map(changes[0], function (r) { return r.slice(1); }), additions = changes[1];
+      return _.union(_.without.apply(_, classes.concat(removals)), additions).join(' ');
+    } else {
+      return delta;
+    }
+  });
+};
+
+/**
  * Clones this shape with the given optional additional attributes
  */
 Shape.prototype.clone = function (attr/*, ...*/) {
@@ -262,34 +294,6 @@ Shape.prototype.addTo = function (paper) {
 };
 
 /**
- * Utility for use in @see Shape.prototype.delta. Just returns the delta'd attributes
- * without creating a new Shape.
- * @see Shape.deltaAttr.
- */
-Shape.prototype.deltaAttr = function (dAttr) {
-  return Shape.deltaAttr(_.clone(this.attr), dAttr);
-};
-
-/**
- * Returns the mutated attributes according to the given deltas.
- * For numeric attributes, the given amounts are numeric deltas.
- * For the class attribute, a space-delimited list of classes. Suffix minus to remove (e.g. '-link').
- */
-Shape.deltaAttr = function (attr, dAttr) {
-  return _.assignWith(attr, dAttr, function (v, d, key) {
-    if (NUMERIC_ATTR.test(key)) {
-      return (v || 0) + d;
-    } else if (key === 'class') {
-      var changes = _.partition(d.split(' '), function (c) { return c.charAt(0) === '-' }),
-          removals = _.map(changes[0], function (r) { return r.slice(1); }), additions = changes[1];
-      return _.union(_.without.apply(_, (v ? [v.split(' ')] : []).concat(removals)), additions).join(' ');
-    } else {
-      return d;
-    }
-  });
-};
-
-/**
  * Utility to return any points from this shape that are outside of the given other shape,
  * plus intersection points.
  * Note that the return will not be ordered.
@@ -330,6 +334,13 @@ Shape.strongAttr = function (e) {
     }
   }
   return attr;
+};
+
+/**
+ * Returns the closest of an array of points to a given point
+ */
+Shape.closest = function (points, toPoint) {
+  return _.minBy(points, _.bind(toPoint.distanceFrom, toPoint));
 };
 
 function strongPoint(point) {

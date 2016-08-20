@@ -3,8 +3,7 @@ var _ = require('lodash'),
     Shape = require('../client/shape'),
     Rect = require('../client/shape/rect'),
     Line = require('../client/shape/line'),
-    Linkline = require('../client/shape/linkline'),
-    MockPaper = require('./mockPaper');
+    Linkline = require('../client/shape/linkline');
 
 describe('Linkline', function () {
   it('should load directly from JSON', function () {
