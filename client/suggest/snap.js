@@ -5,13 +5,8 @@ var _ = require('lodash'),
     Shape = require('../shape'),
     Point = require('kld-affine').Point2D;
 
-var GAP_FACTOR = 0.1; // Magic number, ideal ratio of gap to point-adjusted shape extent
-
 function getConfidence(p1, p2, s1, s2) {
-  var d = p1.distanceFrom(p2),
-      extent = s1.extent + (s2 ? s2.extent : 0),
-      count = s1.points.length + (s2 ? s2.points.length : 0);
-  return 1 - (d / (extent / count)) * GAP_FACTOR;
+  return 1 - p1.distanceFrom(p2) / (s1.extent + (s2 ? s2.extent : 0));
 }
 
 module.exports = function suggestSnap(picture, element) {

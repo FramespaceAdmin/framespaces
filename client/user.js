@@ -34,7 +34,7 @@ module.exports = function User(paper, json) {
     tool = newTool;
   }
   function isUsing(toolName) {
-    return _.get(tool, 'name') === toolName;
+    return _.get(tool, 'constructor.name') === toolName;
   }
   events.on('interacting', function (delta, state) {
     return tool && tool.using(delta, state);
