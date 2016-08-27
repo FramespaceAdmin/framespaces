@@ -3,8 +3,7 @@ var _ = require('lodash')
     Line = require('../shape/line'),
     Arc = require('../shape/arc'),
     Linkline = require('../shape/linkline'),
-    Shape = require('../shape'),
-    mean = require('compute-mean');
+    Shape = require('../shape');
 
 module.exports = function suggestLink(picture, element) {
   var line = (element && !element.removed && Shape.of(element));
@@ -27,7 +26,7 @@ module.exports = function suggestLink(picture, element) {
         a1 : Linkline.angle(from.shape, to.shape, from.end),
         a2 : Linkline.angle(to.shape, from.shape, to.end)
       } : { /* Nothing to add for an Arc */ })), {
-        confidence : mean([from.confidence, to.confidence])
+        confidence : _.mean([from.confidence, to.confidence])
       });
     } // TODO: sow's ear!
   }

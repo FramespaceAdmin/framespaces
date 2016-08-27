@@ -5,15 +5,14 @@ var _ = require('lodash'),
     Shape = require('../shape'),
     Point = require('kld-affine').Point2D,
     vector = require('kld-affine').Vector2D.fromPoints,
-    stdev = require('compute-stdev'),
-    mean = require('compute-mean');
+    stdev = require('compute-stdev');
 
 module.exports = function suggestArcify(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
   if (shape && shape instanceof Polyline && shape.points.length > 3 && shape.ends.length) {
     // The centroid, C, of the shape will indicate the direction of the arc
     var p1 = shape.ends[0], p2 = shape.ends[1],
-        C = new Point(mean(_.map(shape.points, 'x')), mean(_.map(shape.points, 'y'))),
+        C = new Point(_.mean(_.map(shape.points, 'x')), _.mean(_.map(shape.points, 'y'))),
         m = p1.lerp(p2, 0.5);
     // The line from the mid-point, through the centroid, is a part of a radius
     // Extend a vector well beyond the extent, and intersect to find an approximate sagitta

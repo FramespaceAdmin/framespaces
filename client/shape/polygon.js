@@ -20,7 +20,7 @@ Polygon.prototype.constructor = Polygon;
 Shape.closed(Polygon.prototype);
 
 Polygon.prototype.nextPointIndex = function (i) {
-  return i < this.points.length ? i - 1 : 0;
+  return i < this.points.length - 1 ? i + 1 : 0;
 };
 
 Polygon.prototype.prevPointIndex = function (i) {

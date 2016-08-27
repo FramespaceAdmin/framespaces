@@ -3,8 +3,7 @@ var _ = require('lodash'),
     Line = require('../shape/line'),
     Rect = require('../shape/rect'),
     Shape = require('../shape'),
-    Point = require('kld-affine').Point2D,
-    mean = require('compute-mean');
+    Point = require('kld-affine').Point2D;
 
 function d(p1, p2, axis) {
   return Math.abs(p2[axis] - p1[axis]);
@@ -13,7 +12,7 @@ function d(p1, p2, axis) {
 module.exports = function suggestRectify(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
   function createAction(points) {
-    if (points.length === 4) {
+    if (!shape.ends.length && points.length === 4) {
       return picture.action.replacement(element, new Rect(Shape.computeBBox(points)));
     } else {
       return picture.action.mutation(element, shape.delta(shape instanceof Line ? {
@@ -41,7 +40,7 @@ module.exports = function suggestRectify(picture, element) {
 
     if (!_.isEqual(shape.points, _.map(rp, 'p'))) {
       return _.assign(createAction(_.map(rp, 'p')), {
-        confidence : mean(_.map(rp, 'confidence'))
+        confidence : _.mean(_.map(rp, 'confidence'))
       });
     }
   }
