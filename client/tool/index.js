@@ -30,3 +30,7 @@ Tool.cursor = function (state, radius) {
 };
 
 module.exports = Tool;
+
+module.exports.Pen = require('./pen');
+module.exports.Hand = require('./hand');
+module.exports.Eraser = require('./eraser');

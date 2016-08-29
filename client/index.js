@@ -4,13 +4,14 @@ var _ = require('lodash'),
     History = require('./history'),
     Toolbar = require('./toolbar'),
     Suggestor = require('./suggest'),
-    User = require('./user'),
+    LocalUser = require('./user/local'),
+    RemoteUser = require('./user/remote'),
     keycode = require('keycode'),
     fsIO = io(window.location + '/io'),
     paper = Snap('.paper'),
     picture = new Picture(paper),
     history = new History(picture),
-    users = {};
+    tools = require('./tool');
 
 function makeTool(constructor) {
   var tool = new constructor(picture);
@@ -22,24 +23,30 @@ function makeTool(constructor) {
   return tool;
 }
 
-var pen = makeTool(require('./tool/pen')),
-    hand = makeTool(require('./tool/hand')),
-    eraser = makeTool(require('./tool/eraser'));
+var pen = makeTool(tools.Pen),
+    hand = makeTool(tools.Hand),
+    eraser = makeTool(tools.Eraser);
 
 var toolbar = new Toolbar(Snap('#toolbar'));
 toolbar.undoButton.mousedown(history.undo);
 toolbar.redoButton.mousedown(history.next);
 history.on('revised', toolbar.updatePreviews);
 
-function addUser(json) {
-  return users[json.id] = new User(paper, json);
-}
-
 // Add the current user and wire up events
 fsIO.on('connect', function () {
-  var user = addUser({ id : fsIO.id });
+  var user = new LocalUser(fsIO.id);
+  // Send interactions in batches
+  var interactions = [];
+  function flushInteractions() {
+    if (interactions.length) {
+      fsIO.emit('interactions', interactions.splice(0, interactions.length));
+    }
+  }
   user.on('interacting', function (delta, state) {
-    fsIO.emit('interaction', state);
+    if (!interactions.length) {
+      setTimeout(flushInteractions, 100);
+    }
+    interactions.push(state);
   });
   window.onblur = function () {
     user.interacting({ active : false, char : null });
@@ -77,57 +84,51 @@ fsIO.on('connect', function () {
       element : _.get(element, 'id') || undefined
     });
   }
-  paper.mousedown(mouseHandler).mousemove(mouseHandler);
+  paper.mousedown(mouseHandler).mouseup(mouseHandler).mousemove(mouseHandler);
 
-  function cursor(which, p) {
-    paper.attr('style', 'cursor: url(/web/' + which.toLowerCase() + '.svg) ' + p.x + ' ' + p.y + ', auto;');
+  user.use(pen);
+  toolbar.penButton.mousedown(function () { user.use(pen) });
+  toolbar.handButton.mousedown(function () { user.use(hand) });
+  toolbar.eraserButton.mousedown(function () { user.use(eraser) });
+
+  // Handle history and suggested futures
+  var suggestor = new Suggestor(picture, history);
+  function commit(action) {
+    flushInteractions();
+    fsIO.emit('action', action.toJSON());
   }
-  var tool;
-  function use(newTool) {
-    _.invoke(tool, 'deactivate');
-    user.use(tool = newTool);
-    _.invoke(tool, 'activate');
-    cursor(tool.constructor.name, tool.offset);
-  }
-  use(pen);
-  toolbar.penButton.mousedown(function () { use(pen) });
-  toolbar.handButton.mousedown(function () { use(hand) });
-  toolbar.eraserButton.mousedown(function () { use(eraser) });
+  history.on('done', function (action) {
+    commit(action);
+    suggestor.suggest(action);
+  });
+  history.on('redone', commit);
+  history.on('undone', function (action) {
+    // An undo is the reverse action with the forward action's ID
+    commit(action.undo);
+  });
 });
 
 // Handle interactions from other users
+var users = {};
 fsIO.on('user.connected', function (json) {
-  var user = addUser(json);
-  user.on('interacting', user.showInteraction);
+  var user = users[json.id] = new RemoteUser(json, picture);
+  user.on('interacting', function (delta, state) {
+    user.showInteraction(delta, state);
+  });
 });
 fsIO.on('user.disconnected', function (id) {
   users[id].removed();
   delete users[id];
 });
-fsIO.on('interaction', function (userId, state) {
-  var user = users[userId];
-  if (!user.isUsing(state.tool)) {
-    user.use(new (require('./tool/' + state.tool.toLowerCase()))(picture));
+fsIO.on('interactions', function (userId, interactions) {
+  users[userId].interact(interactions);
+});
+fsIO.on('action', function (userId, json) {
+  var action = picture.action.fromJSON(json), user = users[userId];
+  function doAction() {
+    // Just do it - don't add other people's actions to our history
+    action.isOK() && action();
   }
-  user.interacting(state);
-});
-
-// Handle history and suggested futures
-var suggestor = new Suggestor(picture, history);
-function commit(action) {
-  fsIO.emit('action', action.toJSON());
-}
-history.on('done', function (action) {
-  commit(action);
-  suggestor.suggest(action);
-});
-history.on('redone', commit);
-history.on('undone', function (action) {
-  // An undo is the reverse action with the forward action's ID
-  fsIO.emit('action', action.undo.toJSON());
-});
-fsIO.on('action', function (json) {
-  var action = picture.action.fromJSON(json);
-  // Just do it - don't add other people's actions to our history
-  action.isOK() && action();
+  // Wait until inactive before committing the action
+  user ? user.once('quiesced', doAction) : doAction();
 });

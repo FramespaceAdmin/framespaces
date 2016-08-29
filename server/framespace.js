@@ -1,4 +1,5 @@
-var _url = require('url'),
+var _ = require('lodash'),
+    _url = require('url'),
     log = require('../lib/log'),
     ajv = new (require('ajv'))({
       verbose : log.getLevel() <= log.levels.DEBUG,
@@ -32,7 +33,7 @@ function Framespace(io, name) {
 
     // Replay all the actions that have gone before
     actions().each(function (action) {
-      socket.emit('action', action);
+      socket.emit('action', null, action);
     });
 
     socket.on('action', function (action) {
@@ -44,15 +45,17 @@ function Framespace(io, name) {
         } else {
           actions.insert(action);
         }
-        socket.broadcast.emit('action', action);
+        socket.broadcast.emit('action', user.id, action);
       }
     });
 
-    socket.on('interaction', function (state) {
-      if (!validate.state(state)) {
-        log.debug(validate.state.errors);
-      } else {
-        socket.broadcast.emit('interaction', user.id, state);
+    socket.on('interactions', function (interactions) {
+      if (interactions.length) {
+        if (!_.every(interactions, validate.state)) {
+          log.debug(validate.state.errors);
+        } else {
+          socket.broadcast.emit('interactions', user.id, interactions);
+        }
       }
     });
 
