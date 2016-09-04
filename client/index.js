@@ -7,7 +7,10 @@ var _ = require('lodash'),
     LocalUser = require('./user/local'),
     RemoteUser = require('./user/remote'),
     keycode = require('keycode'),
-    fsIO = io(window.location + '/io'),
+    Io = require('./io/socket-io'),
+    request = require('xhr'),
+    pass = require('pass-error'),
+    guid = require('../lib/guid'),
     paper = Snap('.paper'),
     picture = new Picture(paper),
     history = new History(picture),
@@ -32,14 +35,19 @@ toolbar.undoButton.mousedown(history.undo);
 toolbar.redoButton.mousedown(history.next);
 history.on('revised', toolbar.updatePreviews);
 
+function errorPage(err) {
+  window.location = window.location + '/error?cause=' + encodeURIComponent(err);
+}
+
 // Add the current user and wire up events
-fsIO.on('connect', function () {
-  var user = new LocalUser(fsIO.id);
+var userId = guid(); // TODO: auth cookie
+var io = new Io(userId, pass(function connected() {
+  var user = new LocalUser(userId);
   // Send interactions in batches
   var interactions = [];
   function flushInteractions() {
     if (interactions.length) {
-      fsIO.emit('interactions', interactions.splice(0, interactions.length));
+      io.publish('interactions', interactions.splice(0, interactions.length));
     }
   }
   user.on('interacting', function (delta, state) {
@@ -95,7 +103,14 @@ fsIO.on('connect', function () {
   var suggestor = new Suggestor(picture, history);
   function commit(action) {
     flushInteractions();
-    fsIO.emit('action', action.toJSON());
+    var json = action.toJSON();
+    io.publish('action', json);
+    request.post({ url : window.location + '/actions', json : json }, function (err, res, body) {
+      if (err || res.statusCode !== 200) {
+        // TODO: Disconnected! Retry?
+        errorPage(err || body);
+      }
+    });
   }
   history.on('done', function (action) {
     commit(action);
@@ -106,24 +121,33 @@ fsIO.on('connect', function () {
     // An undo is the reverse action with the forward action's ID
     commit(action.undo);
   });
-});
+
+  // Pause the action while we request all previous actions
+  io.pause('action', pass(function (play) {
+    request({ url : window.location + '/actions', json : true }, pass(function (res, body) {
+      return res.statusCode === 200 ?
+        play(_.map(body, function (action) { return [null, action]; }), '1.id') :
+        errorPage(body);
+    }, errorPage));
+  }, errorPage));
+}, errorPage));
 
 // Handle interactions from other users
 var users = {};
-fsIO.on('user.connected', function (json) {
-  var user = users[json.id] = new RemoteUser(json, picture);
+io.subscribe('user.connected', function (userId, json) {
+  var user = users[userId] = new RemoteUser(json, picture);
   user.on('interacting', function (delta, state) {
     user.showInteraction(delta, state);
   });
 });
-fsIO.on('user.disconnected', function (id) {
-  users[id].removed();
-  delete users[id];
+io.subscribe('user.disconnected', function (userId) {
+  users[userId].removed();
+  delete users[userId];
 });
-fsIO.on('interactions', function (userId, interactions) {
+io.subscribe('interactions', function (userId, interactions) {
   users[userId].interact(interactions);
 });
-fsIO.on('action', function (userId, json) {
+io.subscribe('action', function (userId, json) {
   var action = picture.action.fromJSON(json), user = users[userId];
   function doAction() {
     // Just do it - don't add other people's actions to our history

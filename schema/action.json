@@ -3,18 +3,6 @@
   "$schema" : "http://json-schema.org/schema#",
   "definitions" : {
     "guid" : { "type" : "string", "pattern" : "^[a-f][a-f0-9]{31}$" },
-    "action" : {
-      "type" : "object",
-      "properties" : {
-        "id" : { "$ref": "#/definitions/guid" },
-        "type" : { "type" : "string", "enum" : ["addition", "removal", "replacement", "mutation"] },
-        "element" : { "$ref": "#/definitions/guid" },
-        "shape" : { "$ref": "#/definitions/shape" },
-        "undo" : { "type" : "boolean" }
-      },
-      "required" : ["id", "type"],
-      "additionalProperties" : false
-    },
     "shape" : {
       "type" : "object",
       "properties" : {
@@ -53,8 +41,14 @@
       "additionalProperties" : false
     }
   },
-  "oneOf" : [
-    { "$ref": "#/definitions/action" },
-    { "type" : "array", "items" : { "$ref": "#/definitions/action" }
-  }]
+  "type" : "object",
+  "properties" : {
+    "id" : { "$ref": "#/definitions/guid" },
+    "type" : { "type" : "string", "enum" : ["addition", "removal", "replacement", "mutation"] },
+    "element" : { "$ref": "#/definitions/guid" },
+    "shape" : { "$ref": "#/definitions/shape" },
+    "undo" : { "type" : "boolean" }
+  },
+  "required" : ["id", "type"],
+  "additionalProperties" : false
 }
