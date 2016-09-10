@@ -11,7 +11,7 @@ TaffyStore.prototype = Object.create(Store.prototype);
 TaffyStore.prototype.constructor = TaffyStore;
 
 TaffyStore.prototype.data = function (type) {
-  return this.data[type] || (this.data[type] = taffy());
+  return this.typeData[type] || (this.typeData[type] = taffy());
 };
 
 TaffyStore.prototype.get = _async.asyncify(function (type, filter) {

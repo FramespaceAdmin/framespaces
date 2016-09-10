@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     _async = require('async'),
+    _jwt = require('jsonwebtoken'),
     log = require('../../lib/log'),
     Io = require('../io');
 
@@ -13,11 +14,11 @@ SocketIo.prototype.constructor = SocketIo;
 SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
   var ns = this.io.of('/' + name + '/io');
   ns.on('connection', function (socket) {
-    // Challenge the new socket to provide a userId
-    socket.emit('connected.user', function (user) {
-      socket.user = user; // minor object pollution
-      log.debug('User', user.id, 'connected');
-      socket.broadcast.emit('user.connected', user.id, user);
+    // Challenge the new socket to provide a JWT
+    socket.emit('user.token', function (jwt) {
+      socket.user = _jwt.decode(jwt); // minor object pollution
+      log.debug('User', socket.user.id, 'connected');
+      socket.broadcast.emit('user.connected', socket.user.id, socket.user);
     });
 
     _.each(ns.connected, function (otherSocket) {
@@ -26,8 +27,9 @@ SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
       }
     });
 
-    socket.on('action', function (action) {
+    socket.on('action', function (action, cb) {
       socket.broadcast.emit('action', socket.user.id, action);
+      cb && cb(false);
     });
 
     socket.on('interactions', function (interactions) {

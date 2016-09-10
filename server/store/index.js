@@ -9,7 +9,7 @@ function Store() {}
  * @param cb callback with error and filtered data
  */
 Store.prototype.get = function (type, filter, cb/*(err, [data])*/) {
-  throw new Error('Calling abstract class');
+  throw undefined;
 };
 
 /**
@@ -19,7 +19,7 @@ Store.prototype.get = function (type, filter, cb/*(err, [data])*/) {
  * @param cb callback
  */
 Store.prototype.insert = function (type, data, cb/*(err)*/) {
-  throw new Error('Calling abstract class');
+  throw undefined;
 };
 
 /**
@@ -29,7 +29,7 @@ Store.prototype.insert = function (type, data, cb/*(err)*/) {
  * @param cb callback with error and removed count
  */
 Store.prototype.remove = function (type, filter, cb/*(err, count)*/) {
-  throw new Error('Calling abstract class');
+  throw undefined;
 };
 
 module.exports = Store;

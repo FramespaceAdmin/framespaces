@@ -27,7 +27,7 @@ Io.prototype.constructor = Io;
  * @param listener event listener
  */
 Io.prototype.subscribe = function (eventName, listener/*(userId, data...)*/) {
-  throw new Error('Calling abstract class');
+  throw undefined;
 };
 
 /**
@@ -35,9 +35,10 @@ Io.prototype.subscribe = function (eventName, listener/*(userId, data...)*/) {
  * NOTE a userId will be prepended to the arguments for subscribers.
  * @param eventName channel event name
  * @param data... data to publish
+ * @param cb optional callback with error
  */
-Io.prototype.publish = function (eventName, data/*...*/) {
-  throw new Error('Calling abstract class');
+Io.prototype.publish = function (eventName, data/*...*/, cb/*(err)*/) {
+  throw undefined;
 };
 
 /**
@@ -50,7 +51,7 @@ Io.prototype.publish = function (eventName, data/*...*/) {
  * @param cb callback taking error and re-start (play) method
  */
 Io.prototype.pause = function (eventName, cb/*(err, play(messages, [iteratee=_.identity]))*/) {
-  throw new Error('Calling abstract class');
+  throw undefined;
 };
 
 module.exports = Io;

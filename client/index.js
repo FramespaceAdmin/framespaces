@@ -8,6 +8,8 @@ var _ = require('lodash'),
     RemoteUser = require('./user/remote'),
     keycode = require('keycode'),
     Io = require('./io/socket-io'),
+    jwtDecode = require('jwt-decode'),
+    cookies = require('js-cookie'),
     request = require('xhr'),
     pass = require('pass-error'),
     guid = require('../lib/guid'),
@@ -40,9 +42,9 @@ function errorPage(err) {
 }
 
 // Add the current user and wire up events
-var userId = guid(); // TODO: auth cookie
-var io = new Io(userId, pass(function connected() {
-  var user = new LocalUser(userId);
+var jwt = cookies.get('jwt') || errorPage('Can\'t log in');
+var io = new Io(jwt, pass(function connected() {
+  var user = new LocalUser(jwtDecode(jwt).id);
   // Send interactions in batches
   var interactions = [];
   function flushInteractions() {
@@ -104,13 +106,14 @@ var io = new Io(userId, pass(function connected() {
   function commit(action) {
     flushInteractions();
     var json = action.toJSON();
-    io.publish('action', json);
-    request.post({ url : window.location + '/actions', json : json }, function (err, res, body) {
-      if (err || res.statusCode !== 200) {
-        // TODO: Disconnected! Retry?
-        errorPage(err || body);
-      }
-    });
+    io.publish('action', json, pass(function () {
+      request.post({ url : window.location + '/actions', json : json }, function (err, res, body) {
+        if (err || res.statusCode !== 200) {
+          // TODO: Disconnected! Retry?
+          errorPage(err || body);
+        }
+      });
+    }, errorPage));
   }
   history.on('done', function (action) {
     commit(action);

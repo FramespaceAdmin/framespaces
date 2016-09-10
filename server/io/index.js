@@ -8,7 +8,7 @@ function Io() {
  * @param cb callback with error and channel object (implementation specific)
  */
 Io.prototype.createChannel = function (name, cb/*(err, channel)*/) {
-  throw new Error('Calling abstract class');
+  throw undefined;
 };
 
 /**
@@ -17,7 +17,7 @@ Io.prototype.createChannel = function (name, cb/*(err, channel)*/) {
  * @param cb callback with error and authorisation (implementation specific)
  */
 Io.prototype.authorise = function (name, cb/*(err, authorisation)*/) {
-  throw new Error('Calling abstract class');
+  throw undefined;
 };
 
 module.exports = Io;

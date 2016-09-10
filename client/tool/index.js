@@ -14,7 +14,7 @@ Tool.prototype = Object.create(EventEmitter.prototype);
 Tool.prototype.constructor = Tool;
 
 Tool.prototype.using = function using(delta, state) {
-  throw new Error('Function using(delta, state) must be overridden');
+  throw undefined;
 };
 
 Tool.prototype.offset = null;

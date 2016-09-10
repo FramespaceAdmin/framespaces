@@ -1,16 +1,14 @@
 var _ = require('lodash'),
     Io = require('../io');
 
-function SocketIo(userId, cb) {
+function SocketIo(jwt, cb) {
   // Note that 'io' is a global from /socket.io/socket.io.js
   this.socket = io(window.location + '/io');
 
   this.socket.on('connect', _.partial(cb, false));
   this.socket.on('connect_error', cb);
 
-  this.socket.on('connected.user', function (userIs) {
-    userIs({ id : userId });
-  });
+  this.socket.on('user.token', function (tokenIs) { tokenIs(jwt); });
 }
 
 SocketIo.prototype = Object.create(Io.prototype);
