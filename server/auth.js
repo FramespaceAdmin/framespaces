@@ -7,9 +7,9 @@ var _ = require('lodash'),
 var JWT_SECRET = 'f962db97-49c7-4f16-bbba-3fee16b5fd4b';
 
 function setReqUser(req, jwt, next) {
-  _jwt.verify(jwt, JWT_SECRET, pass(function (decoded) {
-    log.trace('%s: %s authorised for user %s', req.method, req.url, decoded.id);
-    req.user = decoded;
+  _jwt.verify(jwt, JWT_SECRET, pass(function (user) {
+    log.trace('%s: %s authorised for user %s', req.method, req.url, user.id);
+    req.user = user;
     next();
   }, next));
 }

@@ -1,4 +1,5 @@
 var _ = require('lodash'),
+    config = require('config'),
     log = require('../lib/log'),
     express = require('express'),
     bodyParser = require('body-parser'),
@@ -11,8 +12,9 @@ var _ = require('lodash'),
     auth = require('./auth'),
     port = process.env.PORT || 3000,
     validate = require('../lib/validate'),
-    io = new (require('./io/socket-io'))(server),
-    store = new (require('./store/taffy'))();
+    modules = require('../lib/modules'),
+    io = new (require(modules.io))(server),
+    store = new (require(modules.store))();
 
 // Note, this is used from the stop and restart scripts
 process.title = 'Framespaces';
@@ -27,7 +29,7 @@ app.use(cookieParser());
  * NOTE this route does not require authorisation
  */
 app.get('/', function (req, res, next) {
-  // Create a new board and redirect to it
+  // Create a new framespace and redirect to it
   _async.auto({
     name : function (cb) {
       return _async.concatSeries(['adjective', 'noun'], function (partOfSpeech, cb) {
@@ -51,20 +53,20 @@ app.get('/', function (req, res, next) {
 app.get('/:fsName', auth.cookie, function (req, res, next) {
   store.get('fs', { name : req.params.fsName }, pass(function (fss) {
     return fss.length === 1 ?
-      res.render('index', { fs : fss[0] }) :
+      res.render('index', { fs : fss[0], config : config }) :
       res.sendStatus(fss.length ? 500 : 404);
   }, next));
 });
 
 /**
- * GETting the actions for a board.
+ * GETting the actions for a framespace.
  */
 app.get('/:fsName/actions', auth.cookie, function (req, res, next) {
   store.get('action', { fs : req.params.fsName }, pass(_.bind(res.send, res), next));
 });
 
 /**
- * POSTing a new action for a board
+ * POSTing a new action for a framespace
  */
 app.post('/:fsName/actions', auth.cookie, function (req, res, next) {
   var actions = _.isArray(req.body) ? req.body : [req.body];
@@ -80,10 +82,10 @@ app.post('/:fsName/actions', auth.cookie, function (req, res, next) {
 });
 
 /**
- * GETting authorisation to use the realtime channel for a board
+ * GETting authorisation to use the realtime channel for a framespace
  */
 app.get('/:fsName/channel/auth', auth.cookie, function (req, res, next) {
-  io.authorise(req.params.fsName, pass(_.bind(res.send, res), next));
+  io.authorise(req.params.fsName, req.user.id, pass(_.bind(res.send, res), next));
 });
 
 /**

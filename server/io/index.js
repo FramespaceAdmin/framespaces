@@ -16,7 +16,7 @@ Io.prototype.createChannel = function (name, cb/*(err, channel)*/) {
  * @param name channel name
  * @param cb callback with error and authorisation (implementation specific)
  */
-Io.prototype.authorise = function (name, cb/*(err, authorisation)*/) {
+Io.prototype.authorise = function (name, userId, cb/*(err, authorisation)*/) {
   throw undefined;
 };
 

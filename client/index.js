@@ -1,4 +1,7 @@
 var _ = require('lodash'),
+    _url = require('url'),
+    log = require('../lib/log'),
+    fsUrl = require('./fsUrl'),
     Snap = require('snapsvg'),
     Picture = require('./picture'),
     History = require('./history'),
@@ -7,7 +10,7 @@ var _ = require('lodash'),
     LocalUser = require('./user/local'),
     RemoteUser = require('./user/remote'),
     keycode = require('keycode'),
-    Io = require('./io/socket-io'),
+    Io = require('io'), // NOTE this is aliasified, see /modules.js
     jwtDecode = require('jwt-decode'),
     cookies = require('js-cookie'),
     request = require('xhr'),
@@ -38,7 +41,7 @@ toolbar.redoButton.mousedown(history.next);
 history.on('revised', toolbar.updatePreviews);
 
 function errorPage(err) {
-  window.location = window.location + '/error?cause=' + encodeURIComponent(err);
+  window.location = fsUrl.append('error?cause=' + encodeURIComponent(err));
 }
 
 // Add the current user and wire up events
@@ -107,7 +110,7 @@ var io = new Io(jwt, pass(function connected() {
     flushInteractions();
     var json = action.toJSON();
     io.publish('action', json, pass(function () {
-      request.post({ url : window.location + '/actions', json : json }, function (err, res, body) {
+      request.post({ url : fsUrl.append('actions'), json : json }, function (err, res, body) {
         if (err || res.statusCode !== 200) {
           // TODO: Disconnected! Retry?
           errorPage(err || body);
@@ -125,37 +128,37 @@ var io = new Io(jwt, pass(function connected() {
     commit(action.undo);
   });
 
+  // Handle interactions from other users
+  var users = {};
+  io.subscribe('user.connected', function (userId, json) {
+    var user = users[userId] = new RemoteUser(json, picture);
+    user.on('interacting', function (delta, state) {
+      user.showInteraction(delta, state);
+    });
+  });
+  io.subscribe('user.disconnected', function (userId) {
+    _.invoke(users, [userId, 'removed']);
+    delete users[userId];
+  });
+  io.subscribe('interactions', function (userId, interactions) {
+    _.invoke(users, [userId, 'interact'], interactions);
+  });
+  io.subscribe('action', function (userId, json) {
+    var action = picture.action.fromJSON(json), user = users[userId];
+    function doAction() {
+      // Just do it - don't add other people's actions to our history
+      action.isOK() && action();
+    }
+    // Wait until inactive before committing the action
+    user ? user.once('quiesced', doAction) : doAction();
+  });
+
   // Pause the action while we request all previous actions
   io.pause('action', pass(function (play) {
-    request({ url : window.location + '/actions', json : true }, pass(function (res, body) {
+    request({ url : fsUrl.append('actions'), json : true }, pass(function (res, body) {
       return res.statusCode === 200 ?
         play(_.map(body, function (action) { return [null, action]; }), '1.id') :
         errorPage(body);
     }, errorPage));
   }, errorPage));
 }, errorPage));
-
-// Handle interactions from other users
-var users = {};
-io.subscribe('user.connected', function (userId, json) {
-  var user = users[userId] = new RemoteUser(json, picture);
-  user.on('interacting', function (delta, state) {
-    user.showInteraction(delta, state);
-  });
-});
-io.subscribe('user.disconnected', function (userId) {
-  users[userId].removed();
-  delete users[userId];
-});
-io.subscribe('interactions', function (userId, interactions) {
-  users[userId].interact(interactions);
-});
-io.subscribe('action', function (userId, json) {
-  var action = picture.action.fromJSON(json), user = users[userId];
-  function doAction() {
-    // Just do it - don't add other people's actions to our history
-    action.isOK() && action();
-  }
-  // Wait until inactive before committing the action
-  user ? user.once('quiesced', doAction) : doAction();
-});

@@ -9,14 +9,16 @@
     "url": "https://subversion.assembla.com/svn/framespaces/trunk/"
   },
   "dependencies": {
+    "ably": "^0.8.34",
     "ajv": "^4.1.3",
+    "aliasify": "^2.0.0",
     "async": "^2.0.0-rc.5",
     "body-parser": "^1.15.2",
     "browserify": "^13",
     "compute-stdev": "^1.0.0",
+    "config": "^1.21.0",
     "cookie-parser": "^1.4.3",
     "ejs": "^2.4.2",
-    "envify": "^3.4.1",
     "express": "^4.13.4",
     "html.js": "^0.12.1",
     "js-cookie": "^2.1.3",
@@ -34,6 +36,7 @@
     "svg-intersections": "git+https://github.com/framespaces/svg-intersections.git#master",
     "svg-points": "^2.0.1",
     "taffydb": "^2.7.2",
+    "url-join": "^1.1.0",
     "xhr": "^2.2.2"
   },
   "devDependencies": {
@@ -42,16 +45,17 @@
     "jsdom-global": "2.0.0",
     "mocha": "^2"
   },
+  "aliasify": "./client/modules.js",
   "scripts": {
     "postinstall": "npm run build:dist",
     "start": "node server/index.js",
     "stop": "pkill -SIGINT Framespaces",
     "test": "./node_modules/.bin/mocha test",
-    "start:dev": "npm run build:dev && LOG_LEVEL=DEBUG npm start",
-    "restart:dev": "npm run build:dev && LOG_LEVEL=DEBUG npm restart",
+    "start:dev": "npm run build:dev && NODE_ENV=development node server/index.js",
+    "restart:dev": "npm run build:dev && npm stop && NODE_ENV=development node server/index.js",
     "copy:dist": "mkdir -p dist && cp -R web/* dist/",
-    "bundle:dev": "LOG_LEVEL=DEBUG ./node_modules/browserify/bin/cmd.js client/index.js -t envify > dist/bundle.js",
-    "bundle:dist": "./node_modules/browserify/bin/cmd.js client/index.js -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] -t envify > dist/bundle.js",
+    "bundle:dev": "NODE_ENV=development ./node_modules/browserify/bin/cmd.js client -t aliasify > dist/bundle.js",
+    "bundle:dist": "./node_modules/browserify/bin/cmd.js client -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] -t aliasify > dist/bundle.js",
     "build:dist": "npm run copy:dist && npm run bundle:dist",
     "build:dev": "npm test && npm run copy:dist && npm run bundle:dev"
   }

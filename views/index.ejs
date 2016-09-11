@@ -2,7 +2,11 @@
   <head>
     <title>Framespace <%= fs.name %></title>
     <link rel="stylesheet" type="text/css" href="/web/style.css">
-    <script src="/socket.io/socket.io.js"></script>
+    <% if (config.get('modules.io') == 'socket-io') { %>
+      <script src="/socket.io/socket.io.js"></script>
+    <% } else if (config.get('modules.io') == 'ably') { %>
+      <script src="https://cdn.ably.io/lib/ably.min.js"></script>
+    <% } %>
   </head>
   <body>
     <div id="users" style="position: fixed; top: 0px; left: 0px; pointer-events: none;">

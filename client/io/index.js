@@ -1,5 +1,4 @@
-var _ = require('lodash'),
-    EventEmitter = require('events');
+var _ = require('lodash');
 
 /**
  * Base interface for client-side channels.
@@ -8,25 +7,25 @@ function Io() {
 }
 
 /**
- * Available message events and their arguments
+ * Available message events and their arguments.
+ * When publishing, the arguments should match the given array.
+ * When subscribing, the arguments have the userId prepended.
  */
 Io.messages = {
-  'user.connected' : [{ id : String }],
-  'user.disconnected' : [],
+  'user.connected' : [{ id : String }], // Cannot be published
+  'user.disconnected' : [], // Cannot be published
   'action' : [Object],
   'interactions' : [Array]
 };
 
-Io.prototype = Object.create(EventEmitter.prototype);
-Io.prototype.constructor = Io;
-
 /**
  * Subscribe to the io channel.
- * NOTE the listener always receives a userId as the first argument.
+ * NOTE the subscriber always receives a userId as the first argument.
  * @param eventName channel event name
- * @param listener event listener
+ * @param subscriber event subscriber
+ * @return this, for chaining
  */
-Io.prototype.subscribe = function (eventName, listener/*(userId, data...)*/) {
+Io.prototype.subscribe = function (eventName, subscriber/*(userId, data...)*/) {
   throw undefined;
 };
 
@@ -36,22 +35,53 @@ Io.prototype.subscribe = function (eventName, listener/*(userId, data...)*/) {
  * @param eventName channel event name
  * @param data... data to publish
  * @param cb optional callback with error
+ * @return this, for chaining
  */
 Io.prototype.publish = function (eventName, data/*...*/, cb/*(err)*/) {
   throw undefined;
 };
 
 /**
+ * Removes the given subscriber from the event channel.
+ */
+Io.prototype.unsubscribe = function (eventName, subscriber) {
+  throw undefined;
+};
+
+/**
+ * Gets all the subscription functions for the event channel.
+ */
+Io.prototype.subscribers = function (eventName) {
+  throw undefined;
+};
+
+/**
  * Pause the given channel events.
  * The play method given to the callback takes an optional array of messages to play into the
- * channel before also playing any missed events. Each message is an array of listener arguments.
+ * channel before also playing any missed events. Each message is an array of subscriber arguments.
  * Also taken is an optional iteratee method to be used to de-duplicate messages
  * per https://lodash.com/docs/#uniqBy
  * @param eventName channel event name
  * @param cb callback taking error and re-start (play) method
  */
 Io.prototype.pause = function (eventName, cb/*(err, play(messages, [iteratee=_.identity]))*/) {
-  throw undefined;
+  var subscribers = this.subscribers(eventName), pausedMessages = [];
+  function pausedListener() {
+    pausedMessages.push(_.toArray(arguments));
+  }
+  _.each(subscribers, _.bind(this.unsubscribe, this, eventName));
+  this.subscribe(eventName, pausedListener);
+  cb(false, _.bind(function (messages, iteratee) {
+    this.unsubscribe(eventName, pausedListener);
+    _.each(subscribers, _.bind(this.subscribe, this, eventName));
+    // Emit the requested messages, then the paused messages
+    _.each(_.uniqBy((messages || []).concat(pausedMessages), iteratee), _.bind(function (args) {
+      // Emit locally, not to the socket
+      _.each(subscribers, function (subscriber) {
+        subscriber.apply(this, args);
+      });
+    }, this));
+  }, this));
 };
 
 module.exports = Io;
