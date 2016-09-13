@@ -3,23 +3,23 @@ var _ = require('lodash'),
     realtime = require('ably').Realtime,
     Io = require('../io');
 
-function Ably() {
+function AblyIo() {
   this.ably = realtime({ key : 'sV1fJg.GU6wQw:Pd93KJ6tGjiSogGb'});
 }
 
-Ably.prototype = Object.create(Io.prototype);
-Ably.prototype.constructor = Ably;
+AblyIo.prototype = Object.create(Io.prototype);
+AblyIo.prototype.constructor = AblyIo;
 
-Ably.prototype.createChannel = function (name, cb/*(err)*/) {
+AblyIo.prototype.createChannel = function (name, cb/*(err)*/) {
   // This is not strictly necessary but fulfills the async contract
   this.ably.channels.get(name).attach(cb);
 };
 
-Ably.prototype.authorise = function (name, userId, cb/*(err, authorisation)*/) {
+AblyIo.prototype.authorise = function (name, userId, cb/*(err, authorisation)*/) {
   this.ably.auth.createTokenRequest({
     clientId : userId,
     capability : JSON.stringify(_.set({}, name, ['subscribe', 'publish', 'presence']))
   }, cb);
 };
 
-module.exports = Ably;
+module.exports = AblyIo;

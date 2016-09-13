@@ -49,8 +49,10 @@ app.get('/', function (req, res, next) {
 
 /**
  * GETting a framespace renders the HTML
+ * NOTE this generates an anonymous user cookie if there isn't one on the request.
+ * TODO ... unless the framespace is private.
  */
-app.get('/:fsName', auth.cookie, function (req, res, next) {
+app.get('/:fsName', auth.setCookie, function (req, res, next) {
   store.get('fs', { name : req.params.fsName }, pass(function (fss) {
     return fss.length === 1 ?
       res.render('index', { fs : fss[0], config : config }) :

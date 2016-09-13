@@ -7,11 +7,23 @@ var _ = require('lodash'),
 
 function AblyIo(jwt, cb) {
   // Note that 'Ably.Realtime' is a global from https://cdn.ably.io/lib/ably.min.js
-  var ably = Ably.Realtime({ authUrl : fsUrl.append('channel/auth'), echoMessages : false });
-  var channel = ably.channels.get(fsUrl.name);
-  channel.presence.enter(cb);
+  var ably = Ably.Realtime({ authUrl : fsUrl.append('channel/auth'), echoMessages : false }),
+      channel = ably.channels.get(fsUrl.name),
+      user = jwtDecode(jwt);
 
-  // subscribers member is [[subscriber, ablySubscriber]]
+  channel.presence.get(pass(function(members) {
+    channel.presence.enter(user, pass(function () {
+      cb(false); // Ensure the current user is first
+      // Notify ourselves of the existing users
+      _.each(this.subscribers('user.connected'), function (subscriber) {
+        _.each(members, function (member) {
+          subscriber(member.data.id, member.data);
+        });
+      });
+    }, cb, null, this));
+  }, cb, null, this));
+
+  // subscribers member is array if pairs [[subscriber, ablySubscriber]]
   this.events = {
     'user.connected' : { emitter : channel.presence, name : 'enter', subscribers : [] },
     'user.disconnected' : { emitter : channel.presence, name : 'leave', subscribers : [] },

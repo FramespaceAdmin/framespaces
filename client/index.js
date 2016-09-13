@@ -128,31 +128,6 @@ var io = new Io(jwt, pass(function connected() {
     commit(action.undo);
   });
 
-  // Handle interactions from other users
-  var users = {};
-  io.subscribe('user.connected', function (userId, json) {
-    var user = users[userId] = new RemoteUser(json, picture);
-    user.on('interacting', function (delta, state) {
-      user.showInteraction(delta, state);
-    });
-  });
-  io.subscribe('user.disconnected', function (userId) {
-    _.invoke(users, [userId, 'removed']);
-    delete users[userId];
-  });
-  io.subscribe('interactions', function (userId, interactions) {
-    _.invoke(users, [userId, 'interact'], interactions);
-  });
-  io.subscribe('action', function (userId, json) {
-    var action = picture.action.fromJSON(json), user = users[userId];
-    function doAction() {
-      // Just do it - don't add other people's actions to our history
-      action.isOK() && action();
-    }
-    // Wait until inactive before committing the action
-    user ? user.once('quiesced', doAction) : doAction();
-  });
-
   // Pause the action while we request all previous actions
   io.pause('action', pass(function (play) {
     request({ url : fsUrl.append('actions'), json : true }, pass(function (res, body) {
@@ -162,3 +137,30 @@ var io = new Io(jwt, pass(function connected() {
     }, errorPage));
   }, errorPage));
 }, errorPage));
+
+// Handle interactions from other users
+// NOTE this needs to happen before the Io constructor callback so we get user.connected events
+// for users already on the framespace
+var users = {};
+io.subscribe('user.connected', function (userId, json) {
+  var user = users[userId] = new RemoteUser(json, picture);
+  user.on('interacting', function (delta, state) {
+    user.showInteraction(delta, state);
+  });
+});
+io.subscribe('user.disconnected', function (userId) {
+  _.invoke(users, [userId, 'removed']);
+  delete users[userId];
+});
+io.subscribe('interactions', function (userId, interactions) {
+  _.invoke(users, [userId, 'interact'], interactions);
+});
+io.subscribe('action', function (userId, json) {
+  var action = picture.action.fromJSON(json), user = users[userId];
+  function doAction() {
+    // Just do it - don't add other people's actions to our history
+    action.isOK() && action();
+  }
+  // Wait until inactive before committing the action
+  user ? user.once('quiesced', doAction) : doAction();
+});

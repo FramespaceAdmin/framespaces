@@ -24,9 +24,17 @@ function generateUser(req, res, next) {
 }
 
 /**
- * JSON Web Token cookies for web browser requests
+ * JSON Web Token cookies mandatory for API requests
  */
-exports.cookie = function pageAuth(req, res, next) {
+exports.cookie = function (req, res, next) {
+  if (req.cookies.jwt) {
+    setReqUser(req, req.cookies.jwt, next);
+  } else {
+    res.sendStatus(401);
+  }
+};
+
+exports.setCookie = function (req, res, next) {
   if (req.cookies.jwt) {
     setReqUser(req, req.cookies.jwt, next);
   } else {
