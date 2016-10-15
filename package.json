@@ -6,7 +6,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "svn",
-    "url": "https://subversion.assembla.com/svn/framespaces/trunk/"
+    "url": "https://github.com/FramespaceAdmin/framespaces"
   },
   "dependencies": {
     "ably": "^0.8.34",
