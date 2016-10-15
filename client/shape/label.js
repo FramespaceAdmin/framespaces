@@ -1,4 +1,5 @@
 var _ = require('lodash'),
+    as = require('yavl'),
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
     Text = require('./text');
@@ -13,13 +14,21 @@ Label.fromJSON = function (data) {
     new Label(data.attr, _.map(data.children, Text.Span.fromJSON), data.bbox);
 };
 
-Label.of = function (e) {
-  return e.node.nodeName === 'text' && e.hasClass('label') &&
-    new Label(Shape.strongAttr(e), _.map(e.selectAll('tspan'), Text.Span.of), e.getBBox());
+Label.fromElement = function (e) {
+  return Shape.elementName(e) === 'text' && (function (attr) {
+    return Shape.hasClass(attr, 'label') &&
+      new Label(attr, _.map(e.selectAll('tspan'), Text.Span.fromElement), e.getBBox());
+  })(Text.elementAttr(e));
 };
 
 Label.prototype = Object.create(Text.prototype);
 Label.prototype.constructor = Label;
+
+Label.prototype.ATTR = Text.prototype.ATTR.with({
+  on : String, // id of the labellee
+  ox : as(undefined, Number), // x offset from labelee
+  oy : as(undefined, Number) // y offset from labelee
+});
 
 Label.prototype.label = function (on) {
   var matrix = this.transform(on.transform()),

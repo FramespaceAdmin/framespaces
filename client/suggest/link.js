@@ -6,12 +6,12 @@ var _ = require('lodash')
     Shape = require('../shape');
 
 module.exports = function suggestLink(picture, element) {
-  var line = (element && !element.removed && Shape.of(element));
+  var line = (element && !element.removed && Shape.fromElement(element));
   if (line && (line instanceof Line || line instanceof Arc) && !line.hasClass('link')) {
     function suggestEnd(p) {
       return _.maxBy(_.map(_.without(picture.allElements(), element), function (e) {
         // Confidence is based on the distance of the point from the shape centre or nearest intersect
-        var s = Shape.of(e), end = Shape.closest(line.intersect(s), p) || s.bbox.c,
+        var s = Shape.fromElement(e), end = Shape.closest(line.intersect(s), p) || s.bbox.c,
             d = Math.min(end.distanceFrom(p), s.bbox.c.distanceFrom(p));
         return { shape : s, end : end, confidence : 1 - (d / s.extent) };
       }), 'confidence');

@@ -171,7 +171,7 @@ describe('Arc', function () {
     var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
-      var arc = Shape.of(paper.path('M1 1 A 1 1, 0, 0, 0, 2 2'));
+      var arc = Shape.fromElement(paper.path('M1 1 A 1 1, 0, 0, 0, 2 2'));
       assert.equal(arc.name, 'path');
       assert.equal(arc.points.length, 2);
       assert.equal(arc.extent, Math.sqrt(2));

@@ -1,10 +1,11 @@
 var _ = require('lodash'),
+    as = require('yavl'),
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
     _cap = require('svg-intersections');
 
-function Text(attr, spans, bbox) {
-  Shape.call(this, 'text', attr, spans, bbox);
+function Text(attr, content, bbox) {
+  Shape.call(this, 'text', attr, content, bbox);
 }
 
 Text.fromJSON = function (data) {
@@ -12,13 +13,33 @@ Text.fromJSON = function (data) {
     new Text(data.attr, _.map(data.children, Text.Span.fromJSON), data.bbox);
 };
 
-Text.of = function (e) {
-  return e.node.nodeName === 'text' &&
-    new Text(Shape.strongAttr(e), _.map(e.selectAll('tspan'), Text.Span.of), e.getBBox());
+Text.fromElement = function (e) {
+  return Shape.elementName(e) === 'text' && (function (node, bbox) {
+    var tspans = node.querySelectorAll('tspan'),
+        content = tspans.length ? _.map(tspans, Text.Span.fromElement) : node.textContent;
+    return new Text(Text.elementAttr(e), content, bbox);
+  })(e.node|| e, e.getBBox());
+};
+
+Text.elementAttr = function (e) {
+  var attr = Shape.elementAttr(e);
+  // Grab a font-size inline style attribute, if in pixels
+  var fsStr = attr['font-size'] || (e.node || e).style.getPropertyValue('font-size'),
+      fsParts = fsStr && /([0-9\.]+)(\w{2})?/.exec(fsStr);
+  if (fsParts && (!fsParts[2] || fsParts[2] === 'px')) {
+    attr['font-size'] = Number(fsParts[1]);
+  };
+  return attr;
 };
 
 Text.prototype = Object.create(Shape.prototype);
 Text.prototype.constructor = Text;
+
+Text.prototype.ATTR = Shape.prototype.ATTR.with({
+  x : Number,
+  y : Number,
+  'font-size' : as(undefined, Number) // Pixel font size, see Text.elementAttr
+});
 
 Text.prototype.computeParams = function () {
   // TODO: letter path
@@ -47,13 +68,19 @@ Text.Span.fromJSON = function (data) {
     new Text.Span(data.attr, data.text, data.bbox);
 };
 
-Text.Span.of = function (e) {
-  return e.node.nodeName === 'tspan' &&
-    new Text.Span(Shape.strongAttr(e), e.node.childNodes[0].textContent, e.getBBox());
+Text.Span.fromElement = function (e) {
+  return Shape.elementName(e) === 'tspan' &&
+    new Text.Span(Shape.elementAttr(e), (e.node || e).textContent, e.getBBox());
 };
 
 Text.Span.prototype = Object.create(Text.prototype);
 Text.Span.prototype.constructor = Text.Span;
+
+Text.Span.prototype.ATTR = Shape.prototype.ATTR.with({
+  // tspans start life with no attributes
+  x : as(undefined, Number),
+  y : as(undefined, Number)
+});
 
 Text.Span.prototype.delta = function (dAttr) {
   return new Text.Span(this.deltaAttr(dAttr), this.text, this.bbox);

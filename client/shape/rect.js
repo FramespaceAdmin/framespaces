@@ -10,12 +10,19 @@ Rect.fromJSON = function (data) {
   return data.name === 'rect' && new Rect(data.attr);
 };
 
-Rect.of = function (e) {
-  return e.node.nodeName === 'rect' && new Rect(Shape.strongAttr(e));
+Rect.fromElement = function (e) {
+  return Shape.elementName(e) === 'rect' && new Rect(Shape.elementAttr(e));
 };
 
 Rect.prototype = Object.create(Polygon.prototype);
 Rect.prototype.constructor = Rect;
+
+Rect.prototype.ATTR = Shape.prototype.ATTR.with({
+  x : Number,
+  y : Number,
+  width : Number,
+  height : Number
+});
 
 Rect.prototype.computePoints = Shape.prototype.computePoints;
 

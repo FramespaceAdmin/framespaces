@@ -1,4 +1,5 @@
 var _ = require('lodash'),
+    as = require('yavl'),
     Shape = require('../shape'),
     Line = require('./line'),
     _kld = require('kld-affine'),
@@ -27,8 +28,10 @@ Linkline.fromJSON = function (data) {
   return data.name === 'line' && Shape.hasClass(data.attr, 'link') && new Linkline(data.attr);
 };
 
-Linkline.of = function (e) {
-  return e.node.nodeName === 'line' && e.hasClass('link') && new Linkline(Shape.strongAttr(e));
+Linkline.fromElement = function (e) {
+  return Shape.elementName(e) === 'line' && (function (attr) {
+    return Shape.hasClass(attr, 'link') && new Linkline(attr);
+  })(Shape.elementAttr(e));
 };
 
 Linkline.angle = function (shape, other, end) {
@@ -37,6 +40,13 @@ Linkline.angle = function (shape, other, end) {
 
 Linkline.prototype = Object.create(Line.prototype);
 Linkline.prototype.constructor = Linkline;
+
+Linkline.prototype.ATTR = Line.prototype.ATTR.with({
+  from : String,
+  to : String,
+  a1 : as(undefined, Number),
+  a2 : as(undefined, Number)
+});
 
 Linkline.prototype.link = function (from, to) {
   var p1 = end(from, to, this.attr.a1), p2 = end(to, from, this.attr.a2);

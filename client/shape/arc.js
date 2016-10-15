@@ -4,8 +4,7 @@ var _ = require('lodash'),
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
     Path = require('./path'),
-    Line = require('../shape/line'),
-    Ellipse = require('./ellipse');
+    Line = require('../shape/line');
 
 function Arc(attr) {
   Path.call(this, attr);
@@ -19,8 +18,8 @@ Arc.fromJSON = function (data) {
   return data.name === 'path' && Arc.isArc(data.attr.d) && new Arc(data.attr);
 };
 
-Arc.of = function (e) {
-  return e.node.nodeName === 'path' && Arc.isArc(e.attr('d')) && new Arc(Shape.strongAttr(e));
+Arc.fromElement = function (e) {
+  return Shape.elementName(e) === 'path' && Arc.isArc(Shape.elementAttr(e, 'd')) && new Arc(Shape.elementAttr(e));
 };
 
 Arc.isArc = function (d) {

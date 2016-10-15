@@ -1,28 +1,26 @@
 var _ = require('lodash'),
+    as = require('yavl'),
     Point = require('kld-affine').Point2D,
     Matrix = require('kld-affine').Matrix2D,
     Vector = require('kld-affine').Vector2D,
-    _cap = require('svg-intersections'),
-    NUMERIC_ATTR = /^([xyr]|[orcd][xy]|[xya][12]|width|height|font-size)$/,
-    STRING_ATTR = /^(points|d|id|from|to|on|class)$/,
-    NUMERIC_STYLE_ATTR = /^(font-size)$/;
+    _cap = require('svg-intersections');
 
 /**
  * A shape is an abstract immutable representation of an svg element.
  * Constructor takes an SVG node name, attributes, children and bbox.
- * Children can be an array of child shapes or a single string (no mixed nodes).
- * Children and bbox are optional.
+ * Content can be an array of child shapes or a single string (no mixed nodes).
+ * Content and bbox are optional.
  */
-function Shape(name, attr, children, bbox) {
+function Shape(name, attr, content, bbox) {
   if (this.constructor === Shape) {
     throw new Error("Can't instantiate abstract class!");
   }
 
   // Basic properties
   this.name = name;
-  this.attr = attr;
-  this.text = _.isString(children) ? children : undefined;
-  this.children = _.isArray(children) ? children : undefined;
+  this.attr = this.ATTR.cast(attr);
+  this.text = _.isString(content) ? content : undefined;
+  this.children = _.isArray(content) ? content : undefined;
   this.bbox = bbox && strongBBox(bbox);
 
   // Computed properties
@@ -85,6 +83,15 @@ Shape.closed = function (prototype) {
 };
 
 /**
+ * yavl checker for acceptable attributes for a Shape. Shape sub-class prototypes
+ * define sub-class attributes.
+ */
+Shape.prototype.ATTR = as({
+  id : as(String).or(undefined),
+  class : as(String).or(undefined)
+});
+
+/**
  * Returns JSONable data for this Shape
  */
 Shape.prototype.toJSON = function () {
@@ -108,9 +115,9 @@ Shape.fromJSON = function (data) {
 /**
  * Gets a shape for the given Snap SVG element
  */
-Shape.of = function (element) {
+Shape.fromElement = function (element) {
   return _.reduce(Shape.constructors(), function (shape, constructor) {
-    return shape || constructor.of(element);
+    return shape || constructor.fromElement(element);
   }, null);
 };
 
@@ -210,7 +217,7 @@ Shape.deltaAttr = function (attr, dAttr) {
   return _.assignWith(attr, dAttr, function (value, delta, key) {
     if (_.isFunction(delta)) {
       return delta(value);
-    } else if (NUMERIC_ATTR.test(key)) {
+    } else if ((_.isUndefined(value) || _.isNumber(value)) && _.isNumber(delta)) {
       return (value || 0) + delta;
     } else if (key === 'class') {
       var classes = (value ? [value.split(' ')] : []),
@@ -267,27 +274,33 @@ Shape.prototype.hasClass = function (c) {
 };
 
 /**
- * applies this shape to the given element.
- * By default, only merges attributes
+ * Applies this shape to the given element (or element wrapper, e.g. from Snap.svg).
+ * By default, only applies attributes (not text or children).
  */
 Shape.prototype.applyTo = function (e) {
-  // Snap does not set classes when applying attributes
-  if (this.attr.class) {
-    e.node.className = this.attr.class;
-  }
-  return e.attr(this.attr);
+  _.each(this.attr, function (v, k) {
+    (e.node || e).setAttribute(k, v);
+  });
+  return e;
 };
 
 /**
- * add this shape (and children or text) to the given Snap.svg paper
+ * Add this shape (and children or text) to the given SVG paper (or paper wrapper, e.g. from Snap.svg)
  */
 Shape.prototype.addTo = function (paper) {
-  var e = paper.el(this.name, this.attr);
+  var e = paper.el ? paper.el(this.name, this.attr) : (function (shape) {
+    var e = paper.ownerDocument.createElementNS('http://www.w3.org/2000/svg', shape.name);
+    shape.applyTo(e);
+    paper.appendChild(e);
+    return e;
+  })(this);
+
   if (this.text) {
-    e.node.textContent = this.text;
+    (e.node || e).textContent = this.text;
   } else if (this.children) {
     _.each(this.children, function (child) {
-      child.addTo(paper).appendTo(e);
+      var ce = child.addTo(paper);
+      (e.node || e).appendChild(ce.node || ce);
     });
   }
   return e;
@@ -319,21 +332,26 @@ Shape.prototype.mover = null;
 Shape.prototype.minus = null;
 
 /**
- * Returns strongly typed attributes for the given element
+ * Returns the name of the given element (or element wrapper, e.g. from Snap.svg)
  */
-Shape.strongAttr = function (e) {
-  var attr = _.mapValues(_.pickBy(e.attr(), function (v, key) {
-    return NUMERIC_ATTR.test(key) || STRING_ATTR.test(key);
-  }), function (value, key) {
-    return NUMERIC_ATTR.test(key) ? Number(value) : value;
-  });
-  for (var i = 0; i < e.node.style.length; i++) {
-    var styleKey = e.node.style[i];
-    if (NUMERIC_STYLE_ATTR.test(styleKey)) {
-      attr[styleKey] = Number(/^([0-9]+)/.exec(e.node.style[styleKey])[1]);
-    }
+Shape.elementName = function (e) {
+  return (e.node || e).nodeName;
+};
+
+/**
+ * Returns the attributes of the given element (or element wrapper, e.g. from Snap.svg).
+ * If an attribute name is passed, returns the attribute value.
+ */
+Shape.elementAttr = function (e, name) {
+  if (_.isString(name)) {
+    return (e.node || e).getAttribute(name);
+  } else if (e.attr) {
+    return e.attr();
+  } else {
+    return _.reduce((e.node || e).attributes, function (attr, attribute) {
+      return _.set(attr, attribute.name, attribute.textContent);
+    }, {});
   }
-  return attr;
 };
 
 /**

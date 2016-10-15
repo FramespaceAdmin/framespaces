@@ -25,7 +25,7 @@
     "jsonwebtoken": "^7.1.9",
     "jwt-decode": "^2.1.0",
     "keycode": "^2.1.1",
-    "kld-affine": "git+https://github.com/framespaces/kld-affine.git#development",
+    "kld-affine": "^2.0.0",
     "lodash": "^4",
     "loglevel": "^1.4.1",
     "minifyify": "^7.3.3",
@@ -37,20 +37,21 @@
     "svg-points": "^2.0.1",
     "taffydb": "^2.7.2",
     "url-join": "^1.1.0",
-    "xhr": "^2.2.2"
+    "xhr": "^2.2.2",
+    "yavl": "^0.0"
   },
   "devDependencies": {
-    "chai": "^3",
-    "jsdom": "9.2.1",
-    "jsdom-global": "2.0.0",
-    "mocha": "^2"
+    "chai": "^3.5.0",
+    "jsdom": "^9.2.1",
+    "jsdom-global": "^2.0.0",
+    "mocha": "^2.5.3"
   },
   "aliasify": "./client/modules.js",
   "scripts": {
     "postinstall": "npm run build:dist",
     "start": "node server/index.js",
     "stop": "pkill -SIGINT Framespaces",
-    "test": "./node_modules/.bin/mocha test",
+    "test": "mocha test",
     "start:dev": "npm run build:dev && NODE_ENV=development node server/index.js",
     "restart:dev": "npm run build:dev && npm stop && NODE_ENV=development node server/index.js",
     "copy:dist": "mkdir -p dist && cp -R web/* dist/",

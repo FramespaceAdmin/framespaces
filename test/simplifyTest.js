@@ -17,7 +17,7 @@ describe('Simplify suggestor', function () {
     var action = simplify(picture, pl);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var simplified = Shape.of(action());
+    var simplified = Shape.fromElement(action());
     assert.instanceOf(simplified, Line);
     assert.equal(simplified.extent, 2);
   });
@@ -27,7 +27,7 @@ describe('Simplify suggestor', function () {
     var action = simplify(picture, pl);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var simplified = Shape.of(action());
+    var simplified = Shape.fromElement(action());
     assert.instanceOf(simplified, Polyline);
     assert.equal(simplified.points.length, 3);
     assert.equal(simplified.extent, Math.sqrt(8));
@@ -38,7 +38,7 @@ describe('Simplify suggestor', function () {
     var action = simplify(picture, pl);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var simplified = Shape.of(action());
+    var simplified = Shape.fromElement(action());
     assert.instanceOf(simplified, Polyline);
     assert.equal(simplified.points.length, 3);
     assert.equal(simplified.extent, Math.sqrt(8));
@@ -49,7 +49,7 @@ describe('Simplify suggestor', function () {
     var action = simplify(picture, pl);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var simplified = Shape.of(action());
+    var simplified = Shape.fromElement(action());
     assert.instanceOf(simplified, Polygon);
     assert.equal(simplified.points.length, 3);
     assert.equal(simplified.extent, Math.sqrt(8));
@@ -66,7 +66,7 @@ describe('Simplify suggestor', function () {
     var action = simplify(picture, pl);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var simplified = Shape.of(action());
+    var simplified = Shape.fromElement(action());
     assert.instanceOf(simplified, Polygon);
     assert.equal(simplified.points.length, 3);
     assert.equal(simplified.extent, Math.sqrt(8));
@@ -77,7 +77,7 @@ describe('Simplify suggestor', function () {
     var action = simplify(picture, pl);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var simplified = Shape.of(action());
+    var simplified = Shape.fromElement(action());
     assert.instanceOf(simplified, Polygon);
     assert.equal(simplified.points.length, 3);
     assert.equal(simplified.extent, Math.sqrt(8));

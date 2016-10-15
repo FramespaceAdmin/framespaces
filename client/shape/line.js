@@ -12,8 +12,8 @@ Line.fromJSON = function (data) {
   return data.name === 'line' && new Line(data.attr);
 };
 
-Line.of = function (e) {
-  return e.node.nodeName === 'line' && new Line(Shape.strongAttr(e));
+Line.fromElement = function (e) {
+  return Shape.elementName(e) === 'line' && new Line(Shape.elementAttr(e));
 };
 
 Line.fromPoints = function (p1, p2) {
@@ -22,6 +22,13 @@ Line.fromPoints = function (p1, p2) {
 
 Line.prototype = Object.create(Shape.prototype);
 Line.prototype.constructor = Line;
+
+Line.prototype.ATTR = Shape.prototype.ATTR.with({
+  x1 : Number,
+  y1 : Number,
+  x2 : Number,
+  y2 : Number
+});
 
 Line.prototype.computePoints = function () {
   return this.params.params;

@@ -16,7 +16,7 @@ describe('Arcify suggestor', function () {
     var action = arcify(picture, line);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.7);
-    var arc = Shape.of(action());
+    var arc = Shape.fromElement(action());
     assert.instanceOf(arc, Arc);
     assert.equal(arc.path[1].curve.rx, 1.625);
     assert.equal(arc.path[1].curve.ry, 1.625);
@@ -29,7 +29,7 @@ describe('Arcify suggestor', function () {
     var action = arcify(picture, line);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.7);
-    var arc = Shape.of(action());
+    var arc = Shape.fromElement(action());
     assert.instanceOf(arc, Arc);
     assert.equal(arc.path[1].curve.rx, 1.625);
     assert.equal(arc.path[1].curve.ry, 1.625);
@@ -43,7 +43,7 @@ describe('Arcify suggestor', function () {
     var action = arcify(picture, line);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.8);
-    var arc = Shape.of(action());
+    var arc = Shape.fromElement(action());
     assert.instanceOf(arc, Arc);
     assert.isAtLeast(arc.path[1].curve.rx, 1.5);
     assert.isAtMost(arc.path[1].curve.rx, 1.6);

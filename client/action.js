@@ -1,21 +1,20 @@
 var _ = require('lodash'),
-    guid = require('../lib/guid');
+    guid = require('../lib/guid'),
+    as = require('yavl');
 
-// TODO: Recfator this to proper classes
-
-/* class Action extends function() {
+exports.ACTION = as.defined('action', as.function().returns(Object).and({
   id : String,
-  description : String, // Some kind of useful string for logging
-  isUser : boolean, // Whether the user took the action (truthy), or the system
-  isOK : function() : boolean // Can this action be applied
-  undo : Action,
-  prev : undefined Action, // Set by history
-  next : undefined Action, // Set by history
-  preview : optional function(paper), // Paper is a temporary svg
-  toJSON : function() // returns JSONable data,
-  result : undefined value // the returned value, set by history,
-  confidence : Number < 1 // for futures
-};*/
+  description : as(String).or(undefined), // Some kind of useful string for logging
+  isUser : Boolean, // Whether the user took the action (truthy), or the system
+  isOK : as.function().returns(Boolean), // Can this action be applied
+  undo : as.defined('action').or(undefined),
+  prev : as.defined('action').or(undefined), // Set by history
+  next : as.defined('action').or(undefined), // Set by history
+  preview : as.function(Object).or(undefined), // Agrument is a temporary svg
+  toJSON : as.function().returns(JSON), // returns JSONable data
+  result : as(Object).or(undefined), // the returned value, set by history
+  confidence : as(Number).lt(1).or(undefined) // for futures
+}));
 
 exports.batch = function (actions) {
   function batch() {

@@ -17,7 +17,7 @@ describe('Rectify suggestor', function () {
     var action = rectify(picture, line);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var rectified = Shape.of(action());
+    var rectified = Shape.fromElement(action());
     assert.instanceOf(rectified, Line);
     assert.equal(rectified.extent, 1);
   });
@@ -33,7 +33,7 @@ describe('Rectify suggestor', function () {
     var action = rectify(picture, pl);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var rectified = Shape.of(action());
+    var rectified = Shape.fromElement(action());
     assert.instanceOf(rectified, Polyline);
     assert.equal(rectified.points.length, 3);
     assert.deepEqual(rectified.points[0], new Point(0, 0));

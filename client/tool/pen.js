@@ -53,7 +53,7 @@ function Pen(picture) {
       } else { // Finished an element
         activity = undefined;
         element.remove();
-        this.emit('finished', picture.action.addition(Shape.of(element)));
+        this.emit('finished', picture.action.addition(Shape.fromElement(element)));
       }
     } else if (state.active) { // Drawing or typing
       element.remove();

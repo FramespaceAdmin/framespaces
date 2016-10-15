@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     _svgp = require('svg-points'),
+    as = require('yavl'),
     Point = require('kld-affine').Point2D,
     Shape = require('../shape');
 
@@ -8,29 +9,40 @@ function Path(attr) {
   Shape.call(this, 'path', attr);
 }
 
+Path.PATH = as([{
+  x : Number,
+  y : Number,
+  moveTo : as(undefined, Boolean),
+  curve : as(undefined, {
+    type : 'arc',
+    rx : Number,
+    ry : Number,
+    xAxisRotation : as(undefined, Number),
+    sweepFlag : Boolean,
+    largeArcFlag : Boolean
+  }, {
+    type : 'quadratic',
+    x1 : Number,
+    y1 : Number
+  }, {
+    type : 'cubic',
+    x1 : Number,
+    y1 : Number,
+    x2 : Number,
+    y2 : Number
+  })
+}]);
+
 Path.parse = function (d) {
-  return _.cloneDeepWith(_svgp.toPoints({ type : 'path', d : d }), function normalise(v, k) {
-    switch (k) {
-      case 'curve':
-        return _.cloneDeepWith(v.type === 'arc' ? _.defaults(v, {
-          sweepFlag : false, largeArcFlag : false
-        }) : v, normalise);
-      case 'sweepFlag':
-      case 'largeArcFlag':
-        return Boolean(v);
-    }
-  });
+  return Path.PATH.cast(_svgp.toPoints({ type : 'path', d : d }));
 };
 
 Path.toString = function (path) {
-  var svgp = _.cloneDeepWith(path, function (v, k) {
-    switch (k) {
-      case 'sweepFlag':
-      case 'largeArcFlag':
-        return v ? 1 : 0;
+  return _svgp.toPath(_.cloneDeepWith(path, function (v, k) {
+    if (/Flag$/.test(k)) {
+      return v ? 1 : 0;
     }
-  });
-  return _svgp.toPath(svgp);
+  }));
 };
 
 Path.delta = function (deltas) {
@@ -49,6 +61,8 @@ Path.clone = function (path) {
 
 Path.prototype = Object.create(Shape.prototype);
 Path.prototype.constructor = Path;
+
+Path.prototype.ATTR = Shape.prototype.ATTR.with({ d : String });
 
 Path.prototype.computePoints = function () {
   return _.map(this.path, function (p) {

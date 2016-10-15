@@ -15,12 +15,18 @@ Circle.fromJSON = function (data) {
   return data.name === 'circle' && new Circle(data.attr);
 };
 
-Circle.of = function (e) {
-  return e.node.nodeName === 'circle' && new Circle(Shape.strongAttr(e));
+Circle.fromElement = function (e) {
+  return Shape.elementName(e) === 'circle' && new Circle(Shape.elementAttr(e));
 };
 
 Circle.prototype = Object.create(Shape.prototype);
 Circle.prototype.constructor = Circle;
+
+Circle.prototype.ATTR = Shape.prototype.ATTR.with({
+  cx : Number,
+  cy : Number,
+  r : Number
+});
 
 Circle.prototype.computePoints = function () {
   return [this.params.params[0]]; // centre

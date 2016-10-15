@@ -10,7 +10,7 @@ function d(p1, p2, axis) {
 }
 
 module.exports = function suggestRectify(picture, element) {
-  var shape = element && !element.removed && Shape.of(element);
+  var shape = element && !element.removed && Shape.fromElement(element);
   function createAction(points) {
     if (!shape.ends.length && points.length === 4) {
       return picture.action.replacement(element, new Rect(Shape.computeBBox(points)));

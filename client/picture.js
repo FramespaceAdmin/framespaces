@@ -42,7 +42,7 @@ module.exports = function Picture(paper) {
   }
 
   function removal(element) {
-    var shape = Shape.of(element), id = shape.attr.id,
+    var shape = Shape.fromElement(element), id = shape.attr.id,
         collateral = _.map(linksTo(id).concat(linksFrom(id)), function (e1) {
           return mutation(e1, linkRemoved(e1));
         }).concat(_.map(labelsOn(id), function (e1) {
@@ -70,7 +70,7 @@ module.exports = function Picture(paper) {
 
   function replacement(element, shape) {
     var id = element.attr('id'),
-        oldShape = Shape.of(element);
+        oldShape = Shape.fromElement(element);
 
     return publicAction(bareReplacement(id, shape), bareReplacement(id, oldShape));
   }
@@ -87,12 +87,12 @@ module.exports = function Picture(paper) {
         (!shape.hasClass('link') || (getElement(shape.attr.from) && getElement(shape.attr.to)));
     };
     if (shape.hasClass('link')) {
-      var fromShape = Shape.of(getElement(shape.attr.from)),
-          toShape = Shape.of(getElement(shape.attr.to)),
+      var fromShape = Shape.fromElement(getElement(shape.attr.from)),
+          toShape = Shape.fromElement(getElement(shape.attr.to)),
           linkShape = shape.link(fromShape, toShape);
       mutation.preview = previewer(fromShape, toShape, linkShape);
     } else if (shape.hasClass('label')) {
-      var onShape = Shape.of(getElement(shape.attr.on)),
+      var onShape = Shape.fromElement(getElement(shape.attr.on)),
           labelShape = shape.label(onShape);
       mutation.preview = previewer(onShape, labelShape);
     } else {
@@ -105,8 +105,8 @@ module.exports = function Picture(paper) {
   }
 
   function mutation(element, shape, done) {
-    var oldShape = done ? shape : Shape.of(element),
-        newShape = done ? Shape.of(element) : shape;
+    var oldShape = done ? shape : Shape.fromElement(element),
+        newShape = done ? Shape.fromElement(element) : shape;
 
     return publicAction(bareMutation(shape.attr.id, newShape),
                         bareMutation(shape.attr.id, oldShape));
@@ -154,11 +154,11 @@ module.exports = function Picture(paper) {
   }
 
   function linkRemoved(element) {
-    return Shape.of(element).delta({ from : '', to : '', class : '-link' });
+    return Shape.fromElement(element).delta({ from : '', to : '', class : '-link' });
   }
 
   function labelRemoved(element) {
-    return Shape.of(element).delta({ on : '', class : '-label' });
+    return Shape.fromElement(element).delta({ on : '', class : '-label' });
   }
 
   function adjust(element) {
@@ -166,7 +166,7 @@ module.exports = function Picture(paper) {
       if (element.hasClass('link')) {
         var from = getElement(element.attr('from')), to = getElement(element.attr('to'));
         if (from && to) {
-          Shape.of(element).link(Shape.of(from), Shape.of(to)).applyTo(element);
+          Shape.fromElement(element).link(Shape.fromElement(from), Shape.fromElement(to)).applyTo(element);
           ensureOrder(from, to, element); // Ensure sensible Z-ordering for a link
         } else {
           linkRemoved(element).applyTo(element);
@@ -174,7 +174,7 @@ module.exports = function Picture(paper) {
       } else if (element.hasClass('label')) {
         var on = getElement(element.attr('on'));
         if (on) {
-          Shape.of(element).label(Shape.of(on)).applyTo(element);
+          Shape.fromElement(element).label(Shape.fromElement(on)).applyTo(element);
           ensureOrder(on, element); // Ensure sensible Z-ordering for a label
         } else {
           labelRemoved(element).applyTo(element);

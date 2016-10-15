@@ -13,12 +13,19 @@ Linkarc.fromJSON = function (data) {
   return data.name === 'path' && Arc.isArc(data.attr.d) && Shape.hasClass(data.attr, 'link') && new Linkarc(data.attr);
 };
 
-Linkarc.of = function (e) {
-  return e.node.nodeName === 'path' && Arc.isArc(e.attr('d')) && e.hasClass('link') && new Linkarc(Shape.strongAttr(e));
+Linkarc.fromElement = function (e) {
+  return Shape.elementName(e) === 'path' && (function (attr) {
+    return Arc.isArc(attr.d) && Shape.hasClass(attr, 'link') && new Linkarc(attr);
+  })(Shape.elementAttr(e));
 };
 
 Linkarc.prototype = Object.create(Arc.prototype);
 Linkarc.prototype.constructor = Linkarc;
+
+Linkarc.prototype.ATTR = Arc.prototype.ATTR.with({
+  from : String,
+  to : String
+});
 
 Linkarc.prototype.link = function (from, to) {
   // Construct an arc with the same curve that traverses the shape centres

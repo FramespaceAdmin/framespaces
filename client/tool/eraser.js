@@ -13,9 +13,9 @@ function Eraser(picture) {
   var erased = { /* id : [fragment] */ };
 
   function erase(e, cursor, removeOld) {
-    var shape = Shape.of(e);
+    var shape = Shape.fromElement(e);
     if (cursor.intersect(shape).length || _.every(shape.points, _.bind(cursor.contains, cursor))) {
-      var fragmentShapes = _.invoke(Shape.of(e), 'minus', cursor);
+      var fragmentShapes = _.invoke(Shape.fromElement(e), 'minus', cursor);
       if (fragmentShapes) {
         removeOld ? removeOld() : e.remove();
         return _.map(fragmentShapes, _.method('addTo', picture.paper));
@@ -41,7 +41,7 @@ function Eraser(picture) {
       var actions = _.map(erased, function (fragments, id) {
         // CAUTION: rolling back temporary changes via side-effects
         var element = picture.getElement(id), fragmentShapes = _.map(fragments, function (fragment) {
-          var fragmentShape = Shape.of(fragment);
+          var fragmentShape = Shape.fromElement(fragment);
           fragment.remove(); // Remove from the paper
           return fragmentShape;
         });

@@ -104,7 +104,7 @@ describe('Line', function () {
     var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
-      var line = Shape.of(paper.line(0, 0, 1, 1));
+      var line = Shape.fromElement(paper.line(0, 0, 1, 1));
       assert.equal(line.name, 'line');
       assert.equal(line.points.length, 2);
       assert.equal(line.points[0].x, 0);
@@ -112,6 +112,52 @@ describe('Line', function () {
       assert.equal(line.points[1].x, 1);
       assert.equal(line.points[1].y, 1);
       assert.equal(line.extent, Math.sqrt(2));
+    });
+
+    it('should handle raw SVG elements', function () {
+      var line = Shape.fromElement(paper.line(0, 0, 1, 1).node);
+      assert.equal(line.name, 'line');
+      assert.equal(line.points.length, 2);
+    });
+
+    it('should add itself to paper', function () {
+      var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
+      var e = line.addTo(paper);
+      assert.equal(e.node.nodeName, 'line');
+      assert.equal(e.node.getAttribute('x1'), '0');
+      assert.equal(e.node.getAttribute('y1'), '0');
+      assert.equal(e.node.getAttribute('x2'), '1');
+      assert.equal(e.node.getAttribute('y2'), '1');
+    });
+
+    it('should add itself to a raw SVG element', function () {
+      var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
+      var node = line.addTo(paper.node);
+      assert.equal(node.nodeName, 'line');
+      assert.equal(node.getAttribute('x1'), '0');
+      assert.equal(node.getAttribute('y1'), '0');
+      assert.equal(node.getAttribute('x2'), '1');
+      assert.equal(node.getAttribute('y2'), '1');
+    });
+
+    it('should apply itself to an existing line', function () {
+      var line = new Line({ x1 : 1, y1 : 1, x2 : 2, y2 : 2 });
+      var e = line.applyTo(paper.line(0, 0, 1, 1));
+      assert.equal(e.node.nodeName, 'line');
+      assert.equal(e.node.getAttribute('x1'), '1');
+      assert.equal(e.node.getAttribute('y1'), '1');
+      assert.equal(e.node.getAttribute('x2'), '2');
+      assert.equal(e.node.getAttribute('y2'), '2');
+    });
+
+    it('should apply itself to an existing raw SVG line', function () {
+      var line = new Line({ x1 : 1, y1 : 1, x2 : 2, y2 : 2 });
+      var node = line.applyTo(paper.line(0, 0, 1, 1).node);
+      assert.equal(node.nodeName, 'line');
+      assert.equal(node.getAttribute('x1'), '1');
+      assert.equal(node.getAttribute('y1'), '1');
+      assert.equal(node.getAttribute('x2'), '2');
+      assert.equal(node.getAttribute('y2'), '2');
     });
   });
 });

@@ -8,7 +8,7 @@ var _ = require('lodash'),
     stdev = require('compute-stdev');
 
 module.exports = function suggestArcify(picture, element) {
-  var shape = element && !element.removed && Shape.of(element);
+  var shape = element && !element.removed && Shape.fromElement(element);
   if (shape && shape instanceof Polyline && shape.points.length > 3 && shape.ends.length) {
     // The centroid, C, of the shape will indicate the direction of the arc
     var p1 = shape.ends[0], p2 = shape.ends[1],

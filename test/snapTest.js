@@ -17,7 +17,7 @@ describe('Snap suggestor', function () {
     var action = snap(picture, line);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var snapped = Shape.of(action());
+    var snapped = Shape.fromElement(action());
     assert.instanceOf(snapped, Polyline);
     assert.equal(snapped.extent, 2);
   });
@@ -29,7 +29,7 @@ describe('Snap suggestor', function () {
     var action = snap(picture, polyline);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var snapped = Shape.of(action());
+    var snapped = Shape.fromElement(action());
     assert.instanceOf(snapped, Polyline);
     assert.equal(snapped.extent, Math.sqrt(5));
   });
@@ -40,7 +40,7 @@ describe('Snap suggestor', function () {
     var action = snap(picture, polyline);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var snapped = Shape.of(action());
+    var snapped = Shape.fromElement(action());
     assert.instanceOf(snapped, Rect);
     assert.equal(snapped.extent, Math.sqrt(2));
   });

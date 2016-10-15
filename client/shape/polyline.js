@@ -12,8 +12,8 @@ Polyline.fromJSON = function (data) {
   return data.name === 'polyline' && new Polyline(data.attr);
 };
 
-Polyline.of = function (e) {
-  return e.node.nodeName === 'polyline' && new Polyline(Shape.strongAttr(e));
+Polyline.fromElement = function (e) {
+  return Shape.elementName(e) === 'polyline' && new Polyline(Shape.elementAttr(e));
 };
 
 /**
@@ -38,6 +38,10 @@ Polyline.pointStr = function (p) {
 
 Polyline.prototype = Object.create(Shape.prototype);
 Polyline.prototype.constructor = Polyline;
+
+Polyline.prototype.ATTR = Shape.prototype.ATTR.with({
+  points : String
+});
 
 Polyline.prototype.computeParams = function () {
   return _cap.shape(this.name, _.mapValues(this.attr, function (value, key) {

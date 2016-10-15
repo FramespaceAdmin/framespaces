@@ -10,8 +10,8 @@ Polygon.fromJSON = function (data) {
   return data.name === 'polygon' && new Polygon(data.attr);
 };
 
-Polygon.of = function (e) {
-  return e.node.nodeName === 'polygon' && new Polygon(Shape.strongAttr(e));
+Polygon.fromElement = function (e) {
+  return Shape.elementName(e) === 'polygon' && new Polygon(Shape.elementAttr(e));
 };
 
 Polygon.prototype = Object.create(Polyline.prototype);
