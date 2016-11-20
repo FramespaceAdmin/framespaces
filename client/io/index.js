@@ -14,8 +14,8 @@ function Io() {
 Io.messages = {
   'user.connected' : [{ id : String }], // Cannot be published
   'user.disconnected' : [], // Cannot be published
-  'action' : [Object],
-  'interactions' : [Array]
+  'action' : [Object], // Echoed to publisher
+  'interactions' : [Array] // NOT echoed to publisher
 };
 
 /**

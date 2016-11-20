@@ -44,11 +44,12 @@
   "type" : "object",
   "properties" : {
     "id" : { "$ref": "#/definitions/guid" },
+    "seq" : { "type" : "number" },
     "type" : { "type" : "string", "enum" : ["addition", "removal", "replacement", "mutation"] },
-    "element" : { "$ref": "#/definitions/guid" },
-    "shape" : { "$ref": "#/definitions/shape" },
+    "from" : { "$ref" : "#/definitions/shape" },
+    "to" : { "$ref" : "#/definitions/shape" },
     "undo" : { "type" : "boolean" }
   },
-  "required" : ["id", "type"],
+  "required" : ["id", "seq", "type"],
   "additionalProperties" : false
 }

@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     as = require('yavl'),
+    guid = require('../../lib/guid'),
     Point = require('kld-affine').Point2D,
     Matrix = require('kld-affine').Matrix2D,
     Vector = require('kld-affine').Vector2D,
@@ -17,6 +18,7 @@ function Shape(name, attr, content, bbox) {
   }
 
   // Basic properties
+  this.id = attr.id;
   this.name = name;
   this.attr = this.ATTR.cast(attr);
   this.text = _.isString(content) ? content : undefined;
@@ -113,9 +115,9 @@ Shape.fromJSON = function (data) {
 }
 
 /**
- * Gets a shape for the given Snap SVG element
+ * Gets a shape for the given Snap SVG or DOM element
  */
-Shape.fromElement = function (element) {
+Shape.of = function (element) {
   return _.reduce(Shape.constructors(), function (shape, constructor) {
     return shape || constructor.fromElement(element);
   }, null);
@@ -243,7 +245,7 @@ Shape.prototype.clone = function (attr/*, ...*/) {
 Shape.prototype.cloneAs = function (name, attr/*, ...*/) {
   return Shape.fromJSON({
     name : name,
-    attr : this.cloneAttr.apply(this, _.tail(_.toArray(arguments))),
+    attr : this.cloneAttr.apply(this, _.slice(arguments, 1)),
     text : this.text,
     children : this.children,
     bbox : this.bbox

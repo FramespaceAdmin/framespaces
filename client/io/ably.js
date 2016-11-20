@@ -1,14 +1,14 @@
 var _ = require('lodash'),
     _url = require('url'),
-    fsUrl = require('../fsUrl'),
+    fs = require('../fs'),
     jwtDecode = require('jwt-decode'),
     pass = require('pass-error'),
     Io = require('../io');
 
 function AblyIo(jwt, cb) {
   // Note that 'Ably.Realtime' is a global from https://cdn.ably.io/lib/ably.min.js
-  var ably = Ably.Realtime({ authUrl : fsUrl.append('channel/auth'), echoMessages : false }),
-      channel = ably.channels.get(fsUrl.name),
+  var ably = Ably.Realtime({ authUrl : fs.url('channel/auth') }),
+      channel = ably.channels.get(fs.name),
       user = jwtDecode(jwt);
 
   channel.presence.get(pass(function(members) {
@@ -23,11 +23,13 @@ function AblyIo(jwt, cb) {
     }, cb, null, this));
   }, cb, null, this));
 
-  // subscribers member is array if pairs [[subscriber, ablySubscriber]]
+  this.clientId = user.id;
+
+  // subscribers member is array of pairs [[subscriber, ablySubscriber]]
   this.events = {
     'user.connected' : { emitter : channel.presence, name : 'enter', subscribers : [] },
     'user.disconnected' : { emitter : channel.presence, name : 'leave', subscribers : [] },
-    'action' : { emitter : channel, name : 'action', subscribers : [] },
+    'action' : { emitter : channel, name : 'action', subscribers : [], echo : true },
     'interactions' : { emitter : channel, name : 'interactions', subscribers : [] }
   };
 }
@@ -39,7 +41,9 @@ AblyIo.prototype.subscribe = function (eventName, subscriber) {
   var event = this.events[eventName];
   // Ably subscribers get a Message object, not just data
   var ablySubscriber = _.bind(function (message) {
-    subscriber.apply(this, [message.clientId].concat(message.data));
+    if (event.echo || message.clientId !== this.clientId) {
+      subscriber.apply(this, [message.clientId].concat(message.data));
+    }
   }, this);
   event.emitter.subscribe(event.name, ablySubscriber);
   event.subscribers.push([subscriber, ablySubscriber]);

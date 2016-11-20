@@ -2,6 +2,7 @@ var _ = require('lodash'),
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
     Tool = require('../tool'),
+    Mutation = require('../action/mutation'),
     Snap = require('snapsvg');
 
 var CURSOR_RADIUS = 16;
@@ -18,10 +19,10 @@ function Hand(picture) {
 
   function tryMove(element, isEdge, cursor) {
     if (element && element.node.nodeName !== 'svg') {
-      oldShape = shape = Shape.fromElement(moving = element);
+      oldShape = shape = Shape.of(moving = element);
       var moverKey = _.find(['link', 'label'], _.bind(moving.hasClass, moving)) ||  shape.name;
       move = shape.mover && shape.mover(isEdge, cursor, function (id) {
-        return Shape.fromElement(picture.getElement(id));
+        return Shape.of(picture.getElement(id));
       });
     }
     return move || reset();
@@ -33,7 +34,7 @@ function Hand(picture) {
         // Find something to grab - edges first
         var cursor = Tool.cursor(state, CURSOR_RADIUS);
         var edgeOf = picture.getElement(function (e) {
-          return cursor.intersect(Shape.fromElement(e)).length;
+          return cursor.intersect(Shape.of(e)).length;
         });
         var bodyOf = picture.getElement(state.element);
         var point = new Point(state.x, state.y);
@@ -42,7 +43,7 @@ function Hand(picture) {
           edgeOf && tryMove(bodyOf, false, cursor);
         }
       } else if (moving) { // Finished moving something
-        this.emit('finished', picture.action.mutation(moving, oldShape, true));
+        this.emit('finished', new Mutation(oldShape, shape, { result : moving }));
         reset();
       }
     } else if (state.active && moving) { // Moving

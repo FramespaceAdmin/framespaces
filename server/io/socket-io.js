@@ -29,6 +29,7 @@ SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
 
     socket.on('action', function (action, cb) {
       socket.broadcast.emit('action', socket.user.id, action);
+      socket.emit('action', socket.user.id, action); // Actions are echoed
       cb && cb(false);
     });
 

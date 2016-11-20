@@ -14,7 +14,7 @@ var _ = require('lodash'),
     validate = require('../lib/validate'),
     modules = require('../lib/modules'),
     io = new (require(modules.io))(server),
-    store = new (require(modules.store))();
+    journal = new (require(modules.journal))();
 
 // Note, this is used from the stop and restart scripts
 process.title = 'Framespaces';
@@ -37,7 +37,7 @@ app.get('/', function (req, res, next) {
       }, pass(function (words) { cb(false, words.join('')); }, cb));
     },
     save : ['name', function ($, cb) {
-      return store.insert('fs', { name : $.name, created : new Date().getTime() }, cb);
+      return journal.insert('fs', { name : $.name, created : new Date().getTime() }, cb);
     }],
     channel : ['name', function ($, cb) {
       return io.createChannel($.name, cb);
@@ -53,7 +53,7 @@ app.get('/', function (req, res, next) {
  * TODO ... unless the framespace is private.
  */
 app.get('/:fsName', auth.setCookie, function (req, res, next) {
-  store.get('fs', { name : req.params.fsName }, pass(function (fss) {
+  journal.get('fs', { name : req.params.fsName }, pass(function (fss) {
     return fss.length === 1 ?
       res.render('index', { fs : fss[0], config : config }) :
       res.sendStatus(fss.length ? 500 : 404);
@@ -64,16 +64,18 @@ app.get('/:fsName', auth.setCookie, function (req, res, next) {
  * GETting the actions for a framespace.
  */
 app.get('/:fsName/actions', auth.cookie, function (req, res, next) {
-  store.get('action', { fs : req.params.fsName }, pass(_.bind(res.send, res), next));
+  journal.get('action', { fs : req.params.fsName }, pass(function (actions) {
+    res.send(_.orderBy(actions, ['seq']));
+  }, next));
 });
 
 /**
  * POSTing a new action for a framespace
  */
 app.post('/:fsName/actions', auth.cookie, function (req, res, next) {
-  var actions = _.isArray(req.body) ? req.body : [req.body];
+  var actions = _.castArray(req.body);
   if (_.every(actions, validate.action)) {
-    store.insert('action', _.map(actions, function (action) {
+    journal.insert('action', _.map(actions, function (action) {
       return _.assign(action, { fs : req.params.fsName });
     }), pass(function () {
       res.sendStatus(200);

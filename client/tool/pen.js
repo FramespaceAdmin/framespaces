@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
+    Addition = require('../action/addition'),
     Tool = require('../tool');
 
 function Pen(picture) {
@@ -53,7 +54,7 @@ function Pen(picture) {
       } else { // Finished an element
         activity = undefined;
         element.remove();
-        this.emit('finished', picture.action.addition(Shape.fromElement(element)));
+        this.emit('finished', new Addition(Shape.of(element)));
       }
     } else if (state.active) { // Drawing or typing
       element.remove();

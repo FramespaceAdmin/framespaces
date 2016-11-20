@@ -35,7 +35,7 @@ Also used:
 ##Suggestions
 In `/client/suggest`.
 
-Each suggester is a function that takes `(picture, element)` and returns an action: one of `picture.action.addition`, `picture.action.removal`, `picture.action.replacement` or `picture.action.mutation` (see `/client/picture.js`).
+Each suggester is a function that takes `(picture, element)` and returns an action: one of `Addition`, `Removal`, `Replacement` or `Mutation` (see `/client/picture.js` and `/client/action`).
 
 The action should also be assigned a  `confidence`: a number between 0 and 1. If > 0.9, the suggestion will be auto-applied. Watch the console in the browser to see how the other suggesters behave.
 
@@ -46,4 +46,4 @@ You will also need to create Shapes (`/client/shape/index.js`). See the existing
 To wire in your suggester, modify `/client/suggest/index.js` in the obvious way.
 
 ##Touch & Platform Support
-`client/index.js` contains all the event and mouse listening code, and should be the main place things go wrong on other platforms. 
+`client/index.js` contains all the event and mouse listening code, and should be the main place things go wrong on other platforms.

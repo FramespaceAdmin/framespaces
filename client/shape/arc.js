@@ -27,11 +27,11 @@ Arc.isArc = function (d) {
   return path.length === 2 && _.get(path, '1.curve.type') === 'arc';
 };
 
-Arc.fromPoints = function (end1, end2, curve) {
-  return new Arc({ d : Path.toString([{ x : end1.x, y : end1.y }, {
+Arc.d = function (end1, end2, curve) {
+  return Path.toString([{ x : end1.x, y : end1.y }, {
     // Allow omission of curve type
     x : end2.x, y : end2.y, curve : _.set(curve, 'type', 'arc')
-  }]) });
+  }]);
 }
 
 Arc.curveTraversing = function (end1, point, end2) {
@@ -146,7 +146,7 @@ Arc.arcsBetween = function (points, curve, centre) {
       var p1 = points[i - 1];
       if (!p1.equals(p2)) {
         var isLargeArc = Arc.isLargeArc(centre, p1, p2, curve.sweepFlag);
-        arcs.push(Arc.fromPoints(p1, p2, _.set(curve, 'largeArcFlag', isLargeArc)));
+        arcs.push(new Arc({ d : Arc.d(p1, p2, _.set(curve, 'largeArcFlag', isLargeArc)) }));
       }
     }
     return arcs;

@@ -3,6 +3,8 @@ var _ = require('lodash'),
     Line = require('../shape/line'),
     Rect = require('../shape/rect'),
     Shape = require('../shape'),
+    Replacement = require('../action/replacement'),
+    Mutation = require('../action/mutation'),
     Point = require('kld-affine').Point2D;
 
 function d(p1, p2, axis) {
@@ -10,12 +12,12 @@ function d(p1, p2, axis) {
 }
 
 module.exports = function suggestRectify(picture, element) {
-  var shape = element && !element.removed && Shape.fromElement(element);
+  var shape = element && !element.removed && Shape.of(element);
   function createAction(points) {
     if (!shape.ends.length && points.length === 4) {
-      return picture.action.replacement(element, new Rect(Shape.computeBBox(points)));
+      return new Replacement(shape, shape.cloneAs('rect', Shape.computeBBox(points)));
     } else {
-      return picture.action.mutation(element, shape.delta(shape instanceof Line ? {
+      return new Mutation(shape, shape.delta(shape instanceof Line ? {
         x2 : points[1].x - shape.attr.x2, y2 : points[1].y - shape.attr.y2
       } : {
         points : Polyline.pointStr(points)

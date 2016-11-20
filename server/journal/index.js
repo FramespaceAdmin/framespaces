@@ -1,6 +1,6 @@
 
 
-function Store() {}
+function Journal() {}
 
 /**
  * Fetch an array of filtered data
@@ -8,7 +8,7 @@ function Store() {}
  * @param filter per http://www.taffydb.com/writingqueries
  * @param cb callback with error and filtered data
  */
-Store.prototype.get = function (type, filter, cb/*(err, [data])*/) {
+Journal.prototype.get = function (type, filter, cb/*(err, [data])*/) {
   throw undefined;
 };
 
@@ -18,7 +18,7 @@ Store.prototype.get = function (type, filter, cb/*(err, [data])*/) {
  * @param data object or array of objects to insert
  * @param cb callback
  */
-Store.prototype.insert = function (type, data, cb/*(err)*/) {
+Journal.prototype.insert = function (type, data, cb/*(err)*/) {
   throw undefined;
 };
 
@@ -28,8 +28,8 @@ Store.prototype.insert = function (type, data, cb/*(err)*/) {
  * @param filter per http://www.taffydb.com/writingqueries
  * @param cb callback with error and removed count
  */
-Store.prototype.remove = function (type, filter, cb/*(err, count)*/) {
+Journal.prototype.remove = function (type, filter, cb/*(err, count)*/) {
   throw undefined;
 };
 
-module.exports = Store;
+module.exports = Journal;

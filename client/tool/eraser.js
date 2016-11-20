@@ -1,8 +1,11 @@
 var _ = require('lodash'),
-    _action = require('../action'),
     Point = require('kld-affine').Point2D,
     Vector = require('kld-affine').Vector2D,
     Shape = require('../shape'),
+    Removal = require('../action/removal'),
+    Replacement = require('../action/replacement'),
+    Addition = require('../action/addition'),
+    Batch = require('../action/batch'),
     Tool = require('../tool');
 
 var MIN_CURSOR_RADIUS = 8;
@@ -13,9 +16,9 @@ function Eraser(picture) {
   var erased = { /* id : [fragment] */ };
 
   function erase(e, cursor, removeOld) {
-    var shape = Shape.fromElement(e);
+    var shape = Shape.of(e);
     if (cursor.intersect(shape).length || _.every(shape.points, _.bind(cursor.contains, cursor))) {
-      var fragmentShapes = _.invoke(Shape.fromElement(e), 'minus', cursor);
+      var fragmentShapes = _.invoke(Shape.of(e), 'minus', cursor);
       if (fragmentShapes) {
         removeOld ? removeOld() : e.remove();
         return _.map(fragmentShapes, _.method('addTo', picture.paper));
@@ -41,23 +44,24 @@ function Eraser(picture) {
       var actions = _.map(erased, function (fragments, id) {
         // CAUTION: rolling back temporary changes via side-effects
         var element = picture.getElement(id), fragmentShapes = _.map(fragments, function (fragment) {
-          var fragmentShape = Shape.fromElement(fragment);
+          var fragmentShape = Shape.of(fragment);
           fragment.remove(); // Remove from the paper
           return fragmentShape;
         });
         element.attr('display', ''); // Makes visible
 
+        var shape = Shape.of(element);
         if (_.isEmpty(fragmentShapes)) {
-          return picture.action.removal(element);
+          return new Removal(shape).andCollateral(picture);
         } else {
           return _.reduce(_.tail(fragmentShapes), function (action, fragmentShape) {
-            return action.and(picture.action.addition(fragmentShape));
-          }, picture.action.replacement(element, _.first(fragmentShapes)));
+            return action.and(new Addition(fragmentShape));
+          }, new Replacement(shape, _.first(fragmentShapes).clone({ id : id })));
         }
       });
 
       if (!_.isEmpty(actions)) {
-        this.emit('finished', _action.batch(actions).withUndo());
+        this.emit('finished', new Batch(actions));
       }
       // Reset
       erased = {};

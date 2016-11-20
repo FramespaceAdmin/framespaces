@@ -3,6 +3,8 @@ var _ = require('lodash'),
     Polygon = require('../shape/polygon'),
     Line = require('../shape/line'),
     Shape = require('../shape'),
+    Removal = require('../action/removal'),
+    Replacement = require('../action/replacement'),
     Point = require('kld-affine').Point2D;
 
 function getConfidence(p1, p2, s1, s2) {
@@ -10,29 +12,27 @@ function getConfidence(p1, p2, s1, s2) {
 }
 
 module.exports = function suggestSnap(picture, element) {
-  var shape = element && !element.removed && Shape.fromElement(element);
+  var shape = element && !element.removed && Shape.of(element);
   if (shape && shape.ends.length) {
     var reverseShape = _.invoke(shape, 'reverse'), snaps = [];
 
     if (shape.close) {
-      snaps.push(_.assign(picture.action.replacement(element, shape.close()), {
+      snaps.push(_.assign(new Replacement(shape, shape.close()), {
         confidence : getConfidence(shape.ends[0], shape.ends[1], shape)
       }));
     }
     picture.paper.selectAll('[id]:not(#' + shape.attr.id + ')').forEach(function (oldElement) {
-      var removeNew = picture.action.removal(element), // Removing the newer element
-          replaceOldWith = _.bind(picture.action.replacement, picture.action, oldElement); // Replacing the older
       function pushSnap(sNew, sOld) {
         if (sNew && sOld && sOld.add) {
           var sFinal = sOld.add(sNew); // carrying forward old shape
           if (sFinal) {
-            snaps.push(_.assign(removeNew.and(replaceOldWith(sFinal)), {
+            snaps.push(_.assign(new Removal(shape).and(new Replacement(oldShape, sFinal)), {
               confidence : getConfidence(sNew.ends[0], sOld.ends[1], sNew, sOld)
             }));
           }
         }
       }
-      var oldShape = Shape.fromElement(oldElement), reverseOldShape = _.invoke(oldShape, 'reverse');
+      var oldShape = Shape.of(oldElement), reverseOldShape = _.invoke(oldShape, 'reverse');
       pushSnap(shape, oldShape);
       pushSnap(shape, reverseOldShape);
       pushSnap(reverseShape, oldShape);

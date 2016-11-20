@@ -1,13 +1,14 @@
 var _ = require('lodash'),
     Shape = require('../shape'),
     Polyline = require('../shape/polyline'),
+    Removal = require('../action/removal'),
     Point = require('kld-affine').Point2D,
     Vector = require('kld-affine').Vector2D;
 
 var MIN_POINTS = 6, MIN_REVERSES = 4, INTERSECTS_FACTOR = 4;
 
 module.exports = function suggestScribble(picture, pline) {
-  var shape = pline && !pline.removed && Shape.fromElement(pline);
+  var shape = pline && !pline.removed && Shape.of(pline);
   if (shape && shape instanceof Polyline && shape.points.length >= MIN_POINTS) {
     // Work out how many times the line has reversed on itself
     var reverses = _.reduce(shape.points.slice(1, shape.points.length - 1), function (reverses, p, i) {
@@ -20,9 +21,11 @@ module.exports = function suggestScribble(picture, pline) {
     if (reverses.length >= MIN_REVERSES) {
       return _.last(_.sortBy(_.reduce(picture.allElements(), function (candidates, other) {
         if (other !== pline) {
-          var otherShape = Shape.fromElement(other);
+          var otherShape = Shape.of(other);
           // Look for shapes we intersect with
-          candidates.push(_.assign(picture.action.removal(other).and(picture.action.removal(pline)), {
+          var removeShape = new Removal(otherShape).andCollateral(picture),
+              removeScribble = new Removal(shape).andCollateral(picture);
+          candidates.push(_.assign(removeShape.and(removeScribble), {
             confidence : 1 - 1 / (shape.intersect(otherShape).length * INTERSECTS_FACTOR)
           }));
           // TODO: Look for shapes we fill

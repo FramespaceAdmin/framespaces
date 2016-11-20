@@ -104,7 +104,7 @@ describe('Line', function () {
     var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
-      var line = Shape.fromElement(paper.line(0, 0, 1, 1));
+      var line = Shape.of(paper.line(0, 0, 1, 1));
       assert.equal(line.name, 'line');
       assert.equal(line.points.length, 2);
       assert.equal(line.points[0].x, 0);
@@ -115,7 +115,7 @@ describe('Line', function () {
     });
 
     it('should handle raw SVG elements', function () {
-      var line = Shape.fromElement(paper.line(0, 0, 1, 1).node);
+      var line = Shape.of(paper.line(0, 0, 1, 1).node);
       assert.equal(line.name, 'line');
       assert.equal(line.points.length, 2);
     });

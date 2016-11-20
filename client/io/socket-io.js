@@ -1,11 +1,11 @@
 var _ = require('lodash'),
     _url = require('url'),
-    fsUrl = require('../fsUrl'),
+    fs = require('../fs'),
     Io = require('../io');
 
 function SocketIo(jwt, cb) {
   // Note that 'io' is a global from /socket.io/socket.io.js
-  this.socket = io(fsUrl.append('io'));
+  this.socket = io(fs.url('io'));
 
   this.socket.on('connect', _.partial(cb, false));
   this.socket.on('connect_error', cb);

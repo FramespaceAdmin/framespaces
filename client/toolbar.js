@@ -1,6 +1,6 @@
 var _ = require('lodash');
 
-module.exports = function Toolbar(toolPaper) {
+module.exports = function Toolbar(toolPaper, picture) {
   function previewFunc(dir) {
     function elementId(type) {
       return '#' + dir + '-' + type;
@@ -10,10 +10,9 @@ module.exports = function Toolbar(toolPaper) {
       if (lastPreview) {
         lastPreview.remove();
       }
-      // Checking for e.g. present.prev.preview (function) and present.preview.prev (boolean)
       if (_.get(present, [dir, 'preview'])) {
         var paper = toolPaper.svg().attr('id', elementId('preview').slice(1)),
-            preview = present[dir].preview(paper),
+            preview = present[dir].preview(picture, paper),
             bbox = preview.getBBox(),
             icon = toolPaper.select(elementId('icon')).attr('display', 'none');
 
@@ -31,7 +30,7 @@ module.exports = function Toolbar(toolPaper) {
       }
     }
   }
-  var previewUndo = previewFunc('undo');
+  var previewUndo = previewFunc('prev');
   var previewNext = previewFunc('next');
 
   this.updatePreviews = function (present) {
@@ -39,8 +38,8 @@ module.exports = function Toolbar(toolPaper) {
     previewNext(present);
   };
 
-  this.undoButton = toolPaper.select('#undo-button');
-  this.redoButton = toolPaper.select('#next-button');
+  this.prevButton = toolPaper.select('#prev-button');
+  this.nextButton = toolPaper.select('#next-button');
 
   this.eraserButton = toolPaper.select('#eraser-button');
   this.penButton = toolPaper.select('#pen-button');

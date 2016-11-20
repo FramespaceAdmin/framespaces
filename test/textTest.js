@@ -28,7 +28,7 @@ describe('Text', function () {
     var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
-      var text = Shape.fromElement(paper.text(0, 0, ['a', 'b']));
+      var text = Shape.of(paper.text(0, 0, ['a', 'b']));
       assert.equal(text.name, 'text');
       assert.equal(text.attr.x, 0);
       assert.equal(text.attr.y, 0);
@@ -39,14 +39,14 @@ describe('Text', function () {
 
     it('should handle a raw text node with text content', function () {
       var node = paper.text(0, 0, 'a').node;
-      var text = Shape.fromElement(node);
+      var text = Shape.of(node);
       assert.equal(text.name, 'text');
       assert.equal(text.text, 'a');
     });
 
     it('should handle a raw text node with tspans', function () {
       var node = paper.text(0, 0, ['a', 'b']).node;
-      var text = Shape.fromElement(node);
+      var text = Shape.of(node);
       assert.equal(text.name, 'text');
       assert.equal(text.children.length, 2);
     });
@@ -54,14 +54,14 @@ describe('Text', function () {
     it ('should extract pixel font-size from element style', function () {
       var e = paper.text(0, 0, 'a');
       e.node.style['font-size'] = '10px';
-      var text = Shape.fromElement(e);
+      var text = Shape.of(e);
       assert.equal(text.attr['font-size'], 10);
     });
 
     it ('should not extract point font-size from element style', function () {
       var e = paper.text(0, 0, 'a');
       e.node.style['font-size'] = '10pt';
-      var text = Shape.fromElement(e);
+      var text = Shape.of(e);
       assert.isUndefined(text.attr['font-size']);
     });
   });

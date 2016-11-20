@@ -17,14 +17,14 @@ describe('Rectify suggestor', function () {
     var action = rectify(picture, line);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var rectified = Shape.fromElement(action());
+    var rectified = Shape.of(action.do(picture));
     assert.instanceOf(rectified, Line);
     assert.equal(rectified.extent, 1);
   });
 
   it('should not recurse', function () {
     var line = paper.line(0, 0, 1, 0.01).attr('id', guid());
-    var action = rectify(picture, rectify(picture, line)());
+    var action = rectify(picture, rectify(picture, line).do(picture));
     assert.isUndefined(action);
   });
 
@@ -33,7 +33,7 @@ describe('Rectify suggestor', function () {
     var action = rectify(picture, pl);
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
-    var rectified = Shape.fromElement(action());
+    var rectified = Shape.of(action.do(picture));
     assert.instanceOf(rectified, Polyline);
     assert.equal(rectified.points.length, 3);
     assert.deepEqual(rectified.points[0], new Point(0, 0));

@@ -2,6 +2,6 @@
   "log" : "DEBUG",
   "modules" : {
     "io" : "socket-io",
-    "store" : "taffy"
+    "journal" : "taffy"
   }
 }
