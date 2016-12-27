@@ -11,7 +11,7 @@ function SocketIo(server) {
 SocketIo.prototype = Object.create(Io.prototype);
 SocketIo.prototype.constructor = SocketIo;
 
-SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
+SocketIo.prototype.createChannel = function (name, journal, cb/*(err)*/) {
   var ns = this.io.of('/' + name + '/io');
   ns.on('connection', function (socket) {
     // Challenge the new socket to provide a JWT
@@ -30,7 +30,9 @@ SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
     socket.on('action', function (action, cb) {
       socket.broadcast.emit('action', socket.user.id, action);
       socket.emit('action', socket.user.id, action); // Actions are echoed
-      cb && cb(false);
+      validate.action(action, pass(function () {
+        journal.addEvent(action, cb);
+      }, cb));
     });
 
     socket.on('interactions', function (interactions) {

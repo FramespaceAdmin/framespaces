@@ -11,10 +11,9 @@ var _ = require('lodash'),
     _async = require('async'),
     auth = require('./auth'),
     port = process.env.PORT || 3000,
-    validate = require('../lib/validate'),
     modules = require('../lib/modules'),
     io = new (require(modules.io))(server),
-    journal = new (require(modules.journal))();
+    Journal = (require(modules.journal));
 
 // Note, this is used from the stop and restart scripts
 process.title = 'Framespaces';
@@ -36,11 +35,11 @@ app.get('/', function (req, res, next) {
         _word.random({ includePartOfSpeech : partOfSpeech, maxLength : 5 }, cb);
       }, pass(function (words) { cb(false, words.join('')); }, cb));
     },
-    save : ['name', function ($, cb) {
-      return journal.insert('fs', { name : $.name, created : new Date().getTime() }, cb);
+    journal : ['name', function ($, cb) {
+      return Journal($.name).putDetails({ name : $.name, created : new Date().getTime() }, cb);
     }],
-    channel : ['name', function ($, cb) {
-      return io.createChannel($.name, cb);
+    channel : ['name', 'journal', function ($, cb) {
+      return io.createChannel($.name, $.journal, cb);
     }]
   }, pass(function ($) {
     return res.redirect('/' + $.name);
@@ -53,10 +52,8 @@ app.get('/', function (req, res, next) {
  * TODO ... unless the framespace is private.
  */
 app.get('/:fsName', auth.setCookie, function (req, res, next) {
-  journal.get('fs', { name : req.params.fsName }, pass(function (fss) {
-    return fss.length === 1 ?
-      res.render('index', { fs : fss[0], config : config }) :
-      res.sendStatus(fss.length ? 500 : 404);
+  Journal(req.params.fsName).getDetails(pass(function (fs) {
+    return res.render('index', { fs : fs, config : config });
   }, next));
 });
 
@@ -64,25 +61,9 @@ app.get('/:fsName', auth.setCookie, function (req, res, next) {
  * GETting the actions for a framespace.
  */
 app.get('/:fsName/actions', auth.cookie, function (req, res, next) {
-  journal.get('action', { fs : req.params.fsName }, pass(function (actions) {
-    res.send(_.orderBy(actions, ['seq']));
+  Journal(req.params.fsName).getEvents(pass(function (actions) {
+    return res.send(actions);
   }, next));
-});
-
-/**
- * POSTing a new action for a framespace
- */
-app.post('/:fsName/actions', auth.cookie, function (req, res, next) {
-  var actions = _.castArray(req.body);
-  if (_.every(actions, validate.action)) {
-    journal.insert('action', _.map(actions, function (action) {
-      return _.assign(action, { fs : req.params.fsName });
-    }), pass(function () {
-      res.sendStatus(200);
-    }, next));
-  } else {
-    res.sendStatus(400);
-  }
 });
 
 /**

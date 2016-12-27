@@ -96,4 +96,11 @@ Action.prototype.and = function (more) {
   }
 };
 
+/**
+ * Gets the actions buried in this action. By default, just this action.
+ */
+Action.prototype.actions = function () {
+  return [this];
+};
+
 module.exports = Action;

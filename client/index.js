@@ -1,5 +1,4 @@
 var _ = require('lodash'),
-    _url = require('url'),
     log = require('../lib/log'),
     fs = require('./fs'),
     Snap = require('snapsvg'),
@@ -43,10 +42,10 @@ history.on('revised', toolbar.updatePreviews);
 
 // Add the current user and wire up events
 var jwt = cookies.get('jwt') || fs.errorPage('Can\'t log in'),
-    localUserId = jwtDecode(jwt).id;
+    localActions = new Batch([]), users = {};
 
 var io = new Io(jwt, pass(function connected() {
-  var user = new LocalUser(localUserId);
+  var localUserId = jwtDecode(jwt).id, user = users[localUserId] = new LocalUser(localUserId);
   // Send interactions in batches
   var interactions = [];
   function flushInteractions() {
@@ -109,6 +108,8 @@ var io = new Io(jwt, pass(function connected() {
     flushInteractions();
     // This will be echoed to the subscriber
     io.publish('action', action.toJSON(), fs.errorPage);
+    // Local actions are applied pre-emptively and so may be out of order, see below
+    localActions = localActions.and(action);
   }
   history.on('done', function (action) {
     commit(action);
@@ -132,8 +133,6 @@ var io = new Io(jwt, pass(function connected() {
 // Handle interactions from other users.
 // NOTE this needs to happen before the Io constructor callback so we get user.connected events
 // for users already on the framespace.
-// Also keep a memory journal of all actions, for replay. NOTE cumulative state!
-var users = {}, journal = [];
 io.subscribe('user.connected', function (userId, data) {
   var user = users[userId] = new RemoteUser(data, picture);
   user.on('interacting', function (delta, state) {
@@ -148,20 +147,14 @@ io.subscribe('interactions', function (userId, interactions) {
   _.invoke(users, [userId, 'interact'], interactions);
 });
 io.subscribe('action', function (userId, data) {
-  // NOTE: messages on the channel are strictly in order; set their sequences
-  _.each(_.castArray(data), function (d) {
-    d.seq = journal.length;
-    journal.push(Action.fromJSON(d));
-  }, -1);
-
-  if (userId === localUserId) {
-    // TODO: This should use a webhook rather than rely on client connectivity and trustworthiness
-    fs.post('actions', data, fs.errorPage);
-  } else {
-    var action = Action.fromJSON(data);
-    // Just do it - don't add other people's actions to our history
-    function act() { action.isOK(picture) && action.do(picture); }
+  var action = Action.fromJSON(data);
+  // Do not repeat actions that this user has already done
+  if (!localActions.removeHead(action)) {
+    // Undo any out of order local actions
+    localActions.un().do(picture);
+    localActions = new Batch([]);
     // Wait until inactive before committing the action
+    function act() { action.isOK(picture) && action.do(picture); }
     users[userId] ? users[userId].once('quiesced', act) : act();
   }
 });
