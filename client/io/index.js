@@ -1,9 +1,15 @@
-var _ = require('lodash');
+var _ = require('lodash'),
+    _url = require('url'),
+    pass = require('pass-error'),
+    join = require('url-join');
 
 /**
- * Base interface for client-side channels.
+ * Base class for client-side IO.
  */
-function Io() {
+function Io(baseUrl, user) {
+  this.baseUrl = _url.parse(baseUrl);
+  this.name = _.find(this.baseUrl.pathname.split(/[/?]/g));
+  this.user = user;
 }
 
 /**
@@ -16,6 +22,31 @@ Io.messages = {
   'user.disconnected' : [], // Cannot be published
   'action' : [Object], // Echoed to publisher
   'interactions' : [Array] // NOT echoed to publisher
+};
+
+/**
+ * Appends arguments as path names to the base url
+ */
+Io.prototype.url = function () {
+  return join.apply(null, [_url.format({
+    protocol : this.baseUrl.protocol,
+    auth : this.baseUrl.auth,
+    host : this.baseUrl.host
+  }), this.name].concat(_.toArray(arguments)));
+};
+
+/**
+ * GET method requests JSON from the base url plus the given path
+ */
+Io.prototype.get = function (path, cb/*(err, body)*/) {
+  throw undefined;
+};
+
+/**
+ * Destroy the current IO session and report the given error
+ */
+Io.prototype.close = function (err) {
+  throw undefined;
 };
 
 /**
@@ -56,6 +87,17 @@ Io.prototype.subscribers = function (eventName) {
 };
 
 /**
+ * Emits the given data locally (not to the IO channel).
+ * Useful when simulating or batching channel IO.
+ * @param data array of message arguments, including user id.
+ */
+Io.prototype.emit = function (eventName, data) {
+  _.each(this.subscribers(eventName), function (subscriber) {
+    subscriber.apply(this, data);
+  });
+};
+
+/**
  * Pause the given channel events.
  * The play method given to the callback takes an optional array of messages to play into the
  * channel before also playing any missed events. Each message is an array of subscriber arguments.
@@ -75,12 +117,8 @@ Io.prototype.pause = function (eventName, cb/*(err, play(messages, [iteratee=_.i
     this.unsubscribe(eventName, pausedListener);
     _.each(subscribers, _.bind(this.subscribe, this, eventName));
     // Emit the requested messages, then the paused messages
-    _.each(_.uniqBy((messages || []).concat(pausedMessages), iteratee), _.bind(function (args) {
-      // Emit locally, not to the socket
-      _.each(subscribers, function (subscriber) {
-        subscriber.apply(this, args);
-      });
-    }, this));
+    messages = _.uniqBy((messages || []).concat(pausedMessages), iteratee);
+    _.each(messages, _.bind(this.emit, this, eventName));
   }, this));
 };
 

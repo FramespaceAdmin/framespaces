@@ -1,18 +1,18 @@
 var _ = require('lodash'),
     format = require('util').format,
-    User = require('../user'),
+    BrowserUser = require('./browser'),
     html = require('html.js');
 
-function LocalUser(id) {
-  User.call(this, { id : id });
+function LocalUser(data) {
+  BrowserUser.call(this, data);
 };
 
-LocalUser.prototype = Object.create(User.prototype);
+LocalUser.prototype = Object.create(BrowserUser.prototype);
 LocalUser.prototype.constructor = LocalUser;
 
 LocalUser.prototype.use = function (tool) {
   _.invoke(this.tool, 'deactivate');
-  User.prototype.use.call(this, tool);
+  BrowserUser.prototype.use.call(this, tool);
   _.invoke(this.tool, 'activate');
   html.query('.paper').style.cursor = format('url(/web/%s.svg) %d %d, auto',
     this.tool.constructor.name.toLowerCase(), this.tool.offset.x, this.tool.offset.y);

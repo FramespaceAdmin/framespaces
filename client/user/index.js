@@ -1,28 +1,12 @@
 var _ = require('lodash'),
-    _url = require('url'),
-    EventEmitter = require('events'),
-    html = require('html.js');
+    EventEmitter = require('events');
 
 function User(json) {
   EventEmitter.call(this);
-
   _.assign(this, json);
 
   // See ../schema/state.json
   this.state = { active : false };
-
-  this.place = html.query('#users').add(html.query('#user-template').cloneNode(true));
-  this.place.id = this.id;
-  this.place.style.display = 'block'; // Because template is hidden
-
-  this.avatar = this.place.add('img');
-  this.avatar.src = _url.format({
-    protocol : 'http',
-    host : 'robohash.org',
-    pathname : this.id,
-    query : { size : '80x80', set : 'set3' }
-  });
-  _.assign(this.avatar.style, { display : 'block', position : 'absolute', left : 0, top : 0 });
 };
 
 User.prototype = Object.create(EventEmitter.prototype);
@@ -61,16 +45,9 @@ User.prototype.interacting = function (newState) {
   }
 };
 
-User.prototype.removed = function () {
-  this.place.remove();
-};
-
-User.prototype.once = function (eventName, listener) {
-  if (eventName === 'quiesced' && !this.state.active) {
-    listener();
-  } else {
-    EventEmitter.prototype.once.call(this, eventName, listener);
-  }
-};
+/**
+ * Called when the user is remomved from the Framespace, override to specialise
+ */
+User.prototype.removed = _.noop;
 
 module.exports = User;

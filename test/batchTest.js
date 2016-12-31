@@ -1,29 +1,9 @@
 var _ = require('lodash'),
     assert = require('chai').assert,
-    Action = require('../client/action'),
+    SetAction = require('./setAction'),
     Batch = require('../client/action/batch');
 
 describe('Batch action', function () {
-  function SetAction(options) {
-    Action.call(this, options);
-  }
-  SetAction.prototype = _.assign(Object.create(Action.prototype), {
-    constructor : SetAction,
-    do : function (s) { return s[this.id] = true; },
-    isOK : function (s) { return !s[this.id]; },
-    un : function () { return new UnsetAction(this.undoOptions()); },
-    toJSON : function () { return 'SetAction_' + this.id; }
-  });
-  function UnsetAction(options) {
-    Action.call(this, options);
-  }
-  UnsetAction.prototype = _.assign(Object.create(Action.prototype), {
-    constructor : UnsetAction,
-    do : function (s) { delete s[this.id]; return true; },
-    isOK : function (s) { return !!s[this.id]; },
-    un : function () { return new SetAction(this.undoOptions()); }
-  });
-
   describe('making batches', function () {
     var seta = new SetAction({ id : 'a' });
     var setb = new SetAction({ id : 'b' });

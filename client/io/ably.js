@@ -1,29 +1,24 @@
 var _ = require('lodash'),
-    _url = require('url'),
-    fs = require('../fs'),
     jwtDecode = require('jwt-decode'),
     pass = require('pass-error'),
-    Io = require('../io');
+    BrowserIo = require('./browser');
 
-function AblyIo(jwt, cb) {
+function AblyIo() {
+  BrowserIo.call(this);
   // Note that 'Ably.Realtime' is a global from https://cdn.ably.io/lib/ably.min.js
-  var ably = Ably.Realtime({ authUrl : fs.url('channel/auth') }),
-      channel = ably.channels.get(fs.name),
-      user = jwtDecode(jwt);
+  var ably = Ably.Realtime({ authUrl : this.url('channel/auth') }),
+      channel = ably.channels.get(this.name);
 
   channel.presence.get(pass(function(members) {
-    channel.presence.enter(user, pass(function () {
-      cb(false); // Ensure the current user is first
+    channel.presence.enter(this.user, pass(function () {
+      // Notify ourselves of connected user
+      this.emit('user.connected', [this.user.id, this.user]);
       // Notify ourselves of the existing users
-      _.each(this.subscribers('user.connected'), function (subscriber) {
-        _.each(members, function (member) {
-          subscriber(member.data.id, member.data);
-        });
+      _.each(members, function (member) {
+        this.emit('user.connected', [member.data.id, member.data]);
       });
-    }, cb, null, this));
-  }, cb, null, this));
-
-  this.clientId = user.id;
+    }, this.close, null, this));
+  }, this.close, null, this));
 
   // subscribers member is array of pairs [[subscriber, ablySubscriber]]
   this.events = {
@@ -34,14 +29,14 @@ function AblyIo(jwt, cb) {
   };
 }
 
-AblyIo.prototype = Object.create(Io.prototype);
+AblyIo.prototype = Object.create(BrowserIo.prototype);
 AblyIo.prototype.constructor = AblyIo;
 
 AblyIo.prototype.subscribe = function (eventName, subscriber) {
   var event = this.events[eventName];
   // Ably subscribers get a Message object, not just data
   var ablySubscriber = _.bind(function (message) {
-    if (event.echo || message.clientId !== this.clientId) {
+    if (event.echo || message.clientId !== this.user.id) {
       subscriber.apply(this, [message.clientId].concat(message.data));
     }
   }, this);

@@ -1,10 +1,10 @@
 var _ = require('lodash'),
-    User = require('../user'),
+    BrowserUser = require('./browser'),
     tools = require('../tool'),
     html = require('html.js');
 
-function RemoteUser(json, picture) {
-  User.call(this, json);
+function RemoteUser(data, picture) {
+  BrowserUser.call(this, data);
 
   this.picture = picture;
 
@@ -16,7 +16,7 @@ function RemoteUser(json, picture) {
   this.showInteraction(null, this.state);
 };
 
-RemoteUser.prototype = Object.create(User.prototype);
+RemoteUser.prototype = Object.create(BrowserUser.prototype);
 RemoteUser.prototype.constructor = RemoteUser;
 
 RemoteUser.prototype.showInteraction = function (delta, state) {

@@ -1,21 +1,11 @@
 var _ = require('lodash'),
-    log = require('../lib/log'),
     fs = require('./fs'),
     Snap = require('snapsvg'),
-    Action = require('./action'),
     Picture = require('./picture'),
     History = require('./history'),
     Toolbar = require('./toolbar'),
     Suggestor = require('./suggest'),
-    LocalUser = require('./user/local'),
-    RemoteUser = require('./user/remote'),
-    Batch = require('./action/batch'),
     keycode = require('keycode'),
-    Io = require('io'), // NOTE this is aliasified, see /modules.js
-    jwtDecode = require('jwt-decode'),
-    cookies = require('js-cookie'),
-    pass = require('pass-error'),
-    guid = require('../lib/guid'),
     paper = Snap('.paper'),
     picture = new Picture(paper),
     history = new History(picture),
@@ -40,25 +30,7 @@ toolbar.prevButton.mousedown(function () { history.prev() });
 toolbar.nextButton.mousedown(function () { history.next() });
 history.on('revised', toolbar.updatePreviews);
 
-// Add the current user and wire up events
-var jwt = cookies.get('jwt') || fs.errorPage('Can\'t log in'),
-    localActions = new Batch([]), users = {};
-
-var io = new Io(jwt, pass(function connected() {
-  var localUserId = jwtDecode(jwt).id, user = users[localUserId] = new LocalUser(localUserId);
-  // Send interactions in batches
-  var interactions = [];
-  function flushInteractions() {
-    if (interactions.length) {
-      io.publish('interactions', interactions.splice(0, interactions.length));
-    }
-  }
-  user.on('interacting', function (delta, state) {
-    if (!interactions.length) {
-      setTimeout(flushInteractions, 100);
-    }
-    interactions.push(state);
-  });
+fs.load(picture, function (user, commit) {
   window.onblur = function () {
     user.interacting({ active : false, char : null });
   };
@@ -104,13 +76,6 @@ var io = new Io(jwt, pass(function connected() {
 
   // Handle history and suggested futures
   var suggestor = new Suggestor(picture, history);
-  function commit(action) {
-    flushInteractions();
-    // This will be echoed to the subscriber
-    io.publish('action', action.toJSON(), fs.errorPage);
-    // Local actions are applied pre-emptively and so may be out of order, see below
-    localActions = localActions.and(action);
-  }
   history.on('done', function (action) {
     commit(action);
     suggestor.suggest(action);
@@ -120,41 +85,4 @@ var io = new Io(jwt, pass(function connected() {
     // An undo is the reverse action with the forward action's ID
     commit(action.un());
   });
-
-  // Pause the action while we request all previous actions
-  io.pause('action', pass(function (play) {
-    fs.get('actions', pass(function (actions) {
-      log.info('Replaying ' + actions.length + ' actions in Framespace');
-      play(_.map(actions, function (action) { return [null, action]; }), '1.id');
-    }, fs.errorPage));
-  }, fs.errorPage));
-}, fs.errorPage));
-
-// Handle interactions from other users.
-// NOTE this needs to happen before the Io constructor callback so we get user.connected events
-// for users already on the framespace.
-io.subscribe('user.connected', function (userId, data) {
-  var user = users[userId] = new RemoteUser(data, picture);
-  user.on('interacting', function (delta, state) {
-    user.showInteraction(delta, state);
-  });
-});
-io.subscribe('user.disconnected', function (userId) {
-  _.invoke(users, [userId, 'removed']);
-  delete users[userId];
-});
-io.subscribe('interactions', function (userId, interactions) {
-  _.invoke(users, [userId, 'interact'], interactions);
-});
-io.subscribe('action', function (userId, data) {
-  var action = Action.fromJSON(data);
-  // Do not repeat actions that this user has already done
-  if (!localActions.removeHead(action)) {
-    // Undo any out of order local actions
-    localActions.un().do(picture);
-    localActions = new Batch([]);
-    // Wait until inactive before committing the action
-    function act() { action.isOK(picture) && action.do(picture); }
-    users[userId] ? users[userId].once('quiesced', act) : act();
-  }
 });

@@ -1,19 +1,21 @@
 var _ = require('lodash'),
-    _url = require('url'),
-    fs = require('../fs'),
-    Io = require('../io');
+    BrowserIo = require('../io');
 
-function SocketIo(jwt, cb) {
+function SocketIo() {
+  BrowserIo.call(this);
   // Note that 'io' is a global from /socket.io/socket.io.js
-  this.socket = io(fs.url('io'));
+  this.socket = io(this.url('io'));
 
-  this.socket.on('connect', _.partial(cb, false));
-  this.socket.on('connect_error', cb);
+  this.socket.on('connect', function () {
+    this.emit('user.connected', [this.user.id, this.user]);
+  });
+  this.socket.on('connect_error', this.close);
 
+  var jwt = this.jwt;
   this.socket.on('user.token', function (tokenIs) { tokenIs(jwt); });
 }
 
-SocketIo.prototype = Object.create(Io.prototype);
+SocketIo.prototype = Object.create(BrowserIo.prototype);
 SocketIo.prototype.constructor = SocketIo;
 
 SocketIo.prototype.subscribe = function () {
