@@ -10,7 +10,7 @@ function TaffyJournal(id) {
   }
   Journal.call(this, id);
   if (!_.has(journals, id)) {
-    journals[id] = { details : {}, events : taffy(), nextOrdinal = 0 };
+    journals[id] = { details : {}, events : taffy(), nextOrdinal : 0 };
   }
   this.journal = journals[id];
 }
@@ -38,5 +38,10 @@ TaffyJournal.prototype.addEvent = _async.asyncify(function (event) {
   });
   journal.events.insert(event);
 });
+
+// For unit test purposes
+TaffyJournal.reset = function () {
+  journals = {};
+};
 
 module.exports = TaffyJournal;
