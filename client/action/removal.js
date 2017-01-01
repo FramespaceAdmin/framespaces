@@ -11,7 +11,7 @@ function Removal(shape, options) {
 
 Removal.fromJSON = function (data) {
   return data.type === 'removal' &&
-    new Removal(data.from, { id : data.id, collateral : false });
+    new Removal(Shape.fromJSON(data.from), data);
 };
 
 Removal.prototype = Object.create(Action.prototype);
@@ -30,7 +30,9 @@ Removal.prototype.un = function () {
 };
 
 Removal.prototype.toJSON = function () {
-  return { id : this.id, type : 'removal', from : this.shape.toJSON() };
+  return _.assign(Action.prototype.toJSON.call(this), {
+    type : 'removal', from : this.shape.toJSON()
+  });
 };
 
 Removal.prototype.andCollateral = function (picture) {

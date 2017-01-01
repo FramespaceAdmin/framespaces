@@ -10,7 +10,7 @@ function Addition(shape, options) {
 
 Addition.fromJSON = function (data) {
   return data.type === 'addition' &&
-    new Addition(Shape.fromJSON(data.to), { id : data.id });
+    new Addition(Shape.fromJSON(data.to), data);
 };
 
 Addition.prototype = Object.create(Action.prototype);
@@ -33,7 +33,9 @@ Addition.prototype.preview = function (picture, paper) {
 };
 
 Addition.prototype.toJSON = function () {
-  return { id : this.id, type : 'addition', to : this.shape.toJSON() };
+  return _.assign(Action.prototype.toJSON.call(this), {
+    type : 'addition', to : this.shape.toJSON()
+  });
 };
 
 module.exports = Addition;

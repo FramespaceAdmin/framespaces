@@ -15,5 +15,5 @@ module.exports = as({
     bbox : { x : Number, y : Number, width : Number, height : Number, undefined : Error },
     undefined : Error
   }),
-  undo : Boolean
+  isUndo : Boolean
 });

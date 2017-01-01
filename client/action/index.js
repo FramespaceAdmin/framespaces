@@ -3,11 +3,11 @@ var _ = require('lodash'),
     as = require('yavl');
 
 function Action(options) {
-  _.assign(this, _.defaults(options, {
-    id : guid(),
-    description : '',
-    isUser : false
-  }));
+  this.id = _.get(options, 'id', guid());
+  this.description = _.get(options, 'description', '');
+  this.confidence = _.get(options, 'confidence');
+  this.isUser = _.get(options, 'isUser', false);
+  this.isUndo = _.get(options, 'isUndo', false);
 }
 
 Action.OPTIONS = as(_.mapValues({
@@ -17,7 +17,8 @@ Action.OPTIONS = as(_.mapValues({
   prev : Action, // Set by history
   next : Action, // Set by history
   result : Object, // the returned value, set by history
-  confidence : as(Number).lt(1) // for futures
+  confidence : as(Number).lt(1), // for futures
+  isUndo : Boolean
 }, _.method('or', undefined))); // Options are optional
 
 /**
@@ -74,14 +75,14 @@ Action.prototype.preview = undefined;
  * @returns [JSON] Serialiseable data for this Action
  */
 Action.prototype.toJSON = function () {
-  throw undefined;
+  return { id : this.id, isUndo : this.isUndo };
 };
 
 /**
  * @returns [Action.OPTIONS] The expected options to be applied to an undo Action
  */
 Action.prototype.undoOptions = function () {
-  return { id : this.id, undo : true };
+  return { id : this.id, isUndo : true };
 };
 
 /**

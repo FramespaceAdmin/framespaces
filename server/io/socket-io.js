@@ -1,8 +1,12 @@
 var _ = require('lodash'),
     _async = require('async'),
     _jwt = require('jsonwebtoken'),
+    validate = require('../../lib/validate'),
     log = require('../../lib/log'),
-    Io = require('../io');
+    pass = require('pass-error'),
+    modules = require('../../lib/modules'),
+    Io = require('../io'),
+    Journal = (require('../' + modules.journal));
 
 function SocketIo(server) {
   this.io = require('socket.io')(server);
@@ -11,7 +15,7 @@ function SocketIo(server) {
 SocketIo.prototype = Object.create(Io.prototype);
 SocketIo.prototype.constructor = SocketIo;
 
-SocketIo.prototype.createChannel = function (name, journal, cb/*(err)*/) {
+SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
   var ns = this.io.of('/' + name + '/io');
   ns.on('connection', function (socket) {
     // Challenge the new socket to provide a JWT
@@ -19,6 +23,7 @@ SocketIo.prototype.createChannel = function (name, journal, cb/*(err)*/) {
       socket.user = _jwt.decode(jwt); // minor object pollution
       log.debug('User', socket.user.id, 'connected');
       socket.broadcast.emit('user.connected', socket.user.id, socket.user);
+      socket.emit('user.connected', socket.user.id, socket.user);
     });
 
     _.each(ns.connected, function (otherSocket) {
@@ -31,7 +36,7 @@ SocketIo.prototype.createChannel = function (name, journal, cb/*(err)*/) {
       socket.broadcast.emit('action', socket.user.id, action);
       socket.emit('action', socket.user.id, action); // Actions are echoed
       validate.action(action, pass(function () {
-        journal.addEvent(action, cb);
+        Journal(name).addEvent(action, cb);
       }, cb));
     });
 
@@ -40,8 +45,10 @@ SocketIo.prototype.createChannel = function (name, journal, cb/*(err)*/) {
     });
 
     socket.on('disconnect', function () {
-      socket.broadcast.emit('user.disconnected', socket.user.id);
-      log.debug('User', socket.user.id, 'disconnected');
+      if (socket.user) { // May have failed token challenge
+        socket.broadcast.emit('user.disconnected', socket.user.id);
+        log.debug('User', socket.user.id, 'disconnected');
+      }
     });
   });
   _async.nextTick(_async.apply(cb, false, ns));

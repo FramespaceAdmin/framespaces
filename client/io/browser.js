@@ -16,14 +16,12 @@ BrowserIo.prototype = Object.create(Io.prototype);
 BrowserIo.prototype.constructor = BrowserIo;
 
 BrowserIo.prototype.get = function (path, cb/*(err, body)*/) {
-  request({ url : this.url(path), json : true }, function () {
-    return function (err, res, body) {
-      if (err || res.statusCode !== 200) {
-        cb(err || body);
-      } else {
-        cb(false, body);
-      }
-    };
+  request({ url : this.url(path), json : true }, function (err, res, body) {
+    if (err || res.statusCode !== 200) {
+      cb(err || body);
+    } else {
+      cb(false, body);
+    }
   });
 };
 

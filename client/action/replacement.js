@@ -11,7 +11,7 @@ function Replacement(from, to, options) {
 
 Replacement.fromJSON = function (data) {
   return data.type === 'replacement' &&
-    new Replacement(Shape.fromJSON(data.from), Shape.fromJSON(data.to), { id : data.id });
+    new Replacement(Shape.fromJSON(data.from), Shape.fromJSON(data.to), data);
 };
 
 Replacement.prototype = Object.create(Action.prototype);
@@ -35,7 +35,9 @@ Replacement.prototype.preview = function (picture, paper) {
 };
 
 Replacement.prototype.toJSON = function () {
-  return { id : this.id, type : 'replacement', from : this.from.toJSON(), to : this.to.toJSON() };
+  return _.assign(Action.prototype.toJSON.call(this), {
+    type : 'replacement', from : this.from.toJSON(), to : this.to.toJSON()
+  });
 };
 
 module.exports = Replacement;

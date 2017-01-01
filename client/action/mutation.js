@@ -10,7 +10,7 @@ function Mutation(from, to, options) {
 
 Mutation.fromJSON = function (data) {
   return data.type === 'mutation' &&
-    new Mutation(Shape.fromJSON(data.from), Shape.fromJSON(data.to), { id : data.id });
+    new Mutation(Shape.fromJSON(data.from), Shape.fromJSON(data.to), data);
 };
 
 Mutation.prototype = Object.create(Action.prototype);
@@ -36,7 +36,9 @@ Mutation.prototype.preview = function (picture, paper) {
 };
 
 Mutation.prototype.toJSON = function () {
-  return { id : this.id, type : 'mutation', from : this.from.toJSON(), to : this.to.toJSON() };
+  return _.assign(Action.prototype.toJSON.call(this), {
+    type : 'mutation', from : this.from.toJSON(), to : this.to.toJSON()
+  });
 };
 
 module.exports = Mutation;

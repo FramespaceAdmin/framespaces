@@ -39,7 +39,7 @@ app.get('/', function (req, res, next) {
       return Journal($.name).putDetails({ name : $.name, created : new Date().getTime() }, cb);
     }],
     channel : ['name', 'journal', function ($, cb) {
-      return io.createChannel($.name, $.journal, cb);
+      return io.createChannel($.name, cb);
     }]
   }, pass(function ($) {
     return res.redirect('/' + $.name);
@@ -52,7 +52,7 @@ app.get('/', function (req, res, next) {
  * TODO ... unless the framespace is private.
  */
 app.get('/:fsName', auth.setCookie, function (req, res, next) {
-  Journal(req.params.fsName).getDetails(pass(function (fs) {
+  Journal(req.params.fsName).fetchDetails(pass(function (fs) {
     return res.render('index', { fs : fs, config : config });
   }, next));
 });
@@ -61,7 +61,7 @@ app.get('/:fsName', auth.setCookie, function (req, res, next) {
  * GETting the actions for a framespace.
  */
 app.get('/:fsName/actions', auth.cookie, function (req, res, next) {
-  Journal(req.params.fsName).getEvents(pass(function (actions) {
+  Journal(req.params.fsName).fetchEvents(pass(function (actions) {
     return res.send(actions);
   }, next));
 });

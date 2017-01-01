@@ -37,7 +37,7 @@ exports.load = function (subject, connected/*(localUser, commit)*/, ioOptions) {
       function commit(action) {
         flushInteractions();
         // This will be echoed to the subscriber
-        io.publish('action', action.toJSON(), pass(_.noop, io.close));
+        io.publish('action', action.toJSON(), pass(_.noop, io.close, null, io));
         // Local actions are applied pre-emptively and so may be out of order, see below
         localActions = localActions.and(action);
       }
@@ -46,12 +46,16 @@ exports.load = function (subject, connected/*(localUser, commit)*/, ioOptions) {
         io.get('actions', pass(function (actions) {
           log.info('Replaying ' + actions.length + ' actions in Framespace');
           // Replay the actions as unknown user.
-          // The uniqueness check is in case actions seen on the channel have also been loaded.
-          play(_.map(actions, function (action) { return [null, action]; }), '1.id');
+          var actionMessages = _.map(actions, function (action) { return [null, action]; });
+          play(actionMessages, function (am) {
+            // This uniqueness check is in case actions seen on the channel have also been loaded.
+            // NOTE that undo actions have the same id as their do action.
+            return am[1].id + '_' + !!am[1].isUndo;
+          });
           // We're done. Return control to the caller with the user and commit function
           connected(user, commit);
-        }, io.close));
-      }, io.close));
+        }, io.close, null, io));
+      }, io.close, null, io));
     } else {
       user = new RemoteUser(data, subject);
       user.on('interacting', function (delta, state) {

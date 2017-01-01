@@ -2,6 +2,7 @@ var _ = require('lodash'),
     _async = require('async'),
     Journal = require('../journal'),
     taffy = require('taffydb').taffy,
+    log = require('../../lib/log'),
     journals = {};
 
 function TaffyJournal(id) {
@@ -23,6 +24,7 @@ TaffyJournal.prototype.fetchDetails = _async.asyncify(function () {
 });
 
 TaffyJournal.prototype.putDetails = _async.asyncify(function (details) {
+  log.debug('Putting details', details);
   this.journal.details = details;
 });
 
@@ -36,6 +38,7 @@ TaffyJournal.prototype.addEvent = _async.asyncify(function (event) {
     event.timestamp = timestamp;
     event.ordinal = journal.nextOrdinal++;
   });
+  log.trace('Adding event', event);
   journal.events.insert(event);
 });
 
