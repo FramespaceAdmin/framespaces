@@ -45,6 +45,8 @@ exports.load = function (subject, connected/*(localUser, commit)*/, ioOptions) {
       io.pause('action', pass(function (play) {
         io.get('actions', pass(function (actions) {
           log.info('Replaying ' + actions.length + ' actions in Framespace');
+          // Replay the actions as unknown user.
+          // The uniqueness check is in case actions seen on the channel have also been loaded.
           play(_.map(actions, function (action) { return [null, action]; }), '1.id');
           // We're done. Return control to the caller with the user and commit function
           connected(user, commit);
@@ -72,9 +74,8 @@ exports.load = function (subject, connected/*(localUser, commit)*/, ioOptions) {
       // Undo any out of order local actions
       localActions.un().do(subject);
       localActions = new Batch([]);
-      // Wait until inactive before committing the action
-      function act() { action.isOK(subject) && action.do(subject); }
-      users[userId] ? users[userId].once('quiesced', act) : act();
+      // Commit the action
+      action.isOK(subject) && action.do(subject);
     }
   });
 };

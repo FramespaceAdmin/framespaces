@@ -57,9 +57,10 @@ Batch.prototype.actions = function () {
  */
 Batch.prototype.removeHead = function (action) {
   var actions = action.actions();
-  this.batch = _.takeWhile(this.batch, function (a) {
-    return actions[0] && a.id === actions[0].id && actions.shift();
-  });
+  while (actions[0] && this.batch[0] && this.batch[0].id === actions[0].id) {
+    actions.shift();
+    this.batch.shift();
+  }
   return !actions.length;
 };
 

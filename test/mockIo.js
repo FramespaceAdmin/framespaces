@@ -13,9 +13,19 @@ function MockIo(options) {
     done : _.noop
   });
   Io.call(this, options.url, options.user);
-  _.assign(this, _.pick(options, 'events', 'done', 'latency'));
-  _.assign(this.get, options.get);
-  _.assign(this.publish, options.publish);
+  _.each(_.omit(options, 'url', 'user'), _.bind(function (value, key) {
+    if (_.isFunction(this[key])) {
+      if (_.isFunction(value)) {
+        this[key] = value;
+      } else {
+        var originalMethod = this[key];
+        this[key] = function () { originalMethod.apply(this, arguments); }
+      }
+      _.assign(this[key], value);
+    } else {
+      this[key] = value;
+    }
+  }, this));
   this._publish('user.connected', this.user);
 }
 

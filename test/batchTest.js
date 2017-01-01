@@ -67,7 +67,7 @@ describe('Batch action', function () {
       assert.isNotOk(subject.a);
     });
     it('should serialise to a single action', function () {
-      assert.equal(new Batch([seta]).toJSON(), 'SetAction_a');
+      assert.deepEqual(new Batch([seta]).toJSON(), [{ id : 'a' }]);
     });
     it('should lose its head', function () {
       assert.isTrue(new Batch([seta]).removeHead(new Batch([])));
@@ -95,14 +95,35 @@ describe('Batch action', function () {
       assert.isNotOk(subject.b);
     });
     it('should serialise to two actions', function () {
-      assert.deepEqual(new Batch([seta, setb]).toJSON(), ['SetAction_a', 'SetAction_b']);
+      assert.deepEqual(new Batch([seta, setb]).toJSON(), [{ id : 'a' }, { id : 'b' }]);
+    });
+    it('should lose an empty head', function () {
+      var batch = new Batch([seta, setb]);
+      assert.isTrue(batch.removeHead(new Batch([])));
+      assert.deepEqual(batch.actions(), [seta, setb]);
     });
     it('should lose its head', function () {
-      assert.isTrue(new Batch([seta, setb]).removeHead(new Batch([])));
-      assert.isTrue(new Batch([seta, setb]).removeHead(new Batch([seta])));
-      assert.isTrue(new Batch([seta, setb]).removeHead(new Batch([seta, setb])));
+      var batch = new Batch([seta, setb]);
+      assert.isTrue(batch.removeHead(new Batch([seta])));
+      assert.deepEqual(batch.actions(), [setb]);
+    });
+    it('should lose its whole body', function () {
+      var batch = new Batch([seta, setb]);
+      assert.isTrue(batch.removeHead(new Batch([seta, setb])));
+      assert.deepEqual(batch.actions(), []);
       assert.isFalse(new Batch([seta, setb]).removeHead(new SetAction()));
       assert.isFalse(new Batch([seta, setb]).removeHead(new Batch([seta, setb, new SetAction({ id : 'c' })])));
+    });
+    it('should not lose an unmatching head', function () {
+      var batch = new Batch([seta, setb]);
+      assert.isFalse(batch.removeHead(new SetAction()));
+      assert.deepEqual(batch.actions(), [seta, setb]);
+      assert.isFalse(new Batch([seta, setb]).removeHead(new Batch([seta, setb, new SetAction({ id : 'c' })])));
+    });
+    it('should lose a matching superset body but report incomplete', function () {
+      var batch = new Batch([seta, setb]);
+      assert.isFalse(batch.removeHead(new Batch([seta, setb, new SetAction({ id : 'c' })])));
+      assert.deepEqual(batch.actions(), []);
     });
   });
 });
