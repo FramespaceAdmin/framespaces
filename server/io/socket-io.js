@@ -51,7 +51,7 @@ SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
       }
     });
   });
-  _async.nextTick(_async.apply(cb, false, ns));
+  _async.nextTick(cb, false, ns);
 };
 
 module.exports = SocketIo;

@@ -156,12 +156,9 @@ describe('IO', function () {
     var events = new EventEmitter(), io = new MockIo({ events : events }),
         paused = true;
     io.subscribe('action', function (userId, action) {
-      if (paused) {
-        done('Event reveived while paused!');
-      } else {
-        assert.equal(action, 'act');
-        done();
-      }
+      assert.isFalse(paused, 'Event received while paused!');
+      assert.equal(action, 'act');
+      done();
     });
     io.pause('action', pass(function (play) {
       events.emit('action', 'uid', 'act');
@@ -177,9 +174,8 @@ describe('IO', function () {
     var events = new EventEmitter(), io = new MockIo({ events : events }),
         paused = true, act1Received = false;
     io.subscribe('action', function (userId, action) {
-      if (paused) {
-        done('Event reveived while paused!');
-      } else if (!act1Received) {
+      assert.isFalse(paused, 'Event received while paused!');
+      if (!act1Received) {
         assert.equal(action, 'act1');
         act1Received = true;
       } else {
