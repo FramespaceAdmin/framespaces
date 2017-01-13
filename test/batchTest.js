@@ -67,7 +67,7 @@ describe('Batch action', function () {
       assert.isNotOk(subject.a);
     });
     it('should serialise to a single action', function () {
-      assert.deepEqual(new Batch([seta]).toJSON(), [{ id : 'a' }]);
+      assert.deepEqual(new Batch([seta]).toJSON(), [{ id : 'a', type : 'mutation' }]);
     });
     it('should lose its head', function () {
       assert.isTrue(new Batch([seta]).removeHead(new Batch([])));
@@ -95,7 +95,9 @@ describe('Batch action', function () {
       assert.isNotOk(subject.b);
     });
     it('should serialise to two actions', function () {
-      assert.deepEqual(new Batch([seta, setb]).toJSON(), [{ id : 'a' }, { id : 'b' }]);
+      assert.deepEqual(new Batch([seta, setb]).toJSON(), [
+        { id : 'a', type : 'mutation' }, { id : 'b', type : 'mutation' }
+      ]);
     });
     it('should lose an empty head', function () {
       var batch = new Batch([seta, setb]);

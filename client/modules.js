@@ -10,7 +10,8 @@ var _ = require('lodash'),
 
 module.exports = {
   aliases : _.assign({
-    config : '../dist/config' // Configuration as JSON, see below
+    config : '../dist/config', // Configuration as JSON, see below
+    request : 'xhr' // Client-side request
   }, modules)
 };
 

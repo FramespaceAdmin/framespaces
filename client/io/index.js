@@ -8,9 +8,16 @@ var _ = require('lodash'),
  */
 function Io(baseUrl, user) {
   this.baseUrl = _url.parse(baseUrl);
-  this.name = _.find(this.baseUrl.pathname.split(/[/?]/g));
+  this.name = Io.nameFromPath(this.baseUrl.pathname);
   this.user = user;
 }
+
+/**
+ * Utility to get a Framespace name from a URL pathname
+ */
+Io.nameFromPath = function (pathname) {
+  return _.find(pathname.split(/[/?]/g));
+};
 
 /**
  * Available message events and their arguments.
@@ -19,7 +26,7 @@ function Io(baseUrl, user) {
  */
 Io.messages = {
   'user.connected' : [{ id : String }], // Cannot be published
-  'user.disconnected' : [], // Cannot be published
+  'user.disconnected' : [String], // Cannot be published, optional parameter is error cause
   'action' : [Object], // Echoed to publisher
   'interactions' : [Array] // NOT echoed to publisher
 };
@@ -43,7 +50,9 @@ Io.prototype.get = function (path, cb/*(err, body)*/) {
 };
 
 /**
- * Destroy the current IO session and report the given error
+ * Destroy the current IO session and report the given error.
+ * Should also give rise to a user.disconnected event with the error.
+ * @param err [optional] error to close with
  */
 Io.prototype.close = function (err) {
   throw undefined;

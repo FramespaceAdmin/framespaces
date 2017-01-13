@@ -1,31 +1,24 @@
 var _ = require('lodash'),
     _async = require('async'),
     guid = require('../lib/guid'),
+    validate = require('../lib/validate'),
+    pass = require('pass-error'),
     EventEmitter = require('events'),
-    Io = require('../client/io');
+    Io = require('../client/io'),
+    itIsIO = require('./ioSpec');
 
 function MockIo(options) {
+  if (!(this instanceof MockIo)) { return new MockIo(options); }
   options = _.defaults(options, {
     url : 'http://mock.io/fs',
     user : { id : guid() },
     events : new EventEmitter(),
-    latency : 0,
-    done : _.noop
+    latency : 0
   });
   Io.call(this, options.url, options.user);
-  _.each(_.omit(options, 'url', 'user'), _.bind(function (value, key) {
-    if (_.isFunction(this[key])) {
-      if (_.isFunction(value)) {
-        this[key] = value;
-      } else {
-        var originalMethod = this[key];
-        this[key] = function () { originalMethod.apply(this, arguments); }
-      }
-      _.assign(this[key], value);
-    } else {
-      this[key] = value;
-    }
-  }, this));
+  _.assign(this.get, options.get);
+  _.assign(this.publish, options.publish);
+  _.assign(this, _.pick(options, 'events', 'latency'));
   this._publish('user.connected', this.user);
 }
 
@@ -37,12 +30,11 @@ MockIo.prototype.latent = function (cb, args) {
 }
 
 MockIo.prototype.get = function (path, cb/*(err, body)*/) {
-  this.latent(cb, [this.get.error, this.get.body]);
+  this.latent(cb, [this.get.error, this.get[path]]);
 };
 
 MockIo.prototype.close = function (err) {
-  this.latent(this.done, [err]);
-  this._publish('user.disconnected');
+  this._publish('user.disconnected', err);
 };
 
 MockIo.prototype.subscribe = function (eventName, subscriber/*(userId, data...)*/) {
@@ -56,9 +48,12 @@ MockIo.prototype.subscribe = function (eventName, subscriber/*(userId, data...)*
 // Private implementation of publish that allows publishing of user events
 MockIo.prototype._publish = function (eventName/*, data..., cb(err)*/) {
   var data = _.slice(arguments, 1), cb = _.isFunction(_.last(data)) ? data.pop() : _.noop;
+  var validator = eventName === 'action' ? validate.action : _async.asyncify(_.constant(false));
   this.latent(_.bind(function () {
-    this.events.emit.apply(this.events, [eventName, this.user.id].concat(data));
-    cb(this.publish.error);
+    validator(data[0], pass(function () {
+      this.events.emit.apply(this.events, [eventName, this.user.id].concat(data));
+      cb(false);
+    }, cb, null, this));
   }, this));
 };
 

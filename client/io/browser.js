@@ -1,14 +1,14 @@
 var Io = require('../io'),
-    cookies = require('js-cookie'),
+    getCookie = require('js-cookie').get,
     jwtDecode = require('jwt-decode'),
-    request = require('xhr');
+    request = require('request');
 
 /**
  * Base class for browser-based IO.
  * Assumes a browser implementation with a window and XHR.
  */
 function BrowserIo() {
-  this.jwt = cookies.get('jwt');
+  this.jwt = getCookie('jwt');
   Io.call(this, window.location.href, jwtDecode(this.jwt));
 }
 
@@ -26,6 +26,7 @@ BrowserIo.prototype.get = function (path, cb/*(err, body)*/) {
 };
 
 BrowserIo.prototype.close = function (err) {
+  this.emit('user.disconnected', [this.user.id, err]);
   err && (window.location = this.url('error?cause=' + encodeURIComponent(err)));
 };
 

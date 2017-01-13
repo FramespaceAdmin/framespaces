@@ -7,7 +7,7 @@ function SocketIo() {
   this.socket = io(this.url('io'));
   this.socket.on('connect_error', _.bind(this.close, this));
 
-  var jwt = this.jwt;
+  var jwt = this.jwt, user = this.user;
   this.socket.on('user.token', function (tokenIs) { tokenIs(jwt); });
 }
 
@@ -28,6 +28,11 @@ SocketIo.prototype.unsubscribe = function () {
 
 SocketIo.prototype.subscribers = function () {
   return _.clone(this.socket.listeners.apply(this.socket, arguments));
+};
+
+SocketIo.prototype.close = function (err) {
+  this.socket.close();
+  BrowserIo.prototype.close.call(this, err);
 };
 
 module.exports = SocketIo;

@@ -11,7 +11,7 @@ SetAction.prototype = _.assign(Object.create(Action.prototype), {
   },
   isOK : function (s) { return !s[this.id]; },
   un : function () { return new UnsetAction(this.undoOptions()); },
-  toJSON : function () { return { id : this.id }; }
+  toJSON : function () { return { id : this.id, type : 'mutation' }; }
 });
 SetAction.fromJSON = function (data) {
   return new SetAction(data);

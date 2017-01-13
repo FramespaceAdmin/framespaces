@@ -4,6 +4,7 @@ var MockPaper = require('./mockPaper'),
     MockUser = require('../client/user'),
     SetAction = require('./setAction'),
     EventEmitter = require('events'),
+    guid = require('../lib/guid'),
     pass = require('pass-error'),
     assert = require('chai').assert,
     proxyquire = require('proxyquire').noCallThru(),
@@ -14,43 +15,45 @@ var MockPaper = require('./mockPaper'),
       'io' : MockIo
     });
 
+var A_ID = guid(), B_ID = guid();
+
 describe('Framespace client', function () {
   it('should report initialisation', function (done) {
     fs.load({}, function (user, commit) {
       assert.isObject(user);
       assert.isFunction(commit);
       done();
-    }, { get : { body : [] } });
+    }, { get : { actions : [] } });
   });
 
   it('should publish a local action', function (done) {
     var events = new EventEmitter(), subject = {};
     events.on('action', function (userId, data) {
-      assert.deepEqual(data, { id : 'a' })
+      assert.deepEqual(data, { id : A_ID, type : 'mutation' })
       done();
     });
     fs.load(subject, function (user, commit) {
-      var seta = new SetAction({ id : 'a' });
+      var seta = new SetAction({ id : A_ID });
       seta.do(subject);
       commit(seta);
-    }, { get : { body : [] }, events : events });
+    }, { get : { actions : [] }, events : events });
   });
 
   it('should apply a remote action (before loaded)', function (done) {
     var subject = {};
     fs.load(subject, function (user, commit) {
-      assert.isTrue(subject.a);
+      assert.isTrue(subject[A_ID]);
       done();
-    }, { get : { body : [{ id : 'a' }] } });
+    }, { get : { actions : [{ id : A_ID }] } });
   });
 
   it('should apply a remote action (during load)', function (done) {
     var events = new EventEmitter(), subject = {};
     fs.load(subject, function (user, commit) {
-      assert.isTrue(subject.a);
+      assert.isTrue(subject[A_ID]);
       done();
     }, { get : function (path, cb/*(err, body)*/) {
-      events.emit('action', 'uid', { id : 'a' });
+      events.emit('action', 'uid', { id : A_ID });
       setTimeout(function () { // Event is received async
         cb(false, []);
       }, 0);
@@ -60,30 +63,30 @@ describe('Framespace client', function () {
   it('should apply a remote action (after loaded)', function (done) {
     var events = new EventEmitter(), subject = {};
     fs.load(subject, function (user, commit) {
-      events.emit('action', 'uid', { id : 'a' });
+      events.emit('action', 'uid', { id : A_ID });
       setTimeout(function () { // Event is received async
-        assert.isTrue(subject.a);
+        assert.isTrue(subject[A_ID]);
         done();
       }, 0);
-    }, { get : { body : [] }, events : events });
+    }, { get : { actions : [] }, events : events });
   });
 
   it('should reset state if local actions not in channel order', function (done) {
     var events = new EventEmitter(), subject = {
       set : function (key) {
-        if (key === 'a') {
-          assert.isTrue(!subject.b, 'Action a should be applied first');
-        } else if (key === 'b' && subject.a) {
+        if (key === A_ID) {
+          assert.isTrue(!subject[B_ID], 'Action a should be applied first');
+        } else if (key === B_ID && subject[A_ID]) {
           done();
         }
         subject[key] = true;
       }
     };
     fs.load(subject, function (user, commit) {
-      var setb = new SetAction({ id : 'b' });
+      var setb = new SetAction({ id : B_ID });
       setb.do(subject);
-      events.emit('action', 'uid', { id : 'a' }); // Injected remote event
+      events.emit('action', 'uid', { id : A_ID }); // Injected remote event
       commit(setb);
-    }, { get : { body : [] }, events : events });
+    }, { get : { actions : [] }, events : events });
   });
 });
