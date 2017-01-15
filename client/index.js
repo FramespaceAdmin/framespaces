@@ -5,7 +5,9 @@ var _ = require('lodash'),
     History = require('./history'),
     Toolbar = require('./toolbar'),
     Suggestor = require('./suggest'),
+    Point = require('kld-affine').Point2D,
     keycode = require('keycode'),
+    hamster = require('hamsterjs'),
     paper = Snap('.paper'),
     picture = new Picture(paper),
     history = new History(picture),
@@ -68,6 +70,21 @@ fs.load(picture, function (user, commit) {
     });
   }
   paper.mousedown(mouseHandler).mouseup(mouseHandler).mousemove(mouseHandler);
+
+  // Zoom with mouse wheel
+  hamster(paper.node).wheel(function (e, d) {
+    var client = paper.node.getBoundingClientRect(),
+        vb = _.defaults(_.pick(paper.attr('viewBox') || client, 'x', 'y', 'width', 'height'), { x : 0, y : 0 }),
+        width = Math.max(100, vb.width + d), // Arbirarily choose to scale the width
+        height = vb.width * (client.height / client.width), // Scale height in proportion
+        dx = width - vb.width, dy = height - vb.height, // Establish actually changes
+        // Adjust the origin so that the mouse cursor stays still
+        x = vb.x - (dx * ((e.originalEvent.clientX - client.left) / client.width)),
+        y = vb.y - (dy * ((e.originalEvent.clientY - client.top) / client.height));
+
+    paper.attr('viewBox', [x, y, width, height].join(' '));
+    e.preventDefault();
+  });
 
   user.use(pen);
   toolbar.penButton.mousedown(function () { user.use(pen) });
