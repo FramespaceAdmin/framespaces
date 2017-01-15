@@ -1,3 +1,5 @@
+if (require('config').get('tests').indexOf('integration') === -1) return;
+
 var _ = require('lodash'),
     _async = require('async'),
     pass = require('pass-error'),

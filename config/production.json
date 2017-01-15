@@ -1,0 +1,4 @@
+{
+  "log" : "WARN",
+  "tests" : ["unit", "integration"]
+}
