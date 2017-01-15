@@ -25,8 +25,9 @@ BrowserIo.prototype.get = function (path, cb/*(err, body)*/) {
   });
 };
 
-BrowserIo.prototype.close = function (err) {
+BrowserIo.prototype.close = function (err, cb) {
   this.emit('user.disconnected', [this.user.id, err]);
+  cb && cb(false); // Do this before moving the window
   err && (window.location = this.url('error?cause=' + encodeURIComponent(err)));
 };
 

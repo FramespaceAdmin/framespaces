@@ -53,8 +53,9 @@ Io.prototype.get = function (path, cb/*(err, body)*/) {
  * Destroy the current IO session and report the given error.
  * Should also give rise to a user.disconnected event with the error.
  * @param err [optional] error to close with
+ * @param cb [optional] callback to call (with a close error)
  */
-Io.prototype.close = function (err) {
+Io.prototype.close = function (err, cb/*(err)*/) {
   throw undefined;
 };
 

@@ -1,5 +1,5 @@
 {
-  "log" : "DEBUG",
+  "log" : "INFO",
   "modules" : {
     "io" : "socket-io",
     "journal" : "taffy"

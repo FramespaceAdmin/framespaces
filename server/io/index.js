@@ -12,6 +12,17 @@ Io.prototype.createChannel = function (name, cb/*(err, channel)*/) {
 };
 
 /**
+ * Publish to the io channel.
+ * @param userId user publishing
+ * @param eventName channel event name
+ * @param data... data to publish
+ * @param cb optional callback with error
+ */
+Io.prototype.publish = function (name, eventName, userId, data/*...*/, cb/*(err)*/) {
+  throw undefined;
+};
+
+/**
  * Authorise a channel according to some internal means
  * @param name channel name
  * @param cb callback with error and authorisation (implementation specific)

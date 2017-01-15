@@ -23,7 +23,7 @@ describe('Framespace client', function () {
       assert.isObject(user);
       assert.isFunction(commit);
       done();
-    }, { get : { actions : [] } });
+    }, { resources : { actions : [] } });
   });
 
   it('should publish a local action', function (done) {
@@ -36,7 +36,7 @@ describe('Framespace client', function () {
       var seta = new SetAction({ id : A_ID });
       seta.do(subject);
       commit(seta);
-    }, { get : { actions : [] }, events : events });
+    }, { resources : { actions : [] }, events : events });
   });
 
   it('should apply a remote action (before loaded)', function (done) {
@@ -44,7 +44,7 @@ describe('Framespace client', function () {
     fs.load(subject, function (user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
-    }, { get : { actions : [{ id : A_ID }] } });
+    }, { resources : { actions : [{ id : A_ID }] } });
   });
 
   it('should apply a remote action (during load)', function (done) {
@@ -52,7 +52,7 @@ describe('Framespace client', function () {
     fs.load(subject, function (user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
-    }, { get : function (path, cb/*(err, body)*/) {
+    }, { resources : function (path, cb/*(err, body)*/) {
       events.emit('action', 'uid', { id : A_ID });
       setTimeout(function () { // Event is received async
         cb(false, []);
@@ -68,7 +68,7 @@ describe('Framespace client', function () {
         assert.isTrue(subject[A_ID]);
         done();
       }, 0);
-    }, { get : { actions : [] }, events : events });
+    }, { resources : { actions : [] }, events : events });
   });
 
   it('should reset state if local actions not in channel order', function (done) {
@@ -87,6 +87,6 @@ describe('Framespace client', function () {
       setb.do(subject);
       events.emit('action', 'uid', { id : A_ID }); // Injected remote event
       commit(setb);
-    }, { get : { actions : [] }, events : events });
+    }, { resources : { actions : [] }, events : events });
   });
 });

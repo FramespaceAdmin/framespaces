@@ -52,7 +52,7 @@
     "postinstall": "npm run build:dist",
     "start": "node server/index.js",
     "stop": "pkill -SIGINT Framespaces",
-    "test": "mocha test",
+    "test": "NODE_ENV=test mocha test",
     "start:dev": "npm run build:dev && NODE_ENV=development node server/index.js",
     "restart:dev": "npm run build:dev && npm stop && NODE_ENV=development node server/index.js",
     "copy:dist": "mkdir -p dist && cp -R web/* dist/",

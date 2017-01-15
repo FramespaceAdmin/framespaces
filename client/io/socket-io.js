@@ -30,9 +30,9 @@ SocketIo.prototype.subscribers = function () {
   return _.clone(this.socket.listeners.apply(this.socket, arguments));
 };
 
-SocketIo.prototype.close = function (err) {
+SocketIo.prototype.close = function (err, cb) {
   this.socket.close();
-  BrowserIo.prototype.close.call(this, err);
+  BrowserIo.prototype.close.call(this, err, cb);
 };
 
 module.exports = SocketIo;

@@ -57,4 +57,9 @@ SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
   _async.nextTick(cb, false, this.namespaces[name]);
 };
 
+SocketIo.prototype.publish = function (name, eventName, userId, data/*...*/, cb/*(err)*/) {
+  var args = ['emit'].concat(_.slice(arguments, 1));
+  _.each(this.namespaces[name].connected, _.method.apply(_, args));
+};
+
 module.exports = SocketIo;

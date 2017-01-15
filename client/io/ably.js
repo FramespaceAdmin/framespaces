@@ -1,4 +1,5 @@
 var _ = require('lodash'),
+    log = require('../../lib/log'),
     jwtDecode = require('jwt-decode'),
     pass = require('pass-error'),
     BrowserIo = require('./browser');
@@ -6,26 +7,24 @@ var _ = require('lodash'),
 function AblyIo() {
   BrowserIo.call(this);
   // Note that 'Ably.Realtime' is a global from https://cdn.ably.io/lib/ably.min.js
-  var ably = Ably.Realtime({ authUrl : this.url('channel/auth') }),
-      channel = ably.channels.get(this.name);
+  this.realtime = Ably.Realtime({ authUrl : this.url('channel/auth'), log : { level : log.scale(4, -1) } });
+  this.channel = this.realtime.channels.get(this.name);
 
-  channel.presence.get(pass(function(members) {
-    channel.presence.enter(this.user, pass(function () {
-      // Notify ourselves of connected user
-      this.emit('user.connected', [this.user.id, this.user]);
-      // Notify ourselves of the existing users
-      _.each(members, function (member) {
-        this.emit('user.connected', [member.data.id, member.data]);
-      });
+  this.channel.presence.get(pass(function(members) {
+    this.channel.presence.enter(this.user, pass(function () {
+      // Notify ourselves of connected user and existing users
+      _.each([this.user].concat(_.map(members, 'data')), _.bind(function (user) {
+        this.emit('user.connected', [user.id, user]);
+      }, this));
     }, this.close, null, this));
   }, this.close, null, this));
 
   // subscribers member is array of pairs [[subscriber, ablySubscriber]]
   this.events = {
-    'user.connected' : { emitter : channel.presence, name : 'enter', subscribers : [] },
-    'user.disconnected' : { emitter : channel.presence, name : 'leave', subscribers : [] },
-    'action' : { emitter : channel, name : 'action', subscribers : [], echo : true },
-    'interactions' : { emitter : channel, name : 'interactions', subscribers : [] }
+    'user.connected' : { emitter : this.channel.presence, name : 'enter', subscribers : [] },
+    'user.disconnected' : { emitter : this.channel.presence, name : 'leave', subscribers : [] },
+    'action' : { emitter : this.channel, name : 'action', subscribers : [], echo : true },
+    'interactions' : { emitter : this.channel, name : 'interactions', subscribers : [] }
   };
 }
 
@@ -48,7 +47,7 @@ AblyIo.prototype.publish = function (eventName/*, data..., cb*/) {
   var event = this.events[eventName],
       data = _.tail(_.toArray(arguments)),
       cb = _.isFunction(_.last(data)) ? data.pop() : undefined;
-  event.emitter.publish(event.name, data, cb);
+  event.emitter.publish && event.emitter.publish(event.name, data, cb);
 };
 
 AblyIo.prototype.unsubscribe = function (eventName, subscriber) {
@@ -59,6 +58,16 @@ AblyIo.prototype.unsubscribe = function (eventName, subscriber) {
 
 AblyIo.prototype.subscribers = function (eventName) {
   return _.map(this.events[eventName].subscribers, 0);
+};
+
+AblyIo.prototype.close = function (err, cb) {
+  if (_.includes(['closing', 'closed'], this.realtime.connection.state)) {
+    // Already closing or closed, so just call the callback when closed
+    cb && this.realtime.connection.once('closed', _.partial(cb, false));
+  } else {
+    this.realtime.connection.once('closed', _.bind(BrowserIo.prototype.close, this, err, cb));
+  }
+  this.realtime.close();
 };
 
 module.exports = AblyIo;

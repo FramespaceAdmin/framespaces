@@ -16,9 +16,7 @@ function MockIo(options) {
     latency : 0
   });
   Io.call(this, options.url, options.user);
-  _.assign(this.get, options.get);
-  _.assign(this.publish, options.publish);
-  _.assign(this, _.pick(options, 'events', 'latency'));
+  _.assign(this, _.pick(options, 'events', 'latency', 'resources'));
   this._publish('user.connected', this.user);
 }
 
@@ -30,11 +28,11 @@ MockIo.prototype.latent = function (cb, args) {
 }
 
 MockIo.prototype.get = function (path, cb/*(err, body)*/) {
-  this.latent(cb, [this.get.error, this.get[path]]);
-};
-
-MockIo.prototype.close = function (err) {
-  this._publish('user.disconnected', err);
+  if (_.isFunction(this.resources)) {
+    return this.resources.call(this, path, cb);
+  } else {
+    return this.latent(cb, [false, _.get(this, ['resources', path])]);
+  }
 };
 
 MockIo.prototype.subscribe = function (eventName, subscriber/*(userId, data...)*/) {
@@ -52,7 +50,7 @@ MockIo.prototype._publish = function (eventName/*, data..., cb(err)*/) {
   this.latent(_.bind(function () {
     validator(data[0], pass(function () {
       this.events.emit.apply(this.events, [eventName, this.user.id].concat(data));
-      cb(false);
+      this.latent(cb, false);
     }, cb, null, this));
   }, this));
 };
@@ -73,6 +71,10 @@ MockIo.prototype.subscribers = function (eventName) {
   return _.map(_.filter(this.events.listeners(eventName), _.bind(function (listener) {
     return listener.io === this;
   }, this)), 'subscriber');
+};
+
+MockIo.prototype.close = function (err, cb) {
+  this._publish('user.disconnected', err, cb);
 };
 
 module.exports = MockIo;
