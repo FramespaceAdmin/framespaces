@@ -26,6 +26,12 @@ describe('User', function () {
     user.interacting({ x : 1, y : 1 });
   });
 
+  it('should not emit an interaction if updating', function () {
+    var user = new User({ id : 'uid' });
+    user.on('interacting', function (delta, state) { assert.fail(); });
+    user.update({ x : 1, y : 1 });
+  });
+
   it('should not emit an interaction if no change of activity', function () {
     var picture = new Picture(MockPaper(10, 10));
     var user = new User({ id : 'uid' });

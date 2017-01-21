@@ -6,7 +6,7 @@ var _ = require('lodash'),
 
 function Label(attr, spans, bbox) {
   // Allow attr to not have its x and y position specified
-  Text.call(this, Shape.deltaAttr(_.defaults(attr, { x : 0, y : 0 }), { class : 'label' }), spans, bbox);
+  Text.call(this, Shape.delta(_.defaults(attr, { x : 0, y : 0 }), { class : 'label' }), spans, bbox);
 }
 
 Label.fromJSON = function (data) {

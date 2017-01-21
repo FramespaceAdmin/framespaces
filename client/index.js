@@ -55,34 +55,32 @@ fs.load(picture, function (user, commit) {
       user.interacting({ active : true, char : char });
     }
   });
-  function mouseHandler(e, x, y) {
+  var mouse;
+  function svgPosition() {
     var screenToSvg = Snap.matrix(paper.node.getScreenCTM()).invert();
+    return { x : screenToSvg.x(mouse.x, mouse.y), y : screenToSvg.y(mouse.x, mouse.y) };
+  }
+  function mouseHandler(e, x, y) {
+    mouse = new Point(x, y);
     var element = document.elementFromPoint(x, y);
     if (_.get(element, 'nodeName') === 'tspan') {
       element = element.parentElement;
     }
-    user.interacting({
-      x : screenToSvg.x(x, y),
-      y : screenToSvg.y(x, y),
-      active : e.buttons === 1 || e.button === 1,
+    user.interacting(_.assign(svgPosition(), {
+      active : e.buttons === 1,
       char : null, // Finish any keyboard interaction
       element : _.get(element, 'id') || undefined
-    });
+    }));
   }
   paper.mousedown(mouseHandler).mouseup(mouseHandler).mousemove(mouseHandler);
+  // If the picture view changes, silently update the user position
+  picture.on('viewChanged', function () {
+    user.update(svgPosition());
+  });
 
   // Zoom with mouse wheel
   hamster(paper.node).wheel(function (e, d) {
-    var client = paper.node.getBoundingClientRect(),
-        vb = _.defaults(_.pick(paper.attr('viewBox') || client, 'x', 'y', 'width', 'height'), { x : 0, y : 0 }),
-        width = Math.max(100, vb.width + d), // Arbirarily choose to scale the width
-        height = vb.width * (client.height / client.width), // Scale height in proportion
-        dx = width - vb.width, dy = height - vb.height, // Establish actually changes
-        // Adjust the origin so that the mouse cursor stays still
-        x = vb.x - (dx * ((e.originalEvent.clientX - client.left) / client.width)),
-        y = vb.y - (dy * ((e.originalEvent.clientY - client.top) / client.height));
-
-    paper.attr('viewBox', [x, y, width, height].join(' '));
+    picture.zoom(d, { x : e.originalEvent.clientX, y : e.originalEvent.clientY });
     e.preventDefault();
   });
 

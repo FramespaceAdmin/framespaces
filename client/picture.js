@@ -109,4 +109,28 @@ Picture.prototype.changed = function (element) {
   return element;
 };
 
+Picture.prototype.viewBox = function (newBox) {
+  if (newBox) {
+    this.paper.attr('viewBox', [newBox.x, newBox.y, newBox.width, newBox.height].join(' '));
+    this.emit('viewChanged', newBox);
+    return newBox;
+  } else {
+    // Establish the current view box (client rect at 0,0 if not available)
+    var vb = this.paper.attr('viewBox') || this.paper.node.getBoundingClientRect();
+    return _.defaults(_.pick(vb, 'x', 'y', 'width', 'height'), { x : 0, y : 0 });
+  }
+};
+
+Picture.prototype.zoom = function (amount, clientCentre) {
+  var client = this.paper.node.getBoundingClientRect(), vb = this.viewBox(),
+      width = Math.max(100, vb.width + amount), // Arbirarily choose to scale the width
+      height = vb.width * (client.height / client.width), // Scale height in proportion
+      dx = width - vb.width, dy = height - vb.height, // Establish actual changes
+      // Adjust the origin so that the centre stays still
+      x = vb.x - (dx * ((clientCentre.x - client.left) / client.width)),
+      y = vb.y - (dy * ((clientCentre.y - client.top) / client.height));
+
+  this.viewBox({ x : x, y : y, width : width, height : height });
+};
+
 module.exports = Picture;

@@ -204,10 +204,10 @@ Shape.prototype.delta = function (dAttr) {
 /**
  * Utility for use in @see Shape.prototype.delta. Just returns the delta'd attributes
  * without creating a new Shape.
- * @see Shape.deltaAttr.
+ * @see Shape.delta.
  */
 Shape.prototype.deltaAttr = function (dAttr) {
-  return Shape.deltaAttr(_.clone(this.attr), dAttr);
+  return Shape.delta(_.clone(this.attr), dAttr);
 };
 
 /**
@@ -215,12 +215,12 @@ Shape.prototype.deltaAttr = function (dAttr) {
  * For numeric attributes, the given amounts are numeric deltas.
  * For the class attribute, a space-delimited list of classes. Suffix minus to remove (e.g. '-link').
  */
-Shape.deltaAttr = function (attr, dAttr) {
+Shape.delta = function (attr, dAttr) {
   return _.assignWith(attr, dAttr, function (value, delta, key) {
     if (_.isFunction(delta)) {
       return delta(value);
     } else if ((_.isUndefined(value) || _.isNumber(value)) && _.isNumber(delta)) {
-      return (value || 0) + delta;
+      return (value || 0) + (delta || 0);
     } else if (key === 'class') {
       var classes = (value ? [value.split(' ')] : []),
           changes = _.partition(delta.split(' '), function (c) { return c.charAt(0) === '-' }),

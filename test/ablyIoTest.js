@@ -11,6 +11,10 @@ var _ = require('lodash'),
 global.Ably = require('ably'); // Needed by client
 
 describe('Ably IO', function () {
+  beforeEach(function () {
+    this.timeout(5000);
+  });
+
   itIsBrowserIO(function newClientIo(options, cb) {
     // Set up server authorisation
     options.serverIo.authorise(options.name, options.user.id, pass(function (auth) {

@@ -20,6 +20,10 @@ User.prototype.isUsing = function (toolName) {
   return _.get(this.tool, 'constructor.name') === toolName;
 };
 
+User.prototype.update = function (newState) {
+  return _.assign(this.state, newState);
+};
+
 User.prototype.interacting = function (newState) {
   if ((this.state.active || newState.active) && this.tool) {
     var oldState = this.state, delta = _.transform(newState, function (delta, value, key) {
@@ -41,7 +45,7 @@ User.prototype.interacting = function (newState) {
     }
     return this.state;
   } else {
-    return _.assign(this.state, newState);
+    return this.update(newState);
   }
 };
 

@@ -19,7 +19,7 @@ function end(shape, other, angle) {
 
 function Linkline(attr) {
   // Allow attr to not have its start and end points specified
-  Line.call(this, Shape.deltaAttr(_.defaults(attr, {
+  Line.call(this, Shape.delta(_.defaults(attr, {
     x1 : 0, y1 : 0, x2 : 0, y2 : 0
   }), { class : 'link' }));
 }

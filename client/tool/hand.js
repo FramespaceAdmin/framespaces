@@ -46,10 +46,14 @@ function Hand(picture) {
         this.emit('finished', new Mutation(oldShape, shape, { result : moving }));
         reset();
       }
-    } else if (state.active && moving) { // Moving
-      // Move something
-      shape = move.call(shape, delta.x || 0, delta.y || 0, state.x, state.y);
-      picture.changed(shape.applyTo(moving));
+    } else if (state.active) {
+      if (moving) { // Moving an element
+        // Move something
+        shape = move.call(shape, delta.x || 0, delta.y || 0, state.x, state.y);
+        picture.changed(shape.applyTo(moving));
+      } else { // Panning
+        picture.viewBox(Shape.delta(picture.viewBox(), { x : -delta.x, y : -delta.y }));
+      }
     }
   };
 };
@@ -60,6 +64,7 @@ Hand.prototype.constructor = Hand;
 Hand.prototype.activate = function () {
   this.paper.addClass('hand-mode');
 };
+
 Hand.prototype.deactivate = function () {
   this.paper.removeClass('hand-mode');
 };

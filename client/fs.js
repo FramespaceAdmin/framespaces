@@ -20,7 +20,7 @@ exports.load = function (subject, connected/*(localUser, commit)*/, ioOptions) {
   io.subscribe('user.connected', function (userId, data) {
     var user; // NOTE this is the Framespace user, not the IO user
     if (userId === io.user.id) {
-      user = new LocalUser(data);
+      user = new LocalUser(data, subject);
       var interactions = [];
       // Send interactions in batches
       function flushInteractions() {

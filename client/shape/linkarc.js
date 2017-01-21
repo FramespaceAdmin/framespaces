@@ -6,7 +6,7 @@ var _ = require('lodash'),
     Vector = require('kld-affine').Vector2D;
 
 function Linkarc(attr) {
-  Arc.call(this, Shape.deltaAttr(attr, { class : 'link' }));
+  Arc.call(this, Shape.delta(attr, { class : 'link' }));
 }
 
 Linkarc.fromJSON = function (data) {
