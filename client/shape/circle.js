@@ -29,19 +29,22 @@ Circle.prototype.ATTR = Shape.prototype.ATTR.with({
 });
 
 Circle.prototype.computePoints = function () {
-  return [this.params.params[0]]; // centre
+  return Ellipse.computePoints(this.attr.cx, this.attr.cy, this.attr.r, this.attr.r);
 };
 
 Circle.prototype.computeBBox = function () {
-  return Ellipse.computeBBox(this.points[0], this.attr.r, this.attr.r);
+  return Ellipse.computeBBox(this.attr.cx, this.attr.cy, this.attr.r, this.attr.r);
 };
 
 Circle.prototype.computeExtent = function () {
   return this.attr.r * 2; // diameter
 };
 
-Circle.prototype.contains = function (point) {
-  return point.distanceFrom(this.bbox.c) <= this.attr.r;
+Circle.prototype.contains = function (that) {
+  if (that instanceof Shape) {
+    return Shape.prototype.contains.call(this, that);
+  }
+  return that.distanceFrom(this.bbox.c) <= this.attr.r;
 };
 
 Circle.prototype.mover = function (isEdge, cursor) {

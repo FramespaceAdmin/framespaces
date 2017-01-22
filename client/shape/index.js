@@ -183,14 +183,16 @@ Shape.prototype.intersect = function (that) {
 };
 
 /**
- * returns truthy if the shape contains the point.
+ * returns truthy if the shape contains the given point or shape.
  * The default behaviour uses the Jordan curve theorem per
  * https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
  */
-Shape.prototype.contains = function (point) {
-  var ray = _cap.shape('line', { x1 : this.bbox.x, y1 : this.bbox.y, x2 : point.x, y2 : point.y }),
+Shape.prototype.contains = function (that) {
+  if (that instanceof Shape) {
+    return _.every(that.points, _.bind(this.contains, this)) && !this.intersect(that).length;
+  }
+  var ray = _cap.shape('line', { x1 : this.bbox.x, y1 : this.bbox.y, x2 : that.x, y2 : that.y }),
       intersects = _cap.intersect(this.params, ray).points;
-
   return !intersects || intersects.length % 2;
 };
 
@@ -368,10 +370,13 @@ function strongPoint(point) {
   return new Point(Number(point.x), Number(point.y));
 }
 
+Shape.BBOX = as({ x : Number, y : Number, width : Number, height : Number });
+
 /**
  * b must have x, y, width & height. May also have other parameters
  */
 function strongBBox(b) {
+  Shape.BBOX.validate(b);
   var cx = b.cx || (b.c && b.c.x) || b.x + b.width/2,
       cy = b.cy || (b.c && b.c.y) || b.y + b.height/2;
   return {

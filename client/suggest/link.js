@@ -9,8 +9,12 @@ var _ = require('lodash')
 module.exports = function suggestLink(picture, element) {
   var line = (element && !element.removed && Shape.of(element));
   if (line && (line instanceof Line || line instanceof Arc) && !line.hasClass('link')) {
+    // Searching within a reasonable distance of the line
+    var searchBox = Shape.delta(_.pick(line.bbox, 'x', 'y', 'width', 'height'), {
+      x : -line.extent/2, y : -line.extent/2, width : line.extent, height : line.extent
+    });
     function suggestEnd(p) {
-      return _.maxBy(_.map(_.without(picture.allElements(), element), function (e) {
+      return _.maxBy(_.map(_.without(picture.elements(searchBox), element), function (e) {
         // Confidence is based on the distance of the point from the shape centre or nearest intersect
         var s = Shape.of(e), end = Shape.closest(line.intersect(s), p) || s.bbox.c,
             d = Math.min(end.distanceFrom(p), s.bbox.c.distanceFrom(p));

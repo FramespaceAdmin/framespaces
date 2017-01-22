@@ -3,39 +3,53 @@ var _ = require('lodash'),
     Shape = require('./shape'),
     Linkline = require('./shape/linkline'),
     Label = require('./shape/label'),
-    guid = require('../lib/guid');
+    RTree = require('rbush'),
+    guid = require('../lib/guid'),
+    as = require('yavl');
 
 function Picture(paper) {
   this.paper = paper;
-  this.on('changed', _.bind(this.adjust, this));
+  this.rtree = RTree();
+}
+
+function rtreeSelector(bbox) {
+  return {
+    minX : bbox.x,
+    minY : bbox.y,
+    maxX : bbox.x2 || (bbox.x + bbox.width),
+    maxY : bbox.y2 || (bbox.y + bbox.height)
+  };
 }
 
 Picture.prototype = Object.create(EventEmitter.prototype);
 Picture.prototype.constructor = Picture;
 
-Picture.prototype.allElements = function () {
-  return _.filter(this.paper.selectAll('[id]'), function (e) {
-    return _.get(e, 'node.style.display') !== 'none';
-  });
+Picture.prototype.getElement = function (id) {
+  return this.paper.select('#' + id);
 };
 
-Picture.prototype.getElement = function (filter) {
-  if (_.isFunction(filter)) {
-    return _.findLast(this.allElements(), filter);
+Picture.SELECTOR = as(String).and(as.size().gt(0)).or({
+  x : Number, y : Number, width : Number, height : Number
+});
+
+Picture.prototype.elements = function (selector, filter) {
+  Picture.SELECTOR.validate(selector);
+  if (_.isString(selector)) {
+    elements = this.paper.selectAll(selector + '[id]');
   } else {
-    return this.paper.select('#' + filter);
+    elements = _(this.rtree.search(rtreeSelector(selector)))
+      .map('id').map(_.bind(this.getElement, this)).value();
   }
-};
-
-Picture.prototype.getElements = function (selector) {
-  return _.toArray(this.paper.selectAll(selector))
+  return _.filter(elements, function (e) {
+    return _.get(e.node, 'style.display') !== 'none' && e.node.id && (!filter || filter(e));
+  });
 };
 
 Picture.prototype.inLinks = function (id) {
   return _.uniq(_.concat(
-    this.getElements('.link[to="' + id + '"]'),
-    this.getElements('.link[from="' + id + '"]'),
-    this.getElements('.label[on="' + id + '"]')
+    this.elements('.link[to="' + id + '"]'),
+    this.elements('.link[from="' + id + '"]'),
+    this.elements('.label[on="' + id + '"]')
   ));
 };
 
@@ -67,30 +81,6 @@ Picture.prototype.asUnlinkedShape = function (element) {
   return Shape.of(element).delta({ on : '', from : '', to : '', class : '-link -label' });
 };
 
-Picture.prototype.adjust = function (element) {
-  if (!element.removed) {
-    if (element.hasClass('link')) {
-      var from = this.getElement(element.attr('from')), to = this.getElement(element.attr('to'));
-      if (from && to) {
-        Shape.of(element).link(Shape.of(from), Shape.of(to)).applyTo(element);
-        this.ensureOrder(from, to, element); // Ensure sensible Z-ordering for a link
-      } else {
-        this.asUnlinkedShape(element).applyTo(element);
-      }
-    } else if (element.hasClass('label')) {
-      var on = this.getElement(element.attr('on'));
-      if (on) {
-        Shape.of(element).label(Shape.of(on)).applyTo(element);
-        this.ensureOrder(on, element); // Ensure sensible Z-ordering for a label
-      } else {
-        this.asUnlinkedShape(element).applyTo(element);
-      }
-    }
-  }
-  _.each(this.inLinks(element.attr('id')), _.bind(this.adjust, this));
-  return element;
-};
-
 Picture.prototype.ensureOrder = function (e1, e2/*, ...*/) {
   var svg = this.paper.node;
   function indexOf(e) {
@@ -105,7 +95,39 @@ Picture.prototype.ensureOrder = function (e1, e2/*, ...*/) {
 };
 
 Picture.prototype.changed = function (element) {
-  this.emit('changed', element);
+  var id = element.attr('id');
+  if (id) {
+    this.rtree.remove({ id : id }, function (a, b) { return a.id === b.id; });
+    if (!element.removed) {
+      var shape = Shape.of(element);
+      this.rtree.insert(_.set(rtreeSelector(shape.bbox), 'id', id));
+      // Ensure enclosing shapes are ordered first
+      this.ensureOrder.apply(this, this.elements(shape.bbox).sort(function (e1, e2) {
+        var s1 = Shape.of(e1), s2 = Shape.of(e2);
+        return s1.contains(s2) ? -1 : s2.contains(s1) ? 1 : 0;
+      }));
+      // Adjust any linked elements
+      if (element.hasClass('link')) {
+        var from = this.getElement(element.attr('from')), to = this.getElement(element.attr('to'));
+        if (from && to) {
+          shape.link(Shape.of(from), Shape.of(to)).applyTo(element);
+          this.ensureOrder(from, to, element); // Ensure sensible Z-ordering for a link
+        } else {
+          this.asUnlinkedShape(element).applyTo(element);
+        }
+      } else if (element.hasClass('label')) {
+        var on = this.getElement(element.attr('on'));
+        if (on) {
+          shape.label(Shape.of(on)).applyTo(element);
+          this.ensureOrder(on, element); // Ensure sensible Z-ordering for a label
+        } else {
+          this.asUnlinkedShape(element).applyTo(element);
+        }
+      }
+    }
+    _.each(this.inLinks(id), _.bind(this.changed, this));
+    this.emit('changed', element);
+  }
   return element;
 };
 

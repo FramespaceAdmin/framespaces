@@ -1,4 +1,5 @@
-var Shape = require('../shape');
+var Shape = require('../shape'),
+    Point = require('kld-affine').Point2D;
 
 function Ellipse(attr) {
   Shape.call(this, 'ellipse', attr);
@@ -23,15 +24,25 @@ Ellipse.prototype.ATTR = Shape.prototype.ATTR.with({
 });
 
 Ellipse.prototype.computePoints = function () {
-  return [this.params.params[0]]; // centre
+  return Ellipse.computePoints(this.attr.cx, this.attr.cy, this.attr.rx, this.attr.ry);
+};
+
+Ellipse.computePoints = function (cx, cy, rx, ry) {
+  // Compass points
+  return [
+    new Point(cx, cy - ry),
+    new Point(cx + rx, cy),
+    new Point(cx, cy + ry),
+    new Point(cx - rx, cy)
+  ];
 };
 
 Ellipse.prototype.computeBBox = function () {
-  return Ellipse.computeBBox(this.points[0], this.attr.rx, this.attr.ry);
+  return Ellipse.computeBBox(this.attr.cx, this.attr.cy, this.attr.rx, this.attr.ry);
 };
 
-Ellipse.computeBBox = function (c, rx, ry) {
-  return { c : c, x : c.x - rx, y : c.y - ry, width : rx*2, height : ry*2 };
+Ellipse.computeBBox = function (cx, cy, rx, ry) {
+  return { cx : cx, cy : cy, x : cx - rx, y : cy - ry, width : rx*2, height : ry*2 };
 };
 
 Ellipse.prototype.computeExtent = function () {

@@ -2,57 +2,59 @@ var _ = require('lodash'),
     assert = require('chai').assert,
     guid = require('../lib/guid'),
     Picture = require('../client/picture'),
-    Shape = require('../client/shape'),
-    Line = require('../client/shape/line'),
-    Addition = require('../client/action/addition'),
-    Removal = require('../client/action/removal'),
     MockPaper = require('./mockPaper');
 
 describe('Picture', function () {
   it('should get an element by id', function () {
     var paper = MockPaper(10, 10), picture = new Picture(paper), id = guid();
-    var line = paper.line(0, 0, 1, 1).attr('id', id);
+    var line = picture.changed(paper.line(0, 0, 1, 1).attr('id', id));
     assert.equal(picture.getElement(id), line);
   });
 
-  it('should perform addition', function () {
+  it('should get identified visible elements', function () {
     var paper = MockPaper(10, 10), picture = new Picture(paper);
-    var shape = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1, id : guid() });
-    var action = new Addition(shape);
-    assert.isOk(action.isOK(picture));
-    var line = action.do(picture);
-    assert.equal(shape.attr.id, line.attr('id'));
+    var line = picture.changed(paper.line(0, 0, 1, 1).attr('id', guid()));
+    // Unidentified line
+    picture.changed(paper.line(1, 0, 2, 1));
+    // Invisible line
+    picture.changed(paper.line(2, 0, 3, 1).attr('id', guid())).node.style.display = 'none';
+    assert.deepEqual(picture.elements({ x : 0, y : 0, width : 10, height : 10 }), [line]);
   });
 
-  it('should undo addition', function () {
+  it('should get elements by query selector', function () {
     var paper = MockPaper(10, 10), picture = new Picture(paper);
-    var shape = new Line({ id : guid(), x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
-    var action = new Addition(shape);
-    action.do(picture);
-    assert.isOk(action.un().isOK(picture));
-    var line = action.un().do(picture);
-    assert.equal(shape.attr.id, line.attr('id'));
-    assert.isOk(line.removed);
+    var line = picture.changed(paper.line(0, 0, 1, 1).attr('id', guid()).addClass('fred'));
+    assert.deepEqual(picture.elements('.fred'), [line]);
   });
 
-  it('should perform removal', function () {
-    var paper = MockPaper(10, 10), picture = new Picture(paper), id = guid();
-    var addedLine = paper.line(0, 0, 1, 1).attr('id', id);
-    var action = new Removal(Shape.of(addedLine));
-    assert.isOk(action.isOK(picture));
-    var removedLine = action.do(picture);
-    assert.equal(addedLine, removedLine);
-    assert.isOk(removedLine.removed);
+  it('should limit elements by view box', function () {
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
+    var line = picture.changed(paper.line(100, 0, 101, 1).attr('id', guid()));
+    assert.deepEqual(picture.elements({ x : 0, y : 0, width : 10, height : 10 }), []);
   });
 
-  it('should undo removal', function () {
+  it('should get elements by filter', function () {
     var paper = MockPaper(10, 10), picture = new Picture(paper), id = guid();
-    var action = new Removal(Shape.of(paper.line(0, 0, 1, 1).attr('id', id)));
-    action.do(picture);
-    assert.isOk(action.un().isOK(picture));
-    var recoveredLine = action.un().do(picture);
-    assert.equal(id, recoveredLine.attr('id'));
-    assert.equal(0, recoveredLine.attr('x1'));
-    assert.isNotOk(recoveredLine.removed);
+    var line = picture.changed(paper.line(0, 0, 1, 1).attr('id', id));
+    assert.deepEqual(picture.elements({ x : 0, y : 0, width : 10, height : 10 }, function (e) {
+      return e.node.id = id;
+    }), [line]);
+  });
+
+  it('should get elements linking to an element', function () {
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
+    var rect1 = picture.changed(paper.rect(0, 0, 1, 2).attr('id', guid())),
+        rect2 = picture.changed(paper.rect(2, 0, 1, 2).attr('id', guid())),
+        rect3 = picture.changed(paper.rect(4, 0, 1, 2).attr('id', guid())),
+        link1 = picture.changed(paper.line(1, 1, 2, 1).attr({
+          id : guid(), from : rect1.node.id, to : rect2.node.id
+        }).addClass('link')),
+        link2 = picture.changed(paper.line(3, 1, 4, 1).attr({
+          id : guid(), from : rect2.node.id, to : rect3.node.id
+        }).addClass('link')),
+        label = picture.changed(paper.text(2, 1, 'rect2').attr({
+          id : guid(), on : rect2.node.id
+        }).addClass('label'));
+    assert.deepEqual(picture.inLinks(rect2.node.id), [link1, link2, label]);
   });
 });

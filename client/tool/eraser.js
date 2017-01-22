@@ -31,7 +31,7 @@ function Eraser(picture) {
       // Cursor radius is dependent on how fast we are moving
       var cursor = Tool.cursor(state, Math.max(MIN_CURSOR_RADIUS, new Vector(delta.x || 0, delta.y || 0).length()));
       // Affect picture elements and previous fragments
-      _.assign(erased, _.reduce(picture.allElements(), function (erased, e) {
+      _.assign(erased, _.reduce(picture.elements(cursor.bbox), function (erased, e) {
         var fragments = erase(e, cursor, _.bind(e.attr, e, 'display', 'none'));
         return fragments ? _.set(erased, e.attr('id'), fragments) : erased;
       }, {}), _.reduce(erased, function (erased, fragments, id) {

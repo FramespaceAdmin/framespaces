@@ -11,9 +11,15 @@ describe('Circle', function () {
     it('should have expected properties', function () {
       var circle = new Circle({ cx : 1, cy : 1, r : 1 });
       assert.equal(circle.name, 'circle');
-      assert.equal(circle.points.length, 1);
+      assert.equal(circle.points.length, 4);
       assert.equal(circle.points[0].x, 1);
-      assert.equal(circle.points[0].y, 1);
+      assert.equal(circle.points[0].y, 0);
+      assert.equal(circle.points[1].x, 2);
+      assert.equal(circle.points[1].y, 1);
+      assert.equal(circle.points[2].x, 1);
+      assert.equal(circle.points[2].y, 2);
+      assert.equal(circle.points[3].x, 0);
+      assert.equal(circle.points[3].y, 1);
       assert.equal(circle.bbox.x, 0);
       assert.equal(circle.bbox.y, 0);
       assert.equal(circle.bbox.width, 2);
@@ -26,7 +32,8 @@ describe('Circle', function () {
       var circle = new Circle({ cx : 1, cy : 1, r : 1 });
       var move = circle.mover(true, new Rect({ x : 1, y : 0, width : 0.1, height : 0.1 }));
       circle = move.call(circle, 0, -1, 1, -1);
-      assert.isTrue(circle.points[0].equals(new Point(1, 1)));
+      assert.equal(circle.attr.cx, 1);
+      assert.equal(circle.attr.cy, 1);
       assert.equal(circle.attr.r, 2);
     });
 
@@ -71,6 +78,12 @@ describe('Circle', function () {
       assert.instanceOf(fragments[0], Circle);
       assert.isTrue(fragments[0].bbox.c.equals(new Point(1, 1)));
       assert.equal(fragments[0].attr.r, 1);
+    });
+
+    it('should contain a square', function () {
+      var circle = new Circle({ cx : 0.5, cy : 0.5, r : 2 });
+      var square = new Rect({ x : 0, y : 0, width : 1, height : 1 })
+      assert.isTrue(circle.contains(square));
     });
   });
 });

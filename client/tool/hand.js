@@ -33,9 +33,9 @@ function Hand(picture) {
       if (state.active) { // Started to move something
         // Find something to grab - edges first
         var cursor = Tool.cursor(state, CURSOR_RADIUS);
-        var edgeOf = picture.getElement(function (e) {
+        var edgeOf = _.last(picture.elements(cursor.bbox, function (e) {
           return cursor.intersect(Shape.of(e)).length;
-        });
+        }));
         var bodyOf = picture.getElement(state.element);
         var point = new Point(state.x, state.y);
         if (!tryMove(edgeOf || bodyOf, edgeOf, cursor)) {
