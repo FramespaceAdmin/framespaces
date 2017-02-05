@@ -47,6 +47,11 @@ Text.prototype.computeParams = function () {
   return _cap.shape('rect', this.bbox || {});
 }
 
+Text.prototype.transform = function (matrix) {
+  var p = new Point(this.attr.x, this.attr.y).transform(matrix), s = matrix.getScale();
+  return this.clone({ x : p.x, y : p.y, 'font-size' : this.attr['font-size'] * Math.min(s.scaleX, s.scaleY) });
+};
+
 Text.prototype.mover = function (isEdge, cursor) {
   return this.resizer(isEdge, cursor) ||
     function (dx, dy) { return this.delta({ x : dx, y : dy }); };

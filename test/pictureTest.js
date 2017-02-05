@@ -57,4 +57,11 @@ describe('Picture', function () {
         }).addClass('label'));
     assert.deepEqual(picture.inLinks(rect2.node.id), [link1, link2, label]);
   });
+
+  it('should order elements to prevent occlusion', function () {
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
+    var rect1 = picture.changed(paper.rect(1, 1, 1, 1).attr('id', guid())),
+        rect2 = picture.changed(paper.rect(0, 0, 3, 3).attr('id', guid()));
+    assert.deepEqual(_.toArray(paper.node.getElementsByTagName('rect')), [rect2.node, rect1.node]);
+  });
 });

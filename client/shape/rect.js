@@ -26,6 +26,16 @@ Rect.prototype.ATTR = Shape.prototype.ATTR.with({
 
 Rect.prototype.computePoints = Shape.prototype.computePoints;
 
+Rect.prototype.transform = function (matrix) {
+  var p = new Point(this.attr.x, this.attr.y).transform(matrix), s = matrix.getScale();
+  return this.clone({
+    x : p.x,
+    y : p.y,
+    width : this.attr.width * s.scaleX,
+    height : this.attr.height * s.scaleY
+  });
+};
+
 Rect.prototype.contains = function (that) {
   if (that instanceof Shape) {
     return Shape.prototype.contains.call(this, that);

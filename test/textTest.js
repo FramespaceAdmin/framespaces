@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     assert = require('chai').assert,
+    Matrix = require('kld-affine').Matrix2D,
     Shape = require('../client/shape'),
     Text = require('../client/shape/text'),
     MockPaper = require('./mockPaper');
@@ -21,6 +22,32 @@ describe('Text', function () {
       assert.equal(tspan.points.length, 4);
       assert.equal(tspan.extent, Math.sqrt(2));
       assert.equal(tspan.text, 'hello');
+    });
+  });
+
+  describe('transforming', function () {
+    it('should not change with identity', function () {
+      var text = new Text({ x : 0, y : 0, 'font-size' : 1 }, [], { x : 0, y : 0, width : 1, height : 1 });
+      text = text.transform(Matrix.IDENTITY);
+      assert.equal(text.attr.x, 0);
+      assert.equal(text.attr.y, 0);
+      assert.equal(text.attr['font-size'], 1);
+    });
+
+    it('should scale', function () {
+      var text = new Text({ x : 0, y : 0, 'font-size' : 1 }, [], { x : 0, y : 0, width : 1, height : 1 });
+      text = text.transform(Matrix.IDENTITY.scale(2));
+      assert.equal(text.attr.x, 0);
+      assert.equal(text.attr.y, 0);
+      assert.equal(text.attr['font-size'], 2);
+    });
+
+    it('should translate', function () {
+      var text = new Text({ x : 0, y : 0, 'font-size' : 1 }, [], { x : 0, y : 0, width : 1, height : 1 });
+      text = text.transform(Matrix.IDENTITY.translate(1, 1));
+      assert.equal(text.attr.x, 1);
+      assert.equal(text.attr.y, 1);
+      assert.equal(text.attr['font-size'], 1);
     });
   });
 

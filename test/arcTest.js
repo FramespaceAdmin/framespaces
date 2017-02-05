@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
+    Matrix = require('kld-affine').Matrix2D,
     Arc = require('../client/shape/arc'),
     Circle = require('../client/shape/circle'),
     Rect = require('../client/shape/rect'),
@@ -76,6 +77,44 @@ describe('Arc', function () {
       assert.equal(arc.bbox.width, 2);
       assert.equal(arc.bbox.height, 2);
       assert.equal(arc.extent, 2); // rx + ry
+    });
+
+    describe('transforming', function () {
+      it('should not change with identity', function () {
+        var arc = new Arc({ d : 'M1 1 A 1 1, 0, 1, 1, 2 2' }).transform(Matrix.IDENTITY);
+        assert.equal(arc.points[0].x, 1);
+        assert.equal(arc.points[0].y, 1);
+        assert.equal(arc.points[1].x, 2);
+        assert.equal(arc.points[1].y, 2);
+        assert.equal(arc.bbox.x, 1);
+        assert.equal(arc.bbox.y, 0);
+        assert.equal(arc.bbox.width, 2);
+        assert.equal(arc.bbox.height, 2);
+      });
+
+      it('should scale', function () {
+        var arc = new Arc({ d : 'M1 1 A 1 1, 0, 1, 1, 2 2' }).transform(Matrix.IDENTITY.scale(2));
+        assert.equal(arc.points[0].x, 2);
+        assert.equal(arc.points[0].y, 2);
+        assert.equal(arc.points[1].x, 4);
+        assert.equal(arc.points[1].y, 4);
+        assert.equal(arc.bbox.x, 2);
+        assert.equal(arc.bbox.y, 0);
+        assert.equal(arc.bbox.width, 4);
+        assert.equal(arc.bbox.height, 4);
+      });
+
+      it('should translate', function () {
+        var arc = new Arc({ d : 'M1 1 A 1 1, 0, 1, 1, 2 2' }).transform(Matrix.IDENTITY.translate(1, 1));
+        assert.equal(arc.points[0].x, 2);
+        assert.equal(arc.points[0].y, 2);
+        assert.equal(arc.points[1].x, 3);
+        assert.equal(arc.points[1].y, 3);
+        assert.equal(arc.bbox.x, 2);
+        assert.equal(arc.bbox.y, 1);
+        assert.equal(arc.bbox.width, 2);
+        assert.equal(arc.bbox.height, 2);
+      });
     });
 
     it('should stay in proportion when an end is moved', function () {

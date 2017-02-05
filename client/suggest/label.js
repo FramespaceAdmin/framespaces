@@ -22,8 +22,8 @@ module.exports = function suggestLabel(picture, e1) {
           // Don't set the ox and oy, so the user sees the suggestion happening
           // Some kind of animation be cool in future
           on : on.attr('id'),
-          // If the labellee is a line, offset a bit
-          oy : les.name === 'line' ? new Point(0, 1).transform(les.transform().inverse()).y : 0
+          // If the labellee is a line, offset by one unit in the line's unit coordinates
+          oy : les.name === 'line' ? new Point(0, 1).transform(les.scale(les.rotation()).inverse()).y : 0
         }), {
           confidence : 1 - (ls.bbox.c.distanceFrom(les.bbox.c) / (les.extent * factor))
         }));

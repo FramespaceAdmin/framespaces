@@ -1,5 +1,7 @@
 var _ = require('lodash'),
     assert = require('chai').assert,
+    Matrix = require('kld-affine').Matrix2D,
+    Vector = require('kld-affine').Vector2D,
     Shape = require('../client/shape'),
     Line = require('../client/shape/line'),
     Circle = require('../client/shape/circle'),
@@ -16,6 +18,15 @@ describe('Line', function () {
       assert.equal(line.points[1].x, 1);
       assert.equal(line.points[1].y, 1);
       assert.equal(line.extent, Math.sqrt(2));
+    });
+
+    it('should present the correct matrix', function () {
+      var line = new Line({ x1 : 1, y1 : 1, x2 : 2, y2 : 2 });
+      assert.isTrue(line.rotation().equals(Matrix.IDENTITY.rotateFromVector(new Vector(1, 1))));
+      assert.isTrue(line.scale().equals(Matrix.IDENTITY.scale(Math.sqrt(2))));
+      assert.isTrue(line.translation().equals(Matrix.IDENTITY.translate(1, 1)));
+      assert.isTrue(line.matrix().equals(Matrix.IDENTITY.scale(Math.sqrt(2))
+        .rotateFromVector(new Vector(1, 1)).translate(1, 1)));
     });
 
     describe('when being delta\'d', function () {
@@ -40,6 +51,32 @@ describe('Line', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 }).delta({ class : 'a' });
         assert.equal(line.attr.class, 'a');
         assert.isTrue(line.hasClass('a'));
+      });
+    });
+
+    describe('transforming', function () {
+      it('should not change with identity', function () {
+        var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 }).transform(Matrix.IDENTITY);
+        assert.equal(line.attr.x1, 0);
+        assert.equal(line.attr.y1, 0);
+        assert.equal(line.attr.x2, 1);
+        assert.equal(line.attr.y2, 1);
+      });
+
+      it('should scale', function () {
+        var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 }).transform(Matrix.IDENTITY.scale(2));
+        assert.equal(line.attr.x1, 0);
+        assert.equal(line.attr.y1, 0);
+        assert.equal(line.attr.x2, 2);
+        assert.equal(line.attr.y2, 2);
+      });
+
+      it('should translate', function () {
+        var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 }).transform(Matrix.IDENTITY.translate(1, 1));
+        assert.equal(line.attr.x1, 1);
+        assert.equal(line.attr.y1, 1);
+        assert.equal(line.attr.x2, 2);
+        assert.equal(line.attr.y2, 2);
       });
     });
 

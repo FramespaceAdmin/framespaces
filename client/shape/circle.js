@@ -40,6 +40,11 @@ Circle.prototype.computeExtent = function () {
   return this.attr.r * 2; // diameter
 };
 
+Circle.prototype.transform = function (matrix) {
+  var c = this.bbox.c.transform(matrix), s = matrix.getScale();
+  return this.clone({ cx : c.x, cy : c.y, r : this.attr.r * (s.scaleX + s.scaleY)/2 });
+};
+
 Circle.prototype.contains = function (that) {
   if (that instanceof Shape) {
     return Shape.prototype.contains.call(this, that);

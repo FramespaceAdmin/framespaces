@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     Point = require('kld-affine').Point2D,
+    Matrix = require('kld-affine').Matrix2D,
     Shape = require('../shape'),
     Tool = require('../tool'),
     Mutation = require('../action/mutation'),
@@ -11,21 +12,62 @@ function Hand(picture) {
   Tool.call(this, picture);
 
   // Variable state
-  var moving, oldShape, shape, move;
+  function Moving(element) {
+    if (!(this instanceof Moving)) return new Moving(element);
+    this.element = element;
+    this.originalShape = Shape.of(element);
+    this.shape = this.originalShape;
+  }
+
+  Moving.prototype.setShape = function (shape) {
+    this.shape = shape;
+    picture.changed(this.shape.applyTo(this.element));
+  };
+
+  Moving.prototype.asMutation = function () {
+    return new Mutation(this.originalShape, this.shape, { result : this.element });
+  }
+
+  var moving, move, others;
 
   function reset() {
-    moving = oldShape = shape = move = null;
+    moving = move = others = null;
+  }
+
+  function getShapeById(id) {
+    return Shape.of(picture.getElement(id));
   }
 
   function tryMove(element, isEdge, cursor) {
     if (element && element.node.nodeName !== 'svg') {
-      oldShape = shape = Shape.of(moving = element);
-      var moverKey = _.find(['link', 'label'], _.bind(moving.hasClass, moving)) ||  shape.name;
-      move = shape.mover && shape.mover(isEdge, cursor, function (id) {
-        return Shape.of(picture.getElement(id));
-      });
+      moving = new Moving(element);
+      move = moving.shape.mover && moving.shape.mover(isEdge, cursor, getShapeById);
+      if (move) {
+        // Capture other elements enclosed by the moving shape
+        others = _.map(picture.elements(moving.shape.bbox, function (e) {
+          return e !== element && moving.shape.contains(Shape.of(e));
+        }), Moving);
+      }
     }
     return move || reset();
+  }
+
+  // Move something
+  function doMove(dx, dy, x, y) {
+    // Establish the change as a transform matrix
+    var oldBBox = moving.shape.bbox, newBBox, transform;
+    moving.setShape(move.call(moving.shape, dx, dy, x, y));
+
+    newBBox = moving.shape.bbox;
+    if (others.length && oldBBox.width && oldBBox.height) {
+      transform = Matrix.IDENTITY
+        .scaleNonUniformAt(oldBBox.width, oldBBox.height, newBBox.p).inverse()
+        .scaleNonUniformAt(newBBox.width, newBBox.height, newBBox.p)
+        .translate(newBBox.x - oldBBox.x, newBBox.y - oldBBox.y);
+      _.each(others, function (other) {
+        other.setShape(other.shape.transform(transform));
+      });
+    }
   }
 
   this.using = function using(delta, state) {
@@ -43,14 +85,12 @@ function Hand(picture) {
           edgeOf && tryMove(bodyOf, false, cursor);
         }
       } else if (moving) { // Finished moving something
-        this.emit('finished', new Mutation(oldShape, shape, { result : moving }));
+        this.emit('finished', moving.asMutation().and(_.map(others, _.method('asMutation'))));
         reset();
       }
     } else if (state.active) {
       if (moving) { // Moving an element
-        // Move something
-        shape = move.call(shape, delta.x || 0, delta.y || 0, state.x, state.y);
-        picture.changed(shape.applyTo(moving));
+        doMove(delta.x || 0, delta.y || 0, state.x, state.y);
       } else { // Panning
         picture.viewBox(Shape.delta(picture.viewBox(), { x : -delta.x, y : -delta.y }));
       }

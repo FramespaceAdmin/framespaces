@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     assert = require('chai').assert,
     Point = require('kld-affine').Point2D,
+    Matrix = require('kld-affine').Matrix2D,
     Shape = require('../client/shape'),
     Circle = require('../client/shape/circle'),
     Rect = require('../client/shape/rect'),
@@ -30,6 +31,37 @@ describe('Rect', function () {
     it('should not contain a point outside it', function () {
       var rect = new Rect({ x : 0, y : 0, width : 1, height : 1 });
       assert.isNotOk(rect.contains(new Point(2, 2)));
+    });
+
+    it('should present the correct matrix', function () {
+      var rect = new Rect({ x : 1, y : 1, width : 1, height : 1 });
+      assert.isTrue(rect.matrix().equals(Matrix.IDENTITY.translate(1, 1).scaleNonUniform(1, 1)));
+    });
+
+    describe('transforming', function () {
+      it('should not change with identity', function () {
+        var rect = new Rect({ x : 0, y : 0, width : 1, height : 1 }).transform(Matrix.IDENTITY);
+        assert.equal(rect.attr.x, 0);
+        assert.equal(rect.attr.y, 0);
+        assert.equal(rect.attr.width, 1);
+        assert.equal(rect.attr.height, 1);
+      });
+
+      it('should scale', function () {
+        var rect = new Rect({ x : 0, y : 0, width : 1, height : 1 }).transform(Matrix.IDENTITY.scale(2));
+        assert.equal(rect.attr.x, 0);
+        assert.equal(rect.attr.y, 0);
+        assert.equal(rect.attr.width, 2);
+        assert.equal(rect.attr.height, 2);
+      });
+
+      it('should translate', function () {
+        var rect = new Rect({ x : 0, y : 0, width : 1, height : 1 }).transform(Matrix.IDENTITY.translate(1, 1));
+        assert.equal(rect.attr.x, 1);
+        assert.equal(rect.attr.y, 1);
+        assert.equal(rect.attr.width, 1);
+        assert.equal(rect.attr.height, 1);
+      });
     });
 
     it('should move its body', function () {

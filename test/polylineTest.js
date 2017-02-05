@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     assert = require('chai').assert,
     Shape = require('../client/shape'),
+    Matrix = require('kld-affine').Matrix2D,
     Circle = require('../client/shape/circle'),
     Rect = require('../client/shape/rect'),
     Line = require('../client/shape/line'),
@@ -18,6 +19,32 @@ describe('Polyline', function () {
       assert.equal(polyline.points[1].x, 1);
       assert.equal(polyline.points[1].y, 1);
       assert.equal(polyline.extent, Math.sqrt(2));
+    });
+
+    describe('transforming', function () {
+      it('should not change with identity', function () {
+        var polyline = new Polyline({ points : '0,0,1,1' }).transform(Matrix.IDENTITY);
+        assert.equal(polyline.points[0].x, 0);
+        assert.equal(polyline.points[0].y, 0);
+        assert.equal(polyline.points[1].x, 1);
+        assert.equal(polyline.points[1].y, 1);
+      });
+
+      it('should scale', function () {
+        var polyline = new Polyline({ points : '0,0,1,1' }).transform(Matrix.IDENTITY.scale(2));
+        assert.equal(polyline.points[0].x, 0);
+        assert.equal(polyline.points[0].y, 0);
+        assert.equal(polyline.points[1].x, 2);
+        assert.equal(polyline.points[1].y, 2);
+      });
+
+      it('should translate', function () {
+        var polyline = new Polyline({ points : '0,0,1,1' }).transform(Matrix.IDENTITY.translate(1, 1));
+        assert.equal(polyline.points[0].x, 1);
+        assert.equal(polyline.points[0].y, 1);
+        assert.equal(polyline.points[1].x, 2);
+        assert.equal(polyline.points[1].y, 2);
+      });
     });
 
     describe('when recty', function () {

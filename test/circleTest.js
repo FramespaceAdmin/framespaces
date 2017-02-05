@@ -3,6 +3,7 @@ var _ = require('lodash'),
     Shape = require('../client/shape'),
     Arc = require('../client/shape/arc'),
     Circle = require('../client/shape/circle'),
+    Matrix = require('kld-affine').Matrix2D,
     Rect = require('../client/shape/rect'),
     Point = require('kld-affine').Point2D;
 
@@ -26,6 +27,29 @@ describe('Circle', function () {
       assert.equal(circle.bbox.height, 2);
       assert.isTrue(circle.bbox.c.equals(new Point(1, 1)));
       assert.equal(circle.extent, 2);
+    });
+
+    describe('transforming', function () {
+      it('should not change with identity', function () {
+        var circle = new Circle({ cx : 1, cy : 1, r : 1 }).transform(Matrix.IDENTITY);
+        assert.equal(circle.attr.cx, 1);
+        assert.equal(circle.attr.cy, 1);
+        assert.equal(circle.attr.r, 1);
+      });
+
+      it('should scale', function () {
+        var circle = new Circle({ cx : 1, cy : 1, r : 1 }).transform(Matrix.IDENTITY.scale(2));
+        assert.equal(circle.attr.cx, 2);
+        assert.equal(circle.attr.cy, 2);
+        assert.equal(circle.attr.r, 2);
+      });
+
+      it('should translate', function () {
+        var circle = new Circle({ cx : 1, cy : 1, r : 1 }).transform(Matrix.IDENTITY.translate(1, 1));
+        assert.equal(circle.attr.cx, 2);
+        assert.equal(circle.attr.cy, 2);
+        assert.equal(circle.attr.r, 1);
+      });
     });
 
     it('should grow when moved by its edge', function () {

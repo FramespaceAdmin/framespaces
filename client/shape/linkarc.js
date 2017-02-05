@@ -42,21 +42,21 @@ Linkarc.prototype.withEnds = function (p1, p2) {
     return this;
   } else {
     var curve = this.path[1].curve, d = p1.distanceFrom(p2);
-    return this.delta({ d : Path.clone({
+    return this.delta({ d : _.mapValues({
       '0.x' : p1.x, '0.y' : p1.y, '1.x' : p2.x, '1.y' : p2.y,
       '1.curve.rx' : Math.max(curve.rx, d/2),
       '1.curve.ry' : Math.max(curve.ry, d/2),
       '1.curve.largeArcFlag' : Arc.isLargeArc(this.centre, p1, p2, curve.sweepFlag)
-    }) });
+    }, _.constant) });
   }
 };
 
 Linkarc.prototype.mover = function (isEdge, cursor, getShapeById) {
   var from = getShapeById(this.attr.from), to = getShapeById(this.attr.to);
   var traverse = _.bind(function (point) {
-    return this.delta({ d : Path.clone({
-      '1.curve' : Arc.curveTraversing(from.bbox.c, point, to.bbox.c) })
-    }).link(from, to);
+    return this.delta({ d : {
+      '1.curve' : _.constant(Arc.curveTraversing(from.bbox.c, point, to.bbox.c))
+    } }).link(from, to);
   }, this);
   if (isEdge) {
     return function (dx, dy, x, y) {

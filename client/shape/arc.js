@@ -80,38 +80,43 @@ Arc.prototype.computeExtent = function () {
   }
 };
 
+Arc.prototype.transform = function (matrix) {
+  var ends = _.map(this.ends, _.method('transform', matrix)),
+      s = matrix.getScale(), dr = Math.min(s.scaleX, s.scaleY);
+  return this.delta({ d : {
+    '0.x' : _.constant(ends[0].x),
+    '0.y' : _.constant(ends[0].y),
+    '1.x' : _.constant(ends[1].x),
+    '1.y' : _.constant(ends[1].y),
+    '1.curve.rx' : function (r) { return r * dr; },
+    '1.curve.ry' : function (r) { return r * dr; }
+  } });
+};
+
 Arc.prototype.mover = function (isEdge, cursor) {
   if (!isEdge) {
     // Move the whole shape
     return function (dx, dy) {
-      return this.delta({
-        d : Path.delta({ '0.x' : dx, '0.y' : dy, '1.x' : dx, '1.y' : dy })
-      });
+      return this.delta({ d : { '0.x' : dx, '0.y' : dy, '1.x' : dx, '1.y' : dy } });
     };
   } else if (cursor.contains(this.ends[0])) {
     // Move p1
     return function (dx, dy) {
       var fd = this.ends[0].add(new Point(dx, dy)).distanceFrom(this.ends[1]) / this.chord.length();
       function dr(r) { return r * fd; }
-      return this.delta({
-        d : Path.delta({ '0.x' : dx, '0.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr })
-      });
+      return this.delta({ d : { '0.x' : dx, '0.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr } });
     };
   } else if (cursor.contains(this.ends[1])) {
     // Move p2
     return function (dx, dy) {
       var fd = this.ends[1].add(new Point(dx, dy)).distanceFrom(this.ends[0]) / this.chord.length();
       function dr(r) { return r * fd; }
-      return this.delta({
-        d : Path.delta({ '1.x' : dx, '1.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr })
-      });
+      return this.delta({ d : { '1.x' : dx, '1.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr } });
     };
   } else {
     // Re-arrange the world so that the arc still traverses p1, p2 and x,y (circumcentre)
     return function (dx, dy, x, y) {
-      return this.delta({
-        d : Path.delta({ '1.curve' : Arc.curveTraversing(this.ends[0], new Point(x, y), this.ends[1]) })
-      });
+      return this.delta({ d : { '1.curve' : Arc.curveTraversing(this.ends[0], new Point(x, y), this.ends[1]) } });
     };
   }
 };

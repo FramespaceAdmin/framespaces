@@ -14,22 +14,14 @@ Path.PATH = as([{
   y : Number,
   moveTo : as(undefined, Boolean),
   curve : as(undefined, {
-    type : 'arc',
-    rx : Number,
-    ry : Number,
+    type : 'arc', rx : Number, ry : Number,
     xAxisRotation : as(undefined, Number),
     sweepFlag : Boolean,
     largeArcFlag : Boolean
   }, {
-    type : 'quadratic',
-    x1 : Number,
-    y1 : Number
+    type : 'quadratic', x1 : Number, y1 : Number
   }, {
-    type : 'cubic',
-    x1 : Number,
-    y1 : Number,
-    x2 : Number,
-    y2 : Number
+    type : 'cubic', x1 : Number, y1 : Number, x2 : Number, y2 : Number
   })
 }]);
 
@@ -45,20 +37,6 @@ Path.toString = function (path) {
   }));
 };
 
-Path.delta = function (deltas) {
-  return function (d) {
-    return Path.toString(_.reduce(deltas, function (path, delta, key) {
-      return _.update(path, key, _.isNumber(delta) ? function (v) {
-        return (v || 0) + delta;
-      } : _.isFunction(delta) ? delta : _.constant(delta));
-    }, Path.parse(d)));
-  };
-};
-
-Path.clone = function (path) {
-  return Path.delta(_.mapValues(path, _.constant));
-};
-
 Path.prototype = Object.create(Shape.prototype);
 Path.prototype.constructor = Path;
 
@@ -72,6 +50,17 @@ Path.prototype.computePoints = function () {
 
 Path.prototype.computeEnds = function () {
   return [_.first(this.points), _.last(this.points)];
+};
+
+Path.prototype.delta = function (dAttr) {
+  if (_.has(dAttr, 'd')) {
+    if (_.isFunction(dAttr.d)) { // Already a function on the whole path
+      dAttr.d = Path.toString(dAttr.d(this.path));
+    } else if (_.isObject(dAttr.d)) { // Object path mutators
+      dAttr.d = Path.toString(Shape.delta(this.path, dAttr.d));
+    }
+  }
+  return Shape.prototype.delta.call(this, dAttr);
 };
 
 module.exports = Path;

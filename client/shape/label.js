@@ -30,8 +30,12 @@ Label.prototype.ATTR = Text.prototype.ATTR.with({
   oy : as(undefined, Number) // y offset from labelee
 });
 
+Label.prototype.offsetMatrix = function (on) {
+  return this.scale(this.rotation(on.scale(on.rotation())));
+};
+
 Label.prototype.label = function (on) {
-  var matrix = this.transform(on.transform()),
+  var matrix = this.offsetMatrix(on),
       offset = new Point(this.attr.ox || 0, this.attr.oy || 0).transform(matrix);
 
   return this.clone({
@@ -50,7 +54,7 @@ Label.prototype.offsetter = function (isEdge, cursor, getShapeById) {
   if (!isEdge) {
     // ox and oy are transformed relative offsets from labelled shape centre
     var on = getShapeById && getShapeById(this.attr.on),
-        matrix = on && this.transform(on.transform()).inverse();
+        matrix = on && this.offsetMatrix(on).inverse();
     return matrix && function (dx, dy) {
       var offset = new Point(dx, dy).transform(matrix);
       return this.delta({ ox : offset.x, oy : offset.y }).label(on);

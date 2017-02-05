@@ -38,9 +38,21 @@ Line.prototype.computeEnds = function () {
   return this.points;
 };
 
-Line.prototype.transform = function (m) {
-  // Lines are implicitly rotated by their angle
-  return (m || Matrix.IDENTITY).scale(this.extent).rotateFromVector(this.vector);
+Line.prototype.translation = function (m) {
+  return (m || Matrix.IDENTITY).translate(this.ends[0].x, this.ends[0].y);
+};
+
+Line.prototype.rotation = function (m) {
+  return (m || Matrix.IDENTITY).rotateFromVector(this.vector);
+};
+
+Line.prototype.scale = function (m) {
+  return (m || Matrix.IDENTITY).scale(this.extent);
+};
+
+Line.prototype.transform = function (matrix) {
+  var ends = _.map(this.ends, _.method('transform', matrix));
+  return this.clone({ x1 : ends[0].x, y1 : ends[0].y, x2 : ends[1].x, y2 : ends[1].y });
 };
 
 Line.prototype.mover = function (isEdge, cursor) {

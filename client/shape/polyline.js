@@ -78,6 +78,11 @@ Polyline.prototype.computeEnds = function () {
   return [_.first(this.points), _.last(this.points)];
 };
 
+Polyline.prototype.transform = function (matrix) {
+  var points = _.map(this.points, _.method('transform', matrix));
+  return this.clone({ points : Polyline.pointStr(points) });
+};
+
 Polyline.prototype.nextPointIndex = function (i) {
   if (i < this.points.length - 1) {
     return i + 1;

@@ -3,13 +3,13 @@ var _ = require('lodash'),
     Shape = require('./shape'),
     Linkline = require('./shape/linkline'),
     Label = require('./shape/label'),
-    RTree = require('rbush'),
+    rbush = require('rbush'),
     guid = require('../lib/guid'),
     as = require('yavl');
 
 function Picture(paper) {
   this.paper = paper;
-  this.rtree = RTree();
+  this.rtree = rbush();
 }
 
 function rtreeSelector(bbox) {

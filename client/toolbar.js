@@ -3,30 +3,33 @@ var _ = require('lodash');
 module.exports = function Toolbar(toolPaper, picture) {
   function previewFunc(dir) {
     function elementId(type) {
-      return '#' + dir + '-' + type;
+      return dir + '-' + type;
+    }
+    function select(type) {
+      return toolPaper.select('#' + elementId(type));
     }
     return function (present) {
-      var lastPreview = toolPaper.select(elementId('preview'));
-      if (lastPreview) {
-        lastPreview.remove();
-      }
-      if (_.get(present, [dir, 'preview'])) {
-        var paper = toolPaper.svg().attr('id', elementId('preview').slice(1)),
-            preview = present[dir].preview(picture, paper),
-            bbox = preview.getBBox(),
-            icon = toolPaper.select(elementId('icon')).attr('display', 'none');
+      select('preview') && select('preview').remove();
+      select('icon').attr('display', 'block');
 
-        preview.attr('stroke-width', (bbox.r0 * 3) / icon.attr('width'));
-        paper.attr({
-          x : icon.attr('x'),
-          y : icon.attr('y'),
-          width : icon.attr('width'),
-          height : icon.attr('height')
-        });
-        paper.attr('viewBox', [bbox.x - 5, bbox.y - 5, bbox.width + 10, bbox.height + 10].join(' '));
-        toolPaper.select(elementId('button')).append(paper);
-      } else {
-        toolPaper.select(elementId('icon')).attr('display', 'block');
+      if (_.get(present, [dir, 'preview'])) {
+        var paper = toolPaper.svg().attr('id', elementId('preview')),
+            preview = present[dir].preview(picture, paper), bbox, icon;
+        if (preview) {
+          bbox = preview.getBBox();
+          icon = select('icon').attr('display', 'none');
+          preview.attr('stroke-width', (bbox.r0 * 3) / icon.attr('width'));
+          paper.attr({
+            x : icon.attr('x'),
+            y : icon.attr('y'),
+            width : icon.attr('width'),
+            height : icon.attr('height')
+          });
+          paper.attr('viewBox', [bbox.x - 5, bbox.y - 5, bbox.width + 10, bbox.height + 10].join(' '));
+          select('button').append(paper);
+        } else {
+          paper.remove();
+        }
       }
     }
   }

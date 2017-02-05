@@ -167,12 +167,49 @@ Shape.prototype.computeExtent = function () {
 };
 
 /**
- * Default transform computation. Override to specialise.
- * This is a function to return a matrix that represents the shapes size and orientation.
+ * Default matrix computation. Override to specialise.
+ * @param matrix [optional] a matrix to transform (defaults to the identity matrix)
+ * @returns a matrix transformed with the shape's position, size and orientation
  */
-Shape.prototype.transform = function (m) {
-  // Most shapes are only rotated if they have a transform (TODO)
-  return (m || Matrix.IDENTITY).scaleNonUniform(this.bbox.w, this.bbox.h);
+Shape.prototype.matrix = function (matrix) {
+  return this.translation(this.rotation(this.scale(matrix)));
+};
+
+/**
+ * Default rotation matrix computation. Override to specialise.
+ * @param matrix [optional] a matrix to transform (defaults to the identity matrix)
+ * @returns a matrix transformed with the shape's orientation
+ */
+Shape.prototype.rotation = function (matrix) {
+  return matrix || Matrix.IDENTITY;
+};
+
+/**
+ * Default translation matrix computation. Override to specialise.
+ * @param matrix [optional] a matrix to transform (defaults to the identity matrix)
+ * @returns a matrix transformed with the shape's position
+ */
+Shape.prototype.translation = function (matrix) {
+  return (matrix || Matrix.IDENTITY).translate(this.bbox.x, this.bbox.y);
+};
+
+/**
+ * Default scale matrix computation. Override to specialise.
+ * @param matrix [optional] a matrix to transform (defaults to the identity matrix)
+ * @returns a matrix transformed with the shape's size
+ */
+Shape.prototype.scale = function (matrix) {
+  return (matrix || Matrix.IDENTITY).scaleNonUniform(this.bbox.w, this.bbox.h);
+};
+
+/**
+ * Transform this shape according to the given matrix, as best possible while keeping the
+ * shape's class. For example, a circle should not become an ellipse.
+ * @param matrix the transformation matrix
+ * @returns a new shape, of the same class, transformed according to the matrix
+ */
+Shape.prototype.transform = function (matrix) {
+  throw undefined;
 };
 
 /**
@@ -216,22 +253,31 @@ Shape.prototype.deltaAttr = function (dAttr) {
  * Returns the mutated attributes according to the given deltas.
  * For numeric attributes, the given amounts are numeric deltas.
  * For the class attribute, a space-delimited list of classes. Suffix minus to remove (e.g. '-link').
+ * Deltas can also be functions, which take an existing value and return the changed value.
+ * NOTE as a utility, this method copes with deep attribute paths,
+ * even though that's meaningless for attributes
  */
 Shape.delta = function (attr, dAttr) {
-  return _.assignWith(attr, dAttr, function (value, delta, key) {
+  return _.reduce(dAttr, function (attr, delta, path) {
+    var updater;
     if (_.isFunction(delta)) {
-      return delta(value);
-    } else if ((_.isUndefined(value) || _.isNumber(value)) && _.isNumber(delta)) {
-      return (value || 0) + (delta || 0);
-    } else if (key === 'class') {
-      var classes = (value ? [value.split(' ')] : []),
-          changes = _.partition(delta.split(' '), function (c) { return c.charAt(0) === '-' }),
-          removals = _.map(changes[0], function (r) { return r.slice(1); }), additions = changes[1];
-      return _.union(_.without.apply(_, classes.concat(removals)), additions).join(' ');
+      updater = delta;
+    } else if (_.isNumber(delta)) {
+      updater = function (value) {
+        return (value || 0) + (delta || 0); // Cater for NaN
+      }
+    } else if (path === 'class') {
+      updater = function (value) {
+        var classes = (value ? [value.split(' ')] : []),
+            changes = _.partition(delta.split(' '), function (c) { return c.charAt(0) === '-' }),
+            removals = _.map(changes[0], function (r) { return r.slice(1); }), additions = changes[1];
+        return _.union(_.without.apply(_, classes.concat(removals)), additions).join(' ');
+      }
     } else {
-      return delta;
+      updater = _.constant(delta);
     }
-  });
+    return _.update(attr, path, updater);
+  }, attr);
 };
 
 /**
@@ -382,6 +428,7 @@ function strongBBox(b) {
   return {
     x : b.x,
     y : b.y,
+    p : b.p || new Point(b.x, b.y),
     width : b.width,
     w : b.width,
     height : b.height,
