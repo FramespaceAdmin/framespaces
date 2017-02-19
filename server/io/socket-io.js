@@ -5,8 +5,7 @@ var _ = require('lodash'),
     log = require('../../lib/log'),
     pass = require('pass-error'),
     modules = require('../../lib/modules'),
-    Io = require('../io'),
-    Journal = (require('../' + modules.journal));
+    Io = require('../io');
 
 function SocketIo(server) {
   this.io = require('socket.io')(server);
@@ -16,7 +15,7 @@ function SocketIo(server) {
 SocketIo.prototype = Object.create(Io.prototype);
 SocketIo.prototype.constructor = SocketIo;
 
-SocketIo.prototype.createChannel = function (name, cb/*(err)*/) {
+SocketIo.prototype.createChannel = function (name, Journal, cb/*(err)*/) {
   if (!_.has(this.namespaces, name)) {
     var ns = this.namespaces[name] = this.io.of('/' + name + '/io');
     ns.on('connection', function (socket) {

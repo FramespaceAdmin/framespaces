@@ -5,9 +5,10 @@ function Io() {
 /**
  * Create a channel for io.
  * @param name channel name
+ * @param Journal a constructor for adding events
  * @param cb callback with error and channel object (implementation specific)
  */
-Io.prototype.createChannel = function (name, cb/*(err, channel)*/) {
+Io.prototype.createChannel = function (name, Journal, cb/*(err, channel)*/) {
   throw undefined;
 };
 

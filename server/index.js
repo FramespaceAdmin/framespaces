@@ -28,6 +28,7 @@ app.use(cookieParser());
  * NOTE this route does not require authorisation
  */
 app.get('/', function (req, res, next) {
+  console.log(req.originalUrl, req.path, req.params, req.hostname);
   // Create a new framespace and redirect to it
   _async.auto({
     name : function (cb) {
@@ -39,7 +40,7 @@ app.get('/', function (req, res, next) {
       return Journal($.name).putDetails({ name : $.name, created : new Date().getTime() }, cb);
     }],
     channel : ['name', 'journal', function ($, cb) {
-      return io.createChannel($.name, cb);
+      return io.createChannel($.name, Journal, cb);
     }]
   }, pass(function ($) {
     return res.redirect('/' + $.name);
@@ -53,7 +54,7 @@ app.get('/', function (req, res, next) {
  */
 app.get('/:fsName', auth.setCookie, function (req, res, next) {
   Journal(req.params.fsName).fetchDetails(pass(function (fs) {
-    return res.render('index', { fs : fs, config : config });
+    return fs ? res.render('index', { fs : fs, config : config }) : res.sendStatus(404);
   }, next));
 });
 

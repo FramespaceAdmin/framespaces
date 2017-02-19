@@ -5,8 +5,7 @@ var _ = require('lodash'),
     pass = require('pass-error'),
     guid = require('../../lib/guid'),
     modules = require('../../lib/modules'),
-    Io = require('../io'),
-    Journal = (require('../' + modules.journal));
+    Io = require('../io');
 
 function initParams() {
   return { key : 'sV1fJg.GU6wQw:Pd93KJ6tGjiSogGb', log : { level : log.scale(4, -1) } };
@@ -19,7 +18,7 @@ function AblyIo() {
 AblyIo.prototype = Object.create(Io.prototype);
 AblyIo.prototype.constructor = AblyIo;
 
-AblyIo.prototype.createChannel = function (name, cb/*(err, channel)*/) {
+AblyIo.prototype.createChannel = function (name, Journal, cb/*(err, channel)*/) {
   var channel = this.realtime.channels.get(name);
   if (channel.state === 'initialized') {
     // Only add subscriber if this is the first time this channel has appeared

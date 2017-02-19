@@ -1,0 +1,82 @@
+var _ = require('lodash'),
+    _async = require('async'),
+    mongodb = require('mongodb'),
+    pass = require('pass-error'),
+    Journal = require('../journal'),
+    MONGO_URL = 'mongodb://journal:WXGN5Ks4Ya61KjDN@ds155529.mlab.com:55529/dev';
+
+function MLabJournal(id) {
+  if (!(this instanceof MLabJournal)) {
+    return new MLabJournal(id);
+  }
+  Journal.call(this, id);
+}
+
+MLabJournal.connected = function connected(member) {
+  return function () {
+    var args = _.toArray(arguments), cb = _.last(args);
+    if (MLabJournal.db) {
+      member.apply(this, args);
+    } else {
+      mongodb.MongoClient.connect(MONGO_URL, pass(function (db) {
+        MLabJournal.db = db;
+        MLabJournal.journals = db.collection('journals');
+        MLabJournal.events = db.collection('events');
+        member.apply(this, args);
+      }, cb, null, this));
+    }
+  }
+};
+
+MLabJournal.close = function (cb) {
+  if (MLabJournal.db) {
+    MLabJournal.db.close(cb);
+    delete MLabJournal.db;
+    delete MLabJournal.journals;
+    delete MLabJournal.events;
+  }
+}
+
+MLabJournal.prototype = Object.create(Journal.prototype);
+MLabJournal.prototype.constructor = MLabJournal;
+
+MLabJournal.prototype.fetchDetails = MLabJournal.connected(function (cb/*(err, details)*/) {
+  return MLabJournal.journals.findOne({ _id : this.id }, cb);
+});
+
+MLabJournal.prototype.fetchEvents = MLabJournal.connected(function (cb/*(err, [event])*/) {
+  return MLabJournal.events.find({ fs : this.id }, { sort : { seq : 1 } }).toArray(cb);
+});
+
+MLabJournal.prototype.putDetails = MLabJournal.connected(function (details, cb/*(err)*/) {
+  return MLabJournal.journals.insert(_.assign(details, {
+    _id : this.id,
+    nextSeq : 0
+  }), cb);
+});
+
+MLabJournal.prototype.nextEventSeq = MLabJournal.connected(function (inc, cb/*(err, nextSeq)*/) {
+  MLabJournal.journals.findAndModify(
+    { _id : this.id }, // Query
+    [], // Sort
+    { $inc : { nextSeq : inc } }, // Doc (to be updated)
+    { fields : { nextSeq : true } }, // Options
+    pass(function (result) {
+      cb(false, result.value.nextSeq);
+    }, cb, null, this));
+});
+
+MLabJournal.prototype.addEvent = MLabJournal.connected(function (event, cb/*(err)*/) {
+  // Atomically get a block of sequence numbers from the database
+  var events = _.castArray(event);
+  this.nextEventSeq(events.length, pass(function (nextSeq) {
+    MLabJournal.events.insert(_.map(events, _.bind(function (event) {
+      return _.assign(event, {
+        seq : nextSeq++,
+        fs : this.id
+      });
+    }, this)), cb);
+  }, cb, null, this));
+});
+
+module.exports = MLabJournal;
