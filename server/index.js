@@ -28,7 +28,6 @@ app.use(cookieParser());
  * NOTE this route does not require authorisation
  */
 app.get('/', function (req, res, next) {
-  console.log(req.originalUrl, req.path, req.params, req.hostname);
   // Create a new framespace and redirect to it
   _async.auto({
     name : function (cb) {

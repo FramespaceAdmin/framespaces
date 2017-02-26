@@ -25,7 +25,7 @@ Third-party services for production use:
 - Realtime message delivery https://www.ably.io/documentation (for dev & test using http://socket.io/docs/)
 - Database (proposed) https://orchestrate.io/docs/ (for dev & test using http://www.taffydb.com/)
 - Authentication (proposed) https://auth0.com/docs (for dev & test, rolling our own JWTs)
-- Deployment (proposed) https://webtask.io/docs (for dev & test, using https://devcenter.heroku.com/)
+- Deployment (proposed) https://serverless.com/ (for dev & test, using https://devcenter.heroku.com/)
 - Random words http://developer.wordnik.com/docs.html
 - Random robots! https://robohash.org/
 

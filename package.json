@@ -36,7 +36,7 @@
     "request": "^2.72.0",
     "snapsvg": "^0.4",
     "socket.io": "^1.4.6",
-    "svg-intersections": "git+https://github.com/framespaces/svg-intersections.git#master",
+    "svg-intersections": "^0.3.0",
     "svg-points": "^2.0.1",
     "taffydb": "^2.7.2",
     "url-join": "^1.1.0",
