@@ -27,6 +27,7 @@ TaffyJournal.prototype.fetchDetails = _async.asyncify(function () {
 TaffyJournal.prototype.putDetails = _async.asyncify(function (details) {
   log.debug('Putting details', details);
   this.journal.details = details;
+  return details;
 });
 
 TaffyJournal.prototype.fetchEvents = _async.asyncify(function () {

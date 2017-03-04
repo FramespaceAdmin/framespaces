@@ -1,4 +1,3 @@
-var _ = require('lodash'),
-    config = require('../dist/config.json'); // Configuration as JSON
+var _ = require('lodash');
 
-module.exports = _(config);
+module.exports = _(config); // Configuration as global

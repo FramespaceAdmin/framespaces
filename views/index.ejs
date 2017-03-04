@@ -2,11 +2,14 @@
   <head>
     <title>Framespace <%= fs.name %></title>
     <link rel="stylesheet" type="text/css" href="/web/style.css">
-    <% if (config.get('modules.io') == 'socket-io') { %>
+    <% if (config.modules.io == 'socket-io') { %>
       <script src="/socket.io/socket.io.js"></script>
-    <% } else if (config.get('modules.io') == 'ably') { %>
+    <% } else if (config.modules.io == 'ably') { %>
       <script src="https://cdn.ably.io/lib/ably.min.js"></script>
+    <% } else { %>
+      <script>resources = <%- JSON.stringify(resources) %>;</script>
     <% } %>
+    <script>config = <%- JSON.stringify(config) %>;</script>
   </head>
   <body>
     <div id="users" style="position: fixed; top: 0px; left: 0px; pointer-events: none;">

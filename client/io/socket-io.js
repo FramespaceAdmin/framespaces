@@ -4,7 +4,7 @@ var _ = require('lodash'),
 function SocketIo() {
   BrowserIo.call(this);
   // Note that 'io' is a global from /socket.io/socket.io.js
-  this.socket = io(this.url('io'));
+  this.socket = global.io(this.url('io'));
   this.socket.on('connect_error', _.bind(this.close, this));
 
   var jwt = this.jwt, user = this.user;

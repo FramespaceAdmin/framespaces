@@ -52,7 +52,9 @@ MLabJournal.prototype.putDetails = MLabJournal.connected(function (details, cb/*
   return MLabJournal.journals.insert(_.assign(details, {
     _id : this.id,
     nextSeq : 0
-  }), cb);
+  }), pass(function (result) {
+    return cb(false, details);
+  }, cb));
 });
 
 MLabJournal.prototype.nextEventSeq = MLabJournal.connected(function (inc, cb/*(err, nextSeq)*/) {

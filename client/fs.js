@@ -1,11 +1,14 @@
 var _ = require('lodash'),
+    config = require('config'),
     Action = require('./action'),
     LocalUser = require('./user/local'),
     RemoteUser = require('./user/remote'),
     Batch = require('./action/batch'),
-    Io = require('io'), // NOTE this is aliasified, see /modules.js
     log = require('../lib/log'),
     pass = require('pass-error');
+
+// NOTE non-local IO is aliasified, see modules.js
+var Io = config.get('modules.io') === 'local' ? require('./io/local') : require('io');
 
 /**
  * Applies the Framespace actions into the given subject, and wires up IO to handle concurrent

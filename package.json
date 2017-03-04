@@ -61,8 +61,8 @@
     "start:dev": "npm run build:dev && NODE_ENV=development node server/index.js",
     "restart:dev": "npm run build:dev && npm stop && NODE_ENV=development node server/index.js",
     "copy:dist": "mkdir -p dist && cp -R web/* dist/",
-    "bundle:dev": "NODE_ENV=development ./node_modules/browserify/bin/cmd.js client -t aliasify > dist/bundle.js",
-    "bundle:dist": "./node_modules/browserify/bin/cmd.js client -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] -t aliasify > dist/bundle.js",
+    "bundle:dev": "NODE_ENV=development browserify client -t aliasify > dist/bundle.js",
+    "bundle:dist": "browserify client -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] -t aliasify > dist/bundle.js",
     "build:dist": "npm run copy:dist && npm run bundle:dist",
     "build:dev": "NODE_ENV=development mocha test && npm run copy:dist && npm run bundle:dev"
   }

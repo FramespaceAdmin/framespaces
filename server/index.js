@@ -4,6 +4,7 @@ var _ = require('lodash'),
     express = require('express'),
     bodyParser = require('body-parser'),
     cookieParser = require('cookie-parser'),
+    validate = require('../lib/validate'),
     app = express(),
     server = require('http').createServer(app),
     _word = require('./word'),
@@ -28,32 +29,48 @@ app.use(cookieParser());
  * NOTE this route does not require authorisation
  */
 app.get('/', function (req, res, next) {
-  // Create a new framespace and redirect to it
-  _async.auto({
-    name : function (cb) {
-      return _async.concatSeries(['adjective', 'noun'], function (partOfSpeech, cb) {
-        _word.random({ includePartOfSpeech : partOfSpeech, maxLength : 5 }, cb);
-      }, pass(function (words) { cb(false, words.join('')); }, cb));
-    },
-    journal : ['name', function ($, cb) {
-      return Journal($.name).putDetails({ name : $.name, created : new Date().getTime() }, cb);
-    }],
-    channel : ['name', 'journal', function ($, cb) {
-      return io.createChannel($.name, Journal, cb);
-    }]
-  }, pass(function ($) {
-    return res.redirect('/' + $.name);
+  res.render('index', {
+    fs : { name : 'anonymouse' },
+    config : _.set(_.pick(config, 'log'), 'modules.io', 'local' ), // Local IO for anonymous fs
+    resources : { actions : [] } // Placeholder for a welcome message
+  })
+});
+
+/**
+ * GETting a new framespace name
+ */
+app.get('/fsName', auth.cookie, function (req, res, next) {
+  return _async.concatSeries(['adjective', 'noun'], function (partOfSpeech, cb) {
+    _word.random({ includePartOfSpeech : partOfSpeech, maxLength : 5 }, cb);
+  }, pass(function (words) {
+    res.send(words.join(''));
+  }, next));
+});
+
+/**
+ * POSTing a framespace creates it
+ */
+app.post('/', auth.cookie, function (req, res, next) {
+  var fs = req.body;
+  validate.fs(fs, pass(function () {
+    Journal(fs.name).putDetails(fs, pass(function (fs) {
+      io.createChannel(fs.name, Journal, pass(function () {
+        res.status(201).location('/' + fs.name).send(fs);
+      }, next));
+    }, next));
   }, next));
 });
 
 /**
  * GETting a framespace renders the HTML
- * NOTE this generates an anonymous user cookie if there isn't one on the request.
  * TODO ... unless the framespace is private.
  */
-app.get('/:fsName', auth.setCookie, function (req, res, next) {
+app.get('/:fsName', auth.cookie, function (req, res, next) {
   Journal(req.params.fsName).fetchDetails(pass(function (fs) {
-    return fs ? res.render('index', { fs : fs, config : config }) : res.sendStatus(404);
+    return fs ? res.render('index', {
+      fs : fs,
+      config : _.pick(config, 'log', 'modules.io')
+    }) : res.sendStatus(404);
   }, next));
 });
 

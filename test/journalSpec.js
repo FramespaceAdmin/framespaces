@@ -14,8 +14,10 @@ module.exports = function (newJournal) {
   });
 
   it('should store details by id', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('b').putDetails({ name : 'B' }, pass(function () {
+    newJournal('a').putDetails({ name : 'A' }, pass(function (a) {
+      assert.equal(a.name, 'A');
+      newJournal('b').putDetails({ name : 'B' }, pass(function (b) {
+        assert.equal(b.name, 'B');
         newJournal('a').fetchDetails(pass(function (aDetails) {
           newJournal('b').fetchDetails(pass(function (bDetails) {
             assert.equal(aDetails.name, 'A');

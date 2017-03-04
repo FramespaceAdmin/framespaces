@@ -31,7 +31,7 @@ Journal.prototype.fetchEvents = function (cb/*(err, [event])*/) {
  * Persists details of this journal.
  * @param cb callback
  */
-Journal.prototype.putDetails = function (details, cb/*(err)*/) {
+Journal.prototype.putDetails = function (details, cb/*(details, err)*/) {
   throw undefined;
 };
 
