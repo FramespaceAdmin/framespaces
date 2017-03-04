@@ -10,7 +10,7 @@ function TaffyJournal(id) {
   }
   Journal.call(this, id);
   if (!_.has(TaffyJournal.journals, id)) {
-    TaffyJournal.journals[id] = { details : {}, events : taffy(), nextSeq : 0 };
+    TaffyJournal.journals[id] = { details : { name : id }, events : taffy(), nextSeq : 0 };
   }
   this.journal = TaffyJournal.journals[id];
 }

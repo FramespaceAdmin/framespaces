@@ -17,6 +17,7 @@ SocketIo.prototype.constructor = SocketIo;
 
 SocketIo.prototype.createChannel = function (name, Journal, cb/*(err)*/) {
   if (!_.has(this.namespaces, name)) {
+    log.debug('Creating channel', name);
     var ns = this.namespaces[name] = this.io.of('/' + name + '/io');
     ns.on('connection', function (socket) {
       // Challenge the new socket to provide a JWT

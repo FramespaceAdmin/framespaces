@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     _async = require('async'),
+    log = require('../../lib/log'),
     mongodb = require('mongodb'),
     pass = require('pass-error'),
     Journal = require('../journal'),
@@ -18,6 +19,7 @@ MLabJournal.connected = function connected(member) {
     if (MLabJournal.db) {
       member.apply(this, args);
     } else {
+      log.debug('Connecting to MLab');
       mongodb.MongoClient.connect(MONGO_URL, pass(function (db) {
         MLabJournal.db = db;
         MLabJournal.journals = db.collection('journals');
@@ -41,7 +43,11 @@ MLabJournal.prototype = Object.create(Journal.prototype);
 MLabJournal.prototype.constructor = MLabJournal;
 
 MLabJournal.prototype.fetchDetails = MLabJournal.connected(function (cb/*(err, details)*/) {
-  return MLabJournal.journals.findOne({ _id : this.id }, cb);
+  log.debug('Fetching details for', this.id);
+  return MLabJournal.journals.findOne({ _id : this.id }, pass(function (details) {
+    log.debug('Fetched details', details);
+    cb(false, details);
+  }, cb));
 });
 
 MLabJournal.prototype.fetchEvents = MLabJournal.connected(function (cb/*(err, [event])*/) {

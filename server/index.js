@@ -54,9 +54,7 @@ app.post('/', auth.cookie, function (req, res, next) {
   var fs = req.body;
   validate.fs(fs, pass(function () {
     Journal(fs.name).putDetails(fs, pass(function (fs) {
-      io.createChannel(fs.name, Journal, pass(function () {
-        res.status(201).location('/' + fs.name).send(fs);
-      }, next));
+      res.status(201).location('/' + fs.name).send(fs);
     }, next));
   }, next));
 });
@@ -67,10 +65,12 @@ app.post('/', auth.cookie, function (req, res, next) {
  */
 app.get('/:fsName', auth.cookie, function (req, res, next) {
   Journal(req.params.fsName).fetchDetails(pass(function (fs) {
-    return fs ? res.render('index', {
-      fs : fs,
-      config : _.pick(config, 'log', 'modules.io')
-    }) : res.sendStatus(404);
+    return fs ? io.createChannel(fs.name, Journal, pass(function () {
+      return res.render('index', {
+        fs : fs,
+        config : _.pick(config, 'log', 'modules.io')
+      });
+    }, next)) : res.sendStatus(404);
   }, next));
 });
 
