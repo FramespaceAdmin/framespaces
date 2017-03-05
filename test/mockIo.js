@@ -22,4 +22,13 @@ MockIo.prototype.constructor = MockIo;
 
 LocalIo.mixInto(MockIo.prototype);
 
+MockIo.prototype.get = function (path, cb/*(err, body)*/) {
+  if (_.isFunction(this.resources)) {
+    return this.resources.call(this, path, cb);
+  } else {
+    var body = _.get(this, ['resources', path]);
+    return this.latent(cb, [false, body]);
+  }
+};
+
 module.exports = MockIo;

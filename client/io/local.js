@@ -1,13 +1,19 @@
 var _ = require('lodash'),
     pass = require('pass-error'),
     EventEmitter = require('events'),
-    BrowserIo = require('./browser');
+    BrowserIo = require('./browser'),
+    Journal = require('../journal');
 
 function LocalIo() {
   BrowserIo.call(this);
   this.events = new EventEmitter();
-  this.resources = global.resources;
   this._publish('user.connected', this.user);
+  this.journal = new Journal();
+
+  var addAction = _.bind(this.journal.addEvent, this.journal, 'actions');
+  this.events.on('action', function (userId, action) {
+    _.each(_.castArray(action), addAction);
+  });
 }
 
 LocalIo.prototype = Object.create(BrowserIo.prototype);
@@ -15,7 +21,8 @@ LocalIo.prototype.constructor = LocalIo;
 
 /**
  * Mixes in methods to the prototype that implement a local IO.
- * Requires this to have user, events and resources properties.
+ * NOTE Does not include the get method.
+ * Requires this to have user and events properties.
  */
 LocalIo.mixInto = function (prototype) {
   prototype.latent = function (cb, args) {
@@ -23,15 +30,6 @@ LocalIo.mixInto = function (prototype) {
       cb.apply(null, args || []);
     }, this.latency || 0);
   }
-
-  prototype.get = function (path, cb/*(err, body)*/) {
-    if (_.isFunction(this.resources)) {
-      return this.resources.call(this, path, cb);
-    } else {
-      var body = _.get(this, ['resources', path]);
-      return this.latent(cb, [false, body]);
-    }
-  };
 
   prototype.subscribe = function (eventName, subscriber/*(userId, data...)*/) {
     this.events.on(eventName, _.assign(_.bind(function (userId) {
@@ -74,5 +72,9 @@ LocalIo.mixInto = function (prototype) {
 }
 
 LocalIo.mixInto(LocalIo.prototype);
+
+LocalIo.prototype.get = function (path, cb/*(err, body)*/) {
+  this.latent(cb, [false, this.journal.fetchEvents(path)]);
+};
 
 module.exports = LocalIo;

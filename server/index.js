@@ -25,14 +25,13 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 /**
- * GETting the base URL creates a new framespace with a new name
- * NOTE this route does not require authorisation
+ * GETting the base URL creates a browser-local framespace
+ * NOTE this route sets an anonymous cookie, for later traceability
  */
-app.get('/', function (req, res, next) {
+app.get('/', auth.setCookie, function (req, res, next) {
   res.render('index', {
     fs : { name : 'anonymouse' },
-    config : _.set(_.pick(config, 'log'), 'modules.io', 'local' ), // Local IO for anonymous fs
-    resources : { actions : [] } // Placeholder for a welcome message
+    config : _.set(_.pick(config, 'log'), 'modules.io', 'local' ) // Local IO for anonymous fs
   })
 });
 
@@ -63,7 +62,7 @@ app.post('/', auth.cookie, function (req, res, next) {
  * GETting a framespace renders the HTML
  * TODO ... unless the framespace is private.
  */
-app.get('/:fsName', auth.cookie, function (req, res, next) {
+app.get('/:fsName', auth.setCookie, function (req, res, next) {
   Journal(req.params.fsName).fetchDetails(pass(function (fs) {
     return fs ? io.createChannel(fs.name, Journal, pass(function () {
       return res.render('index', {
