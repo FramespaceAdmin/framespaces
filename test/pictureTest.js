@@ -33,6 +33,13 @@ describe('Picture', function () {
     assert.deepEqual(picture.elements({ x : 0, y : 0, width : 10, height : 10 }), []);
   });
 
+  it('should not find removed elements', function () {
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
+    var line = picture.changed(paper.line(1, 1, 2, 2).attr('id', guid()));
+    picture.changed(line.remove());
+    assert.deepEqual(picture.elements({ x : 0, y : 0, width : 10, height : 10 }), []);
+  });
+
   it('should get elements by filter', function () {
     var paper = MockPaper(10, 10), picture = new Picture(paper), id = guid();
     var line = picture.changed(paper.line(0, 0, 1, 1).attr('id', id));

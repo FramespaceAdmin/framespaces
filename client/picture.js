@@ -38,7 +38,7 @@ Picture.prototype.elements = function (selector, filter) {
     elements = this.paper.selectAll(selector + '[id]');
   } else {
     elements = _(this.rtree.search(rtreeSelector(selector)))
-      .map('id').map(_.bind(this.getElement, this)).value();
+      .map('id').uniq().map(_.bind(this.getElement, this)).compact().value();
   }
   return _.filter(elements, function (e) {
     return _.get(e.node, 'style.display') !== 'none' && e.node.id && (!filter || filter(e));
@@ -81,12 +81,11 @@ Picture.prototype.asUnlinkedShape = function (element) {
   return Shape.of(element).delta({ on : '', from : '', to : '', class : '-link -label' });
 };
 
-Picture.prototype.ensureOrder = function (e1, e2/*, ...*/) {
+Picture.prototype.ensureOrder = function (elements) {
   var svg = this.paper.node;
   function indexOf(e) {
     return _.indexOf(svg.childNodes, e.node);
   }
-  var elements = _.toArray(arguments);
   _.each(_.tail(elements), function (e, i) {
     if (indexOf(e) < indexOf(elements[i])) {
       elements[i].after(e);
@@ -94,32 +93,44 @@ Picture.prototype.ensureOrder = function (e1, e2/*, ...*/) {
   });
 };
 
+Picture.ShapeCache = function () {
+  this.shapes = {};
+};
+
+Picture.ShapeCache.prototype.get = function (element) {
+  return this.shapes[element.id] || (this.shapes[element.id] = Shape.of(element));
+};
+
+Picture.ShapeCache.prototype.sortByContains = function (elements) {
+  return elements.sort(_.bind(function (e1, e2) {
+    var s1 = this.get(e1), s2 = this.get(e2);
+    return s1.contains(s2) ? -1 : s2.contains(s1) ? 1 : 0;
+  }, this));
+};
+
 Picture.prototype.changed = function (element) {
   var id = element.attr('id');
   if (id) {
     this.rtree.remove({ id : id }, function (a, b) { return a.id === b.id; });
     if (!element.removed) {
-      var shape = Shape.of(element);
+      var shapeCache = new Picture.ShapeCache(), shape = shapeCache.get(element);
       this.rtree.insert(_.set(rtreeSelector(shape.bbox), 'id', id));
       // Ensure enclosing shapes are ordered first
-      this.ensureOrder.apply(this, this.elements(shape.bbox).sort(function (e1, e2) {
-        var s1 = Shape.of(e1), s2 = Shape.of(e2);
-        return s1.contains(s2) ? -1 : s2.contains(s1) ? 1 : 0;
-      }));
+      this.ensureOrder(shapeCache.sortByContains(this.elements(shape.bbox)));
       // Adjust any linked elements
       if (element.hasClass('link')) {
         var from = this.getElement(element.attr('from')), to = this.getElement(element.attr('to'));
         if (from && to) {
-          shape.link(Shape.of(from), Shape.of(to)).applyTo(element);
-          this.ensureOrder(from, to, element); // Ensure sensible Z-ordering for a link
+          shape.link(shapeCache.get(from), shapeCache.get(to)).applyTo(element);
+          this.ensureOrder([from, to, element]); // Ensure sensible Z-ordering for a link
         } else {
           this.asUnlinkedShape(element).applyTo(element);
         }
       } else if (element.hasClass('label')) {
         var on = this.getElement(element.attr('on'));
         if (on) {
-          shape.label(Shape.of(on)).applyTo(element);
-          this.ensureOrder(on, element); // Ensure sensible Z-ordering for a label
+          shape.label(shapeCache.get(on)).applyTo(element);
+          this.ensureOrder([on, element]); // Ensure sensible Z-ordering for a label
         } else {
           this.asUnlinkedShape(element).applyTo(element);
         }
