@@ -254,8 +254,9 @@ Shape.prototype.deltaAttr = function (dAttr) {
  * For numeric attributes, the given amounts are numeric deltas.
  * For the class attribute, a space-delimited list of classes. Suffix minus to remove (e.g. '-link').
  * Deltas can also be functions, which take an existing value and return the changed value.
- * NOTE as a utility, this method copes with deep attribute paths,
- * even though that's meaningless for attributes
+ * NOTE as a utility, this function copes with deep attribute paths,
+ * even though that's meaningless for attributes.
+ * This function mutates attr
  */
 Shape.delta = function (attr, dAttr) {
   return _.reduce(dAttr, function (attr, delta, path) {
@@ -328,7 +329,14 @@ Shape.prototype.hasClass = function (c) {
  * By default, only applies attributes (not text or children).
  */
 Shape.prototype.applyTo = function (e) {
-  _.each(this.attr, function (v, k) {
+  return Shape.applyAttr(e, this.attr);
+};
+
+/**
+ * Utility to set attributes on the given element or element wrapper
+ */
+Shape.applyAttr = function (e, attr) {
+  _.each(attr, function (v, k) {
     (e.node || e).setAttribute(k, v);
   });
   return e;

@@ -91,6 +91,27 @@ describe('Rect', function () {
       assert.equal(rect.attr.width, 3);
       assert.equal(rect.attr.height, 2);
     });
+
+    it('should switch sides when width < 0', function () {
+      var rect = new Rect({ x : 1, y : 0, width : 1, height : 2 });
+      var move = rect.mover(true, new Circle({ cx : 2, cy : 1, r : 0.5 }));
+      rect = move.call(rect, -2, 0);
+      assert.equal(rect.attr.x, 0);
+      assert.equal(rect.attr.y, 0);
+      assert.equal(rect.attr.width, 1);
+      assert.equal(rect.attr.height, 2);
+    });
+
+    it('should stay switched when width stays < 0', function () {
+      var rect = new Rect({ x : 1, y : 0, width : 1, height : 2 });
+      var move = rect.mover(true, new Circle({ cx : 2, cy : 1, r : 0.5 }));
+      rect = move.call(rect, -2, 0);
+      rect = move.call(rect, -2, 0);
+      assert.equal(rect.attr.x, -2);
+      assert.equal(rect.attr.y, 0);
+      assert.equal(rect.attr.width, 3);
+      assert.equal(rect.attr.height, 2);
+    });
   });
 
   describe('with a Snap.svg element', function () {
