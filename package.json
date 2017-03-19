@@ -55,17 +55,16 @@
   },
   "aliasify": "./client/modules.js",
   "scripts": {
-    "postinstall": "npm run build:dist",
     "start": "node server/index.js",
     "stop": "pkill -SIGINT Framespaces",
     "test": "mocha test",
     "unit": "NODE_ENV=development mocha",
     "start:dev": "npm run build:dev && NODE_ENV=development node server/index.js",
     "restart:dev": "npm run build:dev && npm stop && NODE_ENV=development node server/index.js",
-    "copy:dist": "mkdir -p dist && cp -R web/* dist/",
+    "assets": "mkdir -p dist && cp -R web/* dist/",
     "bundle:dev": "NODE_ENV=development browserify client -t aliasify > dist/bundle.js",
-    "bundle:dist": "browserify client -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] -t aliasify > dist/bundle.js",
-    "build:dist": "npm run copy:dist && npm run bundle:dist",
-    "build:dev": "NODE_ENV=development mocha test && npm run copy:dist && npm run bundle:dev"
+    "bundle": "browserify client -d -p [minifyify --map bundle.js.map --output dist/bundle.js.map] -t aliasify > dist/bundle.js",
+    "build": "npm run assets && npm run bundle",
+    "build:dev": "NODE_ENV=development npm run unit test && npm run assets && npm run bundle:dev"
   }
 }

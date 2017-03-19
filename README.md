@@ -13,6 +13,11 @@ To re-start, `npm run restart:dev`
 
 See `package.json` for other exciting scripts.
 
+The following environment variables need to be set up in the development environment:
+* `FS_JWT_SECRET` (for signing temporary JWTs for anonymous users)
+* `FS_MLAB_DEV_URL` (if active config has `modules.journal` as `mlab`)
+* `FS_ABLY_DEV_KEY` (if active config has `modules.io` as `ably`)
+
 ## Dependencies
 Browser tabs I have permanently open:
 - https://nodejs.org/api/
@@ -23,7 +28,7 @@ Browser tabs I have permanently open:
 
 Third-party services for production use:
 - Realtime message delivery https://www.ably.io/documentation (for dev & test using http://socket.io/docs/)
-- Database (proposed) https://orchestrate.io/docs/ (for dev & test using http://www.taffydb.com/)
+- Database (proposed) https://mlab.com/ (for dev & test using http://www.taffydb.com/)
 - Authentication (proposed) https://auth0.com/docs (for dev & test, rolling our own JWTs)
 - Deployment (proposed) https://serverless.com/ (for dev & test, using https://devcenter.heroku.com/)
 - Random words http://developer.wordnik.com/docs.html

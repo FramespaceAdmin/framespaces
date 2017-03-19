@@ -3,8 +3,7 @@ var _ = require('lodash'),
     log = require('../../lib/log'),
     mongodb = require('mongodb'),
     pass = require('pass-error'),
-    Journal = require('../journal'),
-    MONGO_URL = 'mongodb://journal:WXGN5Ks4Ya61KjDN@ds155529.mlab.com:55529/dev';
+    Journal = require('../journal');
 
 function MLabJournal(id) {
   if (!(this instanceof MLabJournal)) {
@@ -20,7 +19,7 @@ MLabJournal.connected = function connected(member) {
       member.apply(this, args);
     } else {
       log.debug('Connecting to MLab');
-      mongodb.MongoClient.connect(MONGO_URL, pass(function (db) {
+      mongodb.MongoClient.connect(process.env.FS_MLAB_DEV_URL, pass(function (db) {
         MLabJournal.db = db;
         MLabJournal.journals = db.collection('journals');
         MLabJournal.events = db.collection('events');
