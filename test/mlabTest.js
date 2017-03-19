@@ -11,6 +11,10 @@ mongoMock.max_delay = 0;
 
 // Tests Taffy implementation of Journal functionality.
 describe('Journal (mlab)', function () {
+  before(function () {
+    process.env.FS_MLAB_DEV_URL = 'mock';
+  });
+
   afterEach(function (done) {
     MLabJournal.journals.remove();
     MLabJournal.events.remove();

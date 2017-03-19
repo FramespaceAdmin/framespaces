@@ -28,16 +28,15 @@ Browser tabs I have permanently open:
 
 Third-party services for production use:
 - Realtime message delivery https://www.ably.io/documentation (for dev & test using http://socket.io/docs/)
-- Database (proposed) https://mlab.com/ (for dev & test using http://www.taffydb.com/)
+- Database https://mlab.com/ (for dev & test using http://www.taffydb.com/)
 - Authentication (proposed) https://auth0.com/docs (for dev & test, rolling our own JWTs)
-- Deployment (proposed) https://serverless.com/ (for dev & test, using https://devcenter.heroku.com/)
+- Deployment (proposed) https://zeit.co/now
 - Random words http://developer.wordnik.com/docs.html
 - Random robots! https://robohash.org/
 
 Also used:
 
 - https://www.npmjs.com/package/kld-affine for Point2D and Vector2D
-- https://www.npmjs.com/package/keycode for translating keyboard events
 - https://www.npmjs.com/package/svg-intersections for intersecting SVG shapes
 - http://browserify.org/ for browser code packaging, with https://github.com/benbria/aliasify
 
