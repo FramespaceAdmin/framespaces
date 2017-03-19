@@ -20,18 +20,18 @@ Polygon.prototype.constructor = Polygon;
 Shape.closed(Polygon.prototype);
 
 Polygon.prototype.nextPointIndex = function (i) {
-  return i < this.points.length - 1 ? i + 1 : 0;
+  return i < this.getPoints().length - 1 ? i + 1 : 0;
 };
 
 Polygon.prototype.prevPointIndex = function (i) {
-  return i ? i - 1 : this.points.length - 1;
+  return i ? i - 1 : this.getPoints().length - 1;
 };
 
 Polygon.prototype.minus = function (that) {
-  var fragments = Polyline.pointsMinus(this.points.concat(_.first(this.points)), that),
+  var fragments = Polyline.pointsMinus(this.getPoints().concat(_.first(this.getPoints())), that),
       first = _.first(fragments), last = _.last(fragments);
 
-  if (first && _.first(_.get(first, 'points')).equals(_.last(_.get(last, 'points')))) {
+  if (first && _.first(_.invoke(first, 'getPoints')).equals(_.last(_.invoke(last, 'getPoints')))) {
     if (fragments.length === 1) {
       return [this];
     } else {

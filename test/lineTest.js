@@ -12,12 +12,12 @@ describe('Line', function () {
     it('should have expected properties', function () {
       var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 });
       assert.equal(line.name, 'line');
-      assert.equal(line.points.length, 2);
-      assert.equal(line.points[0].x, 0);
-      assert.equal(line.points[0].y, 0);
-      assert.equal(line.points[1].x, 1);
-      assert.equal(line.points[1].y, 1);
-      assert.equal(line.extent, Math.sqrt(2));
+      assert.equal(line.getPoints().length, 2);
+      assert.equal(line.getPoints()[0].x, 0);
+      assert.equal(line.getPoints()[0].y, 0);
+      assert.equal(line.getPoints()[1].x, 1);
+      assert.equal(line.getPoints()[1].y, 1);
+      assert.equal(line.getExtent(), Math.sqrt(2));
     });
 
     it('should present the correct matrix', function () {
@@ -33,11 +33,11 @@ describe('Line', function () {
       it('should apply numeric deltas', function () {
         var line = new Line({ x1 : 0, y1 : 0, x2 : 1, y2 : 1 })
           .delta({ x1 : 1, y1 : 1, x2 : 1, y2 : 1 });
-        assert.equal(line.points.length, 2);
-        assert.equal(line.points[0].x, 1);
-        assert.equal(line.points[0].y, 1);
-        assert.equal(line.points[1].x, 2);
-        assert.equal(line.points[1].y, 2);
+        assert.equal(line.getPoints().length, 2);
+        assert.equal(line.getPoints()[0].x, 1);
+        assert.equal(line.getPoints()[0].y, 1);
+        assert.equal(line.getPoints()[1].x, 2);
+        assert.equal(line.getPoints()[1].y, 2);
       });
 
       it('should apply class deltas', function () {
@@ -143,18 +143,18 @@ describe('Line', function () {
     it('should have expected properties', function () {
       var line = Shape.of(paper.line(0, 0, 1, 1));
       assert.equal(line.name, 'line');
-      assert.equal(line.points.length, 2);
-      assert.equal(line.points[0].x, 0);
-      assert.equal(line.points[0].y, 0);
-      assert.equal(line.points[1].x, 1);
-      assert.equal(line.points[1].y, 1);
-      assert.equal(line.extent, Math.sqrt(2));
+      assert.equal(line.getPoints().length, 2);
+      assert.equal(line.getPoints()[0].x, 0);
+      assert.equal(line.getPoints()[0].y, 0);
+      assert.equal(line.getPoints()[1].x, 1);
+      assert.equal(line.getPoints()[1].y, 1);
+      assert.equal(line.getExtent(), Math.sqrt(2));
     });
 
     it('should handle raw SVG elements', function () {
       var line = Shape.of(paper.line(0, 0, 1, 1).node);
       assert.equal(line.name, 'line');
-      assert.equal(line.points.length, 2);
+      assert.equal(line.getPoints().length, 2);
     });
 
     it('should add itself to paper', function () {

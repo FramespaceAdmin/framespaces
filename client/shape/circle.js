@@ -41,7 +41,7 @@ Circle.prototype.computeExtent = function () {
 };
 
 Circle.prototype.transform = function (matrix) {
-  var c = this.bbox.c.transform(matrix), s = matrix.getScale();
+  var c = this.getBBox().c.transform(matrix), s = matrix.getScale();
   return this.clone({ cx : c.x, cy : c.y, r : this.attr.r * (s.scaleX + s.scaleY)/2 });
 };
 
@@ -49,7 +49,7 @@ Circle.prototype.contains = function (that) {
   if (that instanceof Shape) {
     return Shape.prototype.contains.call(this, that);
   }
-  return that.distanceFrom(this.bbox.c) <= this.attr.r;
+  return that.distanceFrom(this.getBBox().c) <= this.attr.r;
 };
 
 Circle.prototype.mover = function (isEdge, cursor) {
@@ -65,7 +65,7 @@ Circle.prototype.mover = function (isEdge, cursor) {
 
 Circle.prototype.minus = function (that) {
   // Ordering clockwise from top-dead-centre
-  var centre = this.bbox.c, tdc = new Point(this.attr.cx, this.attr.cy - this.attr.r);
+  var centre = this.getBBox().c, tdc = new Point(this.attr.cx, this.attr.cy - this.attr.r);
   var points = _.sortBy(this.intersect(that), function (p) {
     var angle = DOWN.angleBetween(Vector.fromPoints(centre, p));
     // TDC needs to be ordered first
@@ -81,7 +81,7 @@ Circle.prototype.minus = function (that) {
       ry : this.attr.r,
       largeArcFlag : true,
       sweepFlag : true
-    }, this.bbox.c);
+    }, this.getBBox().c);
   } else {
     return [this]; // not overlapping, no change
   }

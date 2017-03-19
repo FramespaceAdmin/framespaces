@@ -20,100 +20,100 @@ describe('Arc', function () {
     it('should have expected properties for small arc and negative angle', function () {
       var arc = new Arc({ d : 'M1 1 A 1 1, 0, 0, 0, 2 2' });
       assert.equal(arc.name, 'path');
-      assert.equal(arc.points.length, 2);
-      assert.equal(arc.points[0].x, 1);
-      assert.equal(arc.points[0].y, 1);
-      assert.equal(arc.points[1].x, 2);
-      assert.equal(arc.points[1].y, 2);
-      assert.equal(arc.bbox.x, 1);
-      assert.equal(arc.bbox.y, 1);
-      assert.equal(arc.bbox.width, 1);
-      assert.equal(arc.bbox.height, 1);
-      assert.equal(arc.extent, Math.sqrt(2));
+      assert.equal(arc.getPoints().length, 2);
+      assert.equal(arc.getPoints()[0].x, 1);
+      assert.equal(arc.getPoints()[0].y, 1);
+      assert.equal(arc.getPoints()[1].x, 2);
+      assert.equal(arc.getPoints()[1].y, 2);
+      assert.equal(arc.getBBox().x, 1);
+      assert.equal(arc.getBBox().y, 1);
+      assert.equal(arc.getBBox().width, 1);
+      assert.equal(arc.getBBox().height, 1);
+      assert.equal(arc.getExtent(), Math.sqrt(2));
       assert.isNotOk(arc.path[1].curve.sweepFlag);
     });
 
     it('should have expected properties for large arc and negative angle', function () {
       var arc = new Arc({ d : 'M1 1 A 1 1, 0, 1, 0, 2 2' });
       assert.equal(arc.name, 'path');
-      assert.equal(arc.points.length, 2);
-      assert.equal(arc.points[0].x, 1);
-      assert.equal(arc.points[0].y, 1);
-      assert.equal(arc.points[1].x, 2);
-      assert.equal(arc.points[1].y, 2);
-      assert.equal(arc.bbox.x, 0);
-      assert.equal(arc.bbox.y, 1);
-      assert.equal(arc.bbox.width, 2);
-      assert.equal(arc.bbox.height, 2);
-      assert.equal(arc.extent, 2); // rx + ry
+      assert.equal(arc.getPoints().length, 2);
+      assert.equal(arc.getPoints()[0].x, 1);
+      assert.equal(arc.getPoints()[0].y, 1);
+      assert.equal(arc.getPoints()[1].x, 2);
+      assert.equal(arc.getPoints()[1].y, 2);
+      assert.equal(arc.getBBox().x, 0);
+      assert.equal(arc.getBBox().y, 1);
+      assert.equal(arc.getBBox().width, 2);
+      assert.equal(arc.getBBox().height, 2);
+      assert.equal(arc.getExtent(), 2); // rx + ry
     });
 
     it('should have expected properties for small arc and positive angle', function () {
       var arc = new Arc({ d : 'M1 1 A 1 1, 0, 0, 1, 2 2' });
       assert.equal(arc.name, 'path');
-      assert.equal(arc.points.length, 2);
-      assert.equal(arc.points[0].x, 1);
-      assert.equal(arc.points[0].y, 1);
-      assert.equal(arc.points[1].x, 2);
-      assert.equal(arc.points[1].y, 2);
-      assert.equal(arc.bbox.x, 1);
-      assert.equal(arc.bbox.y, 1);
-      assert.equal(arc.bbox.width, 1);
-      assert.equal(arc.bbox.height, 1);
-      assert.equal(arc.extent, Math.sqrt(2));
+      assert.equal(arc.getPoints().length, 2);
+      assert.equal(arc.getPoints()[0].x, 1);
+      assert.equal(arc.getPoints()[0].y, 1);
+      assert.equal(arc.getPoints()[1].x, 2);
+      assert.equal(arc.getPoints()[1].y, 2);
+      assert.equal(arc.getBBox().x, 1);
+      assert.equal(arc.getBBox().y, 1);
+      assert.equal(arc.getBBox().width, 1);
+      assert.equal(arc.getBBox().height, 1);
+      assert.equal(arc.getExtent(), Math.sqrt(2));
       assert.isOk(arc.path[1].curve.sweepFlag);
     });
 
     it('should have expected properties for large arc and positive angle', function () {
       var arc = new Arc({ d : 'M1 1 A 1 1, 0, 1, 1, 2 2' });
       assert.equal(arc.name, 'path');
-      assert.equal(arc.points.length, 2);
-      assert.equal(arc.points[0].x, 1);
-      assert.equal(arc.points[0].y, 1);
-      assert.equal(arc.points[1].x, 2);
-      assert.equal(arc.points[1].y, 2);
-      assert.equal(arc.bbox.x, 1);
-      assert.equal(arc.bbox.y, 0);
-      assert.equal(arc.bbox.width, 2);
-      assert.equal(arc.bbox.height, 2);
-      assert.equal(arc.extent, 2); // rx + ry
+      assert.equal(arc.getPoints().length, 2);
+      assert.equal(arc.getPoints()[0].x, 1);
+      assert.equal(arc.getPoints()[0].y, 1);
+      assert.equal(arc.getPoints()[1].x, 2);
+      assert.equal(arc.getPoints()[1].y, 2);
+      assert.equal(arc.getBBox().x, 1);
+      assert.equal(arc.getBBox().y, 0);
+      assert.equal(arc.getBBox().width, 2);
+      assert.equal(arc.getBBox().height, 2);
+      assert.equal(arc.getExtent(), 2); // rx + ry
     });
 
     describe('transforming', function () {
       it('should not change with identity', function () {
         var arc = new Arc({ d : 'M1 1 A 1 1, 0, 1, 1, 2 2' }).transform(Matrix.IDENTITY);
-        assert.equal(arc.points[0].x, 1);
-        assert.equal(arc.points[0].y, 1);
-        assert.equal(arc.points[1].x, 2);
-        assert.equal(arc.points[1].y, 2);
-        assert.equal(arc.bbox.x, 1);
-        assert.equal(arc.bbox.y, 0);
-        assert.equal(arc.bbox.width, 2);
-        assert.equal(arc.bbox.height, 2);
+        assert.equal(arc.getPoints()[0].x, 1);
+        assert.equal(arc.getPoints()[0].y, 1);
+        assert.equal(arc.getPoints()[1].x, 2);
+        assert.equal(arc.getPoints()[1].y, 2);
+        assert.equal(arc.getBBox().x, 1);
+        assert.equal(arc.getBBox().y, 0);
+        assert.equal(arc.getBBox().width, 2);
+        assert.equal(arc.getBBox().height, 2);
       });
 
       it('should scale', function () {
         var arc = new Arc({ d : 'M1 1 A 1 1, 0, 1, 1, 2 2' }).transform(Matrix.IDENTITY.scale(2));
-        assert.equal(arc.points[0].x, 2);
-        assert.equal(arc.points[0].y, 2);
-        assert.equal(arc.points[1].x, 4);
-        assert.equal(arc.points[1].y, 4);
-        assert.equal(arc.bbox.x, 2);
-        assert.equal(arc.bbox.y, 0);
-        assert.equal(arc.bbox.width, 4);
-        assert.equal(arc.bbox.height, 4);
+        assert.equal(arc.getPoints()[0].x, 2);
+        assert.equal(arc.getPoints()[0].y, 2);
+        assert.equal(arc.getPoints()[1].x, 4);
+        assert.equal(arc.getPoints()[1].y, 4);
+        assert.equal(arc.getBBox().x, 2);
+        assert.equal(arc.getBBox().y, 0);
+        assert.equal(arc.getBBox().width, 4);
+        assert.equal(arc.getBBox().height, 4);
       });
 
       it('should translate', function () {
         var arc = new Arc({ d : 'M1 1 A 1 1, 0, 1, 1, 2 2' }).transform(Matrix.IDENTITY.translate(1, 1));
-        assert.equal(arc.points[0].x, 2);
-        assert.equal(arc.points[0].y, 2);
-        assert.equal(arc.points[1].x, 3);
-        assert.equal(arc.points[1].y, 3);
-        assert.equal(arc.bbox.x, 2);
-        assert.equal(arc.bbox.y, 1);
-        assert.equal(arc.bbox.width, 2);
-        assert.equal(arc.bbox.height, 2);
+        assert.equal(arc.getPoints()[0].x, 2);
+        assert.equal(arc.getPoints()[0].y, 2);
+        assert.equal(arc.getPoints()[1].x, 3);
+        assert.equal(arc.getPoints()[1].y, 3);
+        assert.equal(arc.getBBox().x, 2);
+        assert.equal(arc.getBBox().y, 1);
+        assert.equal(arc.getBBox().width, 2);
+        assert.equal(arc.getBBox().height, 2);
       });
     });
 
@@ -121,10 +121,10 @@ describe('Arc', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
       var move = arc.mover(true, new Circle({ cx : 1, cy : 1, r : 0.1 }));
       arc = move.call(arc, 1, 1);
-      assert.equal(arc.ends[0].x, 0);
-      assert.equal(arc.ends[0].y, 0);
-      assert.equal(arc.ends[1].x, 2);
-      assert.equal(arc.ends[1].y, 2);
+      assert.equal(arc.getEnds()[0].x, 0);
+      assert.equal(arc.getEnds()[0].y, 0);
+      assert.equal(arc.getEnds()[1].x, 2);
+      assert.equal(arc.getEnds()[1].y, 2);
       assert.equal(arc.path[1].curve.rx, 2);
       assert.equal(arc.path[1].curve.ry, 2);
     });
@@ -133,10 +133,10 @@ describe('Arc', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
       var move = arc.mover(true, new Circle({ cx : 1/3, cy : 2/3, r : 0.2 }));
       arc = move.call(arc, 1/3, -1/3, 2/3, 1/3);
-      assert.equal(arc.ends[0].x, 0);
-      assert.equal(arc.ends[0].y, 0);
-      assert.equal(arc.ends[1].x, 1);
-      assert.equal(arc.ends[1].y, 1);
+      assert.equal(arc.getEnds()[0].x, 0);
+      assert.equal(arc.getEnds()[0].y, 0);
+      assert.equal(arc.getEnds()[1].x, 1);
+      assert.equal(arc.getEnds()[1].y, 1);
       assert.equal(arc.path[1].curve.sweepFlag, 1);
     });
 
@@ -144,10 +144,10 @@ describe('Arc', function () {
       var arc = new Arc({ d : 'M0 0 A 1 1, 0, 0, 0, 1 1' });
       var move = arc.mover(true, new Circle({ cx : 1/3, cy : 2/3, r : 0.2 }));
       arc = move.call(arc, -1, 1, 1/3-1, 1+2/3);
-      assert.equal(arc.ends[0].x, 0);
-      assert.equal(arc.ends[0].y, 0);
-      assert.equal(arc.ends[1].x, 1);
-      assert.equal(arc.ends[1].y, 1);
+      assert.equal(arc.getEnds()[0].x, 0);
+      assert.equal(arc.getEnds()[0].y, 0);
+      assert.equal(arc.getEnds()[1].x, 1);
+      assert.equal(arc.getEnds()[1].y, 1);
       assert.equal(arc.path[1].curve.largeArcFlag, 1);
     });
 
@@ -212,8 +212,8 @@ describe('Arc', function () {
     it('should have expected properties', function () {
       var arc = Shape.of(paper.path('M1 1 A 1 1, 0, 0, 0, 2 2'));
       assert.equal(arc.name, 'path');
-      assert.equal(arc.points.length, 2);
-      assert.equal(arc.extent, Math.sqrt(2));
+      assert.equal(arc.getPoints().length, 2);
+      assert.equal(arc.getExtent(), Math.sqrt(2));
     });
   });
 });

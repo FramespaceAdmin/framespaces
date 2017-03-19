@@ -12,21 +12,21 @@ describe('Circle', function () {
     it('should have expected properties', function () {
       var circle = new Circle({ cx : 1, cy : 1, r : 1 });
       assert.equal(circle.name, 'circle');
-      assert.equal(circle.points.length, 4);
-      assert.equal(circle.points[0].x, 1);
-      assert.equal(circle.points[0].y, 0);
-      assert.equal(circle.points[1].x, 2);
-      assert.equal(circle.points[1].y, 1);
-      assert.equal(circle.points[2].x, 1);
-      assert.equal(circle.points[2].y, 2);
-      assert.equal(circle.points[3].x, 0);
-      assert.equal(circle.points[3].y, 1);
-      assert.equal(circle.bbox.x, 0);
-      assert.equal(circle.bbox.y, 0);
-      assert.equal(circle.bbox.width, 2);
-      assert.equal(circle.bbox.height, 2);
-      assert.isTrue(circle.bbox.c.equals(new Point(1, 1)));
-      assert.equal(circle.extent, 2);
+      assert.equal(circle.getPoints().length, 4);
+      assert.equal(circle.getPoints()[0].x, 1);
+      assert.equal(circle.getPoints()[0].y, 0);
+      assert.equal(circle.getPoints()[1].x, 2);
+      assert.equal(circle.getPoints()[1].y, 1);
+      assert.equal(circle.getPoints()[2].x, 1);
+      assert.equal(circle.getPoints()[2].y, 2);
+      assert.equal(circle.getPoints()[3].x, 0);
+      assert.equal(circle.getPoints()[3].y, 1);
+      assert.equal(circle.getBBox().x, 0);
+      assert.equal(circle.getBBox().y, 0);
+      assert.equal(circle.getBBox().width, 2);
+      assert.equal(circle.getBBox().height, 2);
+      assert.isTrue(circle.getBBox().c.equals(new Point(1, 1)));
+      assert.equal(circle.getExtent(), 2);
     });
 
     describe('transforming', function () {
@@ -67,9 +67,9 @@ describe('Circle', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
       assert.instanceOf(fragments[0], Arc);
-      assert.isTrue(fragments[0].ends[0].equals(new Point(1, 0)));
-      assert.isTrue(fragments[0].ends[1].equals(new Point(0, 1)));
-      assert.isTrue(fragments[0].centre.equals(new Point(1, 1)));
+      assert.isTrue(fragments[0].getEnds()[0].equals(new Point(1, 0)));
+      assert.isTrue(fragments[0].getEnds()[1].equals(new Point(0, 1)));
+      assert.isTrue(fragments[0].getCentre().equals(new Point(1, 1)));
       assert.isTrue(fragments[0].path[1].curve.largeArcFlag);
       assert.isTrue(fragments[0].path[1].curve.sweepFlag);
     });
@@ -80,9 +80,9 @@ describe('Circle', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
       assert.instanceOf(fragments[0], Arc);
-      assert.isTrue(fragments[0].ends[0].equals(new Point(1, 0)));
-      assert.isTrue(fragments[0].ends[1].equals(new Point(1, 2)));
-      assert.isTrue(fragments[0].centre.equals(new Point(1, 1)));
+      assert.isTrue(fragments[0].getEnds()[0].equals(new Point(1, 0)));
+      assert.isTrue(fragments[0].getEnds()[1].equals(new Point(1, 2)));
+      assert.isTrue(fragments[0].getCentre().equals(new Point(1, 1)));
       assert.isFalse(fragments[0].path[1].curve.largeArcFlag);
       assert.isTrue(fragments[0].path[1].curve.sweepFlag);
     });

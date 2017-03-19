@@ -10,11 +10,11 @@ var _ = require('lodash'),
 
 function end(shape, other, angle) {
   // Throw out a ray from the shape centre, along the specified angle from the centre-centre line.
-  var cc = vector(shape.bbox.c, other.bbox.c),
-      ray = cc.transform(rotate(angle || 0)).unit().multiply(shape.extent),
-      intersects = Line.fromPoints(shape.bbox.c, shape.bbox.c.add(ray)).intersect(shape);
+  var cc = vector(shape.getBBox().c, other.getBBox().c),
+      ray = cc.transform(rotate(angle || 0)).unit().multiply(shape.getExtent()),
+      intersects = Line.fromPoints(shape.getBBox().c, shape.getBBox().c.add(ray)).intersect(shape);
   // Point is the ray intersect
-  return Shape.closest(intersects, other.bbox.c) || shape.bbox.c;
+  return Shape.closest(intersects, other.getBBox().c) || shape.getBBox().c;
 }
 
 function Linkline(attr) {
@@ -35,7 +35,7 @@ Linkline.fromElement = function (e) {
 };
 
 Linkline.angle = function (shape, other, end) {
-  return vector(shape.bbox.c, other.bbox.c).angleBetween(vector(shape.bbox.c, end));
+  return vector(shape.getBBox().c, other.getBBox().c).angleBetween(vector(shape.getBBox().c, end));
 };
 
 Linkline.prototype = Object.create(Line.prototype);
@@ -60,11 +60,11 @@ Linkline.prototype.link = function (from, to) {
 
 Linkline.prototype.mover = function (isEdge, cursor, getShapeById) {
   var from = getShapeById(this.attr.from), to = getShapeById(this.attr.to);
-  if (cursor.contains(this.ends[0])) {
+  if (cursor.contains(this.getEnds()[0])) {
     return function (dx, dy, x, y) {
       return this.clone({ a1 : Linkline.angle(from, to, new Point(x, y)) }).link(from, to);
     };
-  } else if (cursor.contains(this.ends[1])) {
+  } else if (cursor.contains(this.getEnds()[1])) {
     return function (dx, dy, x, y) {
       return this.clone({ a2 : Linkline.angle(to, from, new Point(x, y)) }).link(from, to);
     };
@@ -72,8 +72,8 @@ Linkline.prototype.mover = function (isEdge, cursor, getShapeById) {
     return function (dx, dy) {
       var d = new Vector(dx, dy);
       return this.clone({
-        a1 : Linkline.angle(from, to, this.ends[0].add(d)),
-        a2 : Linkline.angle(to, from, this.ends[1].add(d))
+        a1 : Linkline.angle(from, to, this.getEnds()[0].add(d)),
+        a2 : Linkline.angle(to, from, this.getEnds()[1].add(d))
       }).link(from, to);
     };
   }

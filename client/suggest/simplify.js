@@ -13,7 +13,7 @@ var RIGHT_ANGLE = Math.PI / 2;
 function reducePoints(polyline, begin, iteratee, accumulator) {
   var i = begin;
   for (var count = 1; !_.isUndefined(i); count++) {
-    var next = iteratee(accumulator, polyline.points[i], i, count);
+    var next = iteratee(accumulator, polyline.getPoints()[i], i, count);
     if (_.isUndefined(next)) break;
     accumulator = next;
     i = polyline.nextPointIndex(i);
@@ -23,7 +23,7 @@ function reducePoints(polyline, begin, iteratee, accumulator) {
 }
 
 function suggestSegment(polyline, begin) {
-  var p1 = polyline.points[begin], nextIndex = polyline.nextPointIndex(begin);
+  var p1 = polyline.getPoints()[begin], nextIndex = polyline.nextPointIndex(begin);
   return reducePoints(polyline, nextIndex, function (candidate, p2, i, count) {
     var segmentVector = vector(p1, p2), length = segmentVector.length();
     var sumVar = reducePoints(polyline, nextIndex, function (sumVar, p, i2) {
@@ -51,14 +51,14 @@ function suggestSegments(polyline, begin) {
 
 module.exports = function suggestSimplify(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
-  if (shape && shape instanceof Polyline && shape.points.length > 2) {
+  if (shape && shape instanceof Polyline && shape.getPoints().length > 2) {
     var segments = suggestSegments(shape, 0), lastSegment = _.last(segments);
     // For a polygon, the last segment may wrap. If so, try again with the last segment end.
     if (lastSegment.end > 0) { // Last segment of a polyline has end == -1
       segments = suggestSegments(shape, lastSegment.end);
     }
     var points = _.map(segments, 'p1');
-    if (points.length < shape.points.length) {
+    if (points.length < shape.getPoints().length) {
       return _.assign(points.length > 2 ? new Mutation(shape, shape.delta({
         points : Polyline.pointStr(points)
       })) : new Replacement(shape, shape.cloneAs('line', {

@@ -19,7 +19,7 @@ function MockPaper() {
     function getBBox() {
       switch (name) {
         case 'line' : return bbox(attr.x1, attr.y1, attr.x2, attr.y2);
-        case 'polyline' : return bbox.apply(null, attr.points);
+        case 'polyline' : return bbox.apply(null, attr.getPoints());
         case 'rect' : return bbox(attr.x, attr.y, attr.x + attr.width, attr.y + attr.height);
         case 'text' : return bbox(attr.x, attr.y, attr.x + (this.node || this).textContent.length, attr.y + 0.5);
         default: throw new Error('element not supported in mock paper');

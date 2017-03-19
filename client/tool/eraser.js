@@ -17,7 +17,7 @@ function Eraser(picture) {
 
   function erase(e, cursor, removeOld) {
     var shape = Shape.of(e);
-    if (cursor.intersect(shape).length || _.every(shape.points, _.bind(cursor.contains, cursor))) {
+    if (cursor.intersect(shape).length || _.every(shape.getPoints(), _.bind(cursor.contains, cursor))) {
       var fragmentShapes = _.invoke(Shape.of(e), 'minus', cursor);
       if (fragmentShapes) {
         removeOld ? removeOld() : e.remove();
@@ -31,7 +31,7 @@ function Eraser(picture) {
       // Cursor radius is dependent on how fast we are moving
       var cursor = Tool.cursor(state, Math.max(MIN_CURSOR_RADIUS, new Vector(delta.x || 0, delta.y || 0).length()));
       // Affect picture elements and previous fragments
-      _.assign(erased, _.reduce(picture.elements(cursor.bbox), function (erased, e) {
+      _.assign(erased, _.reduce(picture.elements(cursor.getBBox()), function (erased, e) {
         var fragments = erase(e, cursor, _.bind(e.attr, e, 'display', 'none'));
         return fragments ? _.set(erased, e.attr('id'), fragments) : erased;
       }, {}), _.reduce(erased, function (erased, fragments, id) {

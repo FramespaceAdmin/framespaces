@@ -13,68 +13,68 @@ describe('Polyline', function () {
     it('should have expected properties', function () {
       var polyline = new Polyline({ points : '0,0,1,1' });
       assert.equal(polyline.name, 'polyline');
-      assert.equal(polyline.points.length, 2);
-      assert.equal(polyline.points[0].x, 0);
-      assert.equal(polyline.points[0].y, 0);
-      assert.equal(polyline.points[1].x, 1);
-      assert.equal(polyline.points[1].y, 1);
-      assert.equal(polyline.extent, Math.sqrt(2));
+      assert.equal(polyline.getPoints().length, 2);
+      assert.equal(polyline.getPoints()[0].x, 0);
+      assert.equal(polyline.getPoints()[0].y, 0);
+      assert.equal(polyline.getPoints()[1].x, 1);
+      assert.equal(polyline.getPoints()[1].y, 1);
+      assert.equal(polyline.getExtent(), Math.sqrt(2));
     });
 
     describe('transforming', function () {
       it('should not change with identity', function () {
         var polyline = new Polyline({ points : '0,0,1,1' }).transform(Matrix.IDENTITY);
-        assert.equal(polyline.points[0].x, 0);
-        assert.equal(polyline.points[0].y, 0);
-        assert.equal(polyline.points[1].x, 1);
-        assert.equal(polyline.points[1].y, 1);
+        assert.equal(polyline.getPoints()[0].x, 0);
+        assert.equal(polyline.getPoints()[0].y, 0);
+        assert.equal(polyline.getPoints()[1].x, 1);
+        assert.equal(polyline.getPoints()[1].y, 1);
       });
 
       it('should scale', function () {
         var polyline = new Polyline({ points : '0,0,1,1' }).transform(Matrix.IDENTITY.scale(2));
-        assert.equal(polyline.points[0].x, 0);
-        assert.equal(polyline.points[0].y, 0);
-        assert.equal(polyline.points[1].x, 2);
-        assert.equal(polyline.points[1].y, 2);
+        assert.equal(polyline.getPoints()[0].x, 0);
+        assert.equal(polyline.getPoints()[0].y, 0);
+        assert.equal(polyline.getPoints()[1].x, 2);
+        assert.equal(polyline.getPoints()[1].y, 2);
       });
 
       it('should translate', function () {
         var polyline = new Polyline({ points : '0,0,1,1' }).transform(Matrix.IDENTITY.translate(1, 1));
-        assert.equal(polyline.points[0].x, 1);
-        assert.equal(polyline.points[0].y, 1);
-        assert.equal(polyline.points[1].x, 2);
-        assert.equal(polyline.points[1].y, 2);
+        assert.equal(polyline.getPoints()[0].x, 1);
+        assert.equal(polyline.getPoints()[0].y, 1);
+        assert.equal(polyline.getPoints()[1].x, 2);
+        assert.equal(polyline.getPoints()[1].y, 2);
       });
     });
 
     describe('when recty', function () {
       it('should have expected properties', function () {
         var polyline = new Polyline({ points : '0,0,0,2,2,2' });
-        assert.equal(polyline.axis, 'y');
+        assert.equal(polyline.getAxis(), 'y');
       });
 
       it('should stay recty when a point is dragged', function () {
         var polyline = new Polyline({ points : '0,0,0,2,2,2' });
         var move = polyline.mover(true, new Circle({ cx : 0, cy : 2, r : 0.5 }));
         polyline = move.call(polyline, 1, 1);
-        assert.equal(polyline.points[0].x, 1);
-        assert.equal(polyline.points[0].y, 0);
-        assert.equal(polyline.points[1].x, 1);
-        assert.equal(polyline.points[1].y, 3);
-        assert.equal(polyline.points[2].x, 2);
-        assert.equal(polyline.points[2].y, 3);
+        assert.equal(polyline.getPoints()[0].x, 1);
+        assert.equal(polyline.getPoints()[0].y, 0);
+        assert.equal(polyline.getPoints()[1].x, 1);
+        assert.equal(polyline.getPoints()[1].y, 3);
+        assert.equal(polyline.getPoints()[2].x, 2);
+        assert.equal(polyline.getPoints()[2].y, 3);
       });
 
       it('should stay recty when a segment is dragged', function () {
         var polyline = new Polyline({ points : '0,0,0,2,2,2' });
         var move = polyline.mover(true, new Circle({ cx : 0, cy : 1, r : 0.5 }));
         polyline = move.call(polyline, 1, 1);
-        assert.equal(polyline.points[0].x, 1);
-        assert.equal(polyline.points[0].y, 0);
-        assert.equal(polyline.points[1].x, 1);
-        assert.equal(polyline.points[1].y, 2);
-        assert.equal(polyline.points[2].x, 2);
-        assert.equal(polyline.points[2].y, 2);
+        assert.equal(polyline.getPoints()[0].x, 1);
+        assert.equal(polyline.getPoints()[0].y, 0);
+        assert.equal(polyline.getPoints()[1].x, 1);
+        assert.equal(polyline.getPoints()[1].y, 2);
+        assert.equal(polyline.getPoints()[2].x, 2);
+        assert.equal(polyline.getPoints()[2].y, 2);
       });
 
       it('should close to a rectangle if three points', function () {
@@ -180,12 +180,12 @@ describe('Polyline', function () {
     it('should have expected properties', function () {
       var polyline = Shape.of(paper.polyline(0, 0, 1, 1));
       assert.equal(polyline.name, 'polyline');
-      assert.equal(polyline.points.length, 2);
-      assert.equal(polyline.points[0].x, 0);
-      assert.equal(polyline.points[0].y, 0);
-      assert.equal(polyline.points[1].x, 1);
-      assert.equal(polyline.points[1].y, 1);
-      assert.equal(polyline.extent, Math.sqrt(2));
+      assert.equal(polyline.getPoints().length, 2);
+      assert.equal(polyline.getPoints()[0].x, 0);
+      assert.equal(polyline.getPoints()[0].y, 0);
+      assert.equal(polyline.getPoints()[1].x, 1);
+      assert.equal(polyline.getPoints()[1].y, 1);
+      assert.equal(polyline.getExtent(), Math.sqrt(2));
     });
   });
 });

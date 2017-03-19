@@ -110,9 +110,9 @@ Picture.prototype.changed = function (element) {
     this.rtree.remove({ id : id }, function (a, b) { return a.id === b.id; });
     if (!element.removed) {
       var shape = this.getShape(element, true);
-      this.rtree.insert(_.set(rtreeSelector(shape.bbox), 'id', id));
+      this.rtree.insert(_.set(rtreeSelector(shape.getBBox()), 'id', id));
       // Ensure enclosing shapes are ordered first
-      this.ensureOrder(this.sortByContains(this.elements(shape.bbox)));
+      this.ensureOrder(this.sortByContains(this.elements(shape.getBBox())));
       // Adjust any linked elements
       if (element.hasClass('link')) {
         var from = this.getElement(element.attr('from')), to = this.getElement(element.attr('to'));

@@ -31,15 +31,15 @@ Line.prototype.ATTR = Shape.prototype.ATTR.with({
 });
 
 Line.prototype.computePoints = function () {
-  return this.params.params;
+  return this.getParams().params;
 };
 
 Line.prototype.computeEnds = function () {
-  return this.points;
+  return this.getPoints();
 };
 
 Line.prototype.translation = function (m) {
-  return (m || Matrix.IDENTITY).translate(this.ends[0].x, this.ends[0].y);
+  return (m || Matrix.IDENTITY).translate(this.getEnds()[0].x, this.getEnds()[0].y);
 };
 
 Line.prototype.rotation = function (m) {
@@ -47,18 +47,18 @@ Line.prototype.rotation = function (m) {
 };
 
 Line.prototype.scale = function (m) {
-  return (m || Matrix.IDENTITY).scale(this.extent);
+  return (m || Matrix.IDENTITY).scale(this.getExtent());
 };
 
 Line.prototype.transform = function (matrix) {
-  var ends = _.map(this.ends, _.method('transform', matrix));
+  var ends = _.map(this.getEnds(), _.method('transform', matrix));
   return this.clone({ x1 : ends[0].x, y1 : ends[0].y, x2 : ends[1].x, y2 : ends[1].y });
 };
 
 Line.prototype.mover = function (isEdge, cursor) {
-  if (cursor.contains(this.ends[0])) {
+  if (cursor.contains(this.getEnds()[0])) {
     return function (dx, dy) { return this.delta({ x1 : dx, y1 : dy }); };
-  } else if (cursor.contains(this.ends[1])) {
+  } else if (cursor.contains(this.getEnds()[1])) {
     return function (dx, dy) { return this.delta({ x2 : dx, y2 : dy }); };
   } else {
     return function (dx, dy) { return this.delta({ x1 : dx, y1 : dy, x2 : dx, y2 : dy }); };
@@ -76,7 +76,7 @@ Line.prototype.add = function (that) {
     return this.cloneAs('polyline', {
       x1 : undefined, y1 : undefined, x2 : undefined, y2 : undefined,
       // Lose our second point
-      points : require('./polyline').pointStr(_.initial(this.points).concat(that.points))
+      points : require('./polyline').pointStr(_.initial(this.getPoints()).concat(that.getPoints()))
     });
   }
 };

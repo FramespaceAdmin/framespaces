@@ -24,13 +24,6 @@ function Shape(name, attr, content, bbox) {
   this.text = _.isString(content) ? content : undefined;
   this.children = _.isArray(content) ? content : undefined;
   this.bbox = bbox && strongBBox(bbox);
-
-  // Computed properties
-  this.params = this.computeParams();
-  this.points = _.map(this.computePoints(), strongPoint);
-  this.ends = this.computeEnds ? this.computeEnds() : [];
-  this.bbox = this.bbox || strongBBox(this.computeBBox());
-  this.extent = this.computeExtent();
 }
 
 /**
@@ -101,7 +94,7 @@ Shape.prototype.toJSON = function () {
   if (this.children) {
     json.children = _.map(this.children, _.method('toJSON'));
   }
-  json.bbox = _.pick(this.bbox, 'x', 'y', 'width', 'height');
+  json.bbox = _.pick(this.getBBox(), 'x', 'y', 'width', 'height');
   return json;
 };
 
@@ -124,6 +117,41 @@ Shape.of = function (element) {
 };
 
 /**
+ * Lazily computed property
+ */
+Shape.prototype.getParams = function () {
+  return this.params || (this.params = this.computeParams());
+};
+
+/**
+ * Lazily computed property
+ */
+Shape.prototype.getPoints = function () {
+  return this.points || (this.points = _.map(this.computePoints(), strongPoint));
+};
+
+/**
+ * Lazily computed property
+ */
+Shape.prototype.getEnds = function () {
+  return this.ends || (this.ends = this.computeEnds ? this.computeEnds() : []);
+};
+
+/**
+ * Lazily computed property
+ */
+Shape.prototype.getBBox = function () {
+  return this.bbox || (this.bbox = strongBBox(this.computeBBox()));
+};
+
+/**
+ * Lazily computed property
+ */
+Shape.prototype.getExtent = function () {
+  return this.extent || (this.extent = this.computeExtent());
+};
+
+/**
  * Default params computation. Override to specialise.
  * This is for the svg-intersections library.
  */
@@ -137,7 +165,7 @@ Shape.prototype.computeParams = function () {
  * Called after params have been computed.
  */
 Shape.prototype.computePoints = function () {
-  return this.params.params[0];
+  return this.getParams().params[0];
 };
 
 /**
@@ -146,7 +174,7 @@ Shape.prototype.computePoints = function () {
  * Called after points have been computed.
  */
 Shape.prototype.computeBBox = function () {
-  return Shape.computeBBox(this.points);
+  return Shape.computeBBox(this.getPoints());
 };
 
 /**
@@ -163,7 +191,7 @@ Shape.computeBBox = function(points) {
  * Called after bbox has been computed.
  */
 Shape.prototype.computeExtent = function () {
-  return new Point(0, 0).distanceFrom(new Point(this.bbox.w, this.bbox.h)); // diagonal
+  return new Point(0, 0).distanceFrom(new Point(this.getBBox().w, this.getBBox().h)); // diagonal
 };
 
 /**
@@ -190,7 +218,7 @@ Shape.prototype.rotation = function (matrix) {
  * @returns a matrix transformed with the shape's position
  */
 Shape.prototype.translation = function (matrix) {
-  return (matrix || Matrix.IDENTITY).translate(this.bbox.x, this.bbox.y);
+  return (matrix || Matrix.IDENTITY).translate(this.getBBox().x, this.getBBox().y);
 };
 
 /**
@@ -199,7 +227,7 @@ Shape.prototype.translation = function (matrix) {
  * @returns a matrix transformed with the shape's size
  */
 Shape.prototype.scale = function (matrix) {
-  return (matrix || Matrix.IDENTITY).scaleNonUniform(this.bbox.w, this.bbox.h);
+  return (matrix || Matrix.IDENTITY).scaleNonUniform(this.getBBox().w, this.getBBox().h);
 };
 
 /**
@@ -216,7 +244,7 @@ Shape.prototype.transform = function (matrix) {
  * returns an array of intersection Points with the given shape
  */
 Shape.prototype.intersect = function (that) {
-  return _cap.intersect(this.params, that.params).points || [];
+  return _cap.intersect(this.getParams(), that.getParams()).points || [];
 };
 
 /**
@@ -226,10 +254,10 @@ Shape.prototype.intersect = function (that) {
  */
 Shape.prototype.contains = function (that) {
   if (that instanceof Shape) {
-    return _.every(that.points, _.bind(this.contains, this)) && !this.intersect(that).length;
+    return _.every(that.getPoints(), _.bind(this.contains, this)) && !this.intersect(that).length;
   }
-  var ray = _cap.shape('line', { x1 : this.bbox.x, y1 : this.bbox.y, x2 : that.x, y2 : that.y }),
-      intersects = _cap.intersect(this.params, ray).points;
+  var ray = _cap.shape('line', { x1 : this.getBBox().x, y1 : this.getBBox().y, x2 : that.x, y2 : that.y }),
+      intersects = _cap.intersect(this.getParams(), ray).points;
   return !intersects || intersects.length % 2;
 };
 
@@ -297,7 +325,7 @@ Shape.prototype.cloneAs = function (name, attr/*, ...*/) {
     attr : this.cloneAttr.apply(this, _.slice(arguments, 1)),
     text : this.text,
     children : this.children,
-    bbox : this.bbox
+    bbox : this.getBBox()
   });
 };
 
@@ -370,7 +398,7 @@ Shape.prototype.addTo = function (paper) {
  * Note that the return will not be ordered.
  */
 Shape.prototype.pointsMinus = function (that) {
-  return _.reject(this.points, _.bind(that.contains, that)).concat(this.intersect(that));
+  return _.reject(this.getPoints(), _.bind(that.contains, that)).concat(this.intersect(that));
 };
 
 /**

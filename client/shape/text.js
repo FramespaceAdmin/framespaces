@@ -44,7 +44,7 @@ Text.prototype.ATTR = Shape.prototype.ATTR.with({
 Text.prototype.computeParams = function () {
   // TODO: letter path
   // CAUTION: This assumes that the bbox is already set via the constructor
-  return _cap.shape('rect', this.bbox || {});
+  return _cap.shape('rect', this.getBBox() || {});
 }
 
 Text.prototype.transform = function (matrix) {
@@ -59,7 +59,7 @@ Text.prototype.mover = function (isEdge, cursor) {
 
 Text.prototype.resizer = function (isEdge, cursor) {
   // Scale by bottom-right corner
-  if (cursor.contains(new Point(this.bbox.x2, this.bbox.y2))) { // Bottom right corner
+  if (cursor.contains(new Point(this.getBBox().x2, this.getBBox().y2))) { // Bottom right corner
     return function (dx, dy) { return this.delta({ 'font-size' : (dx + dy) / 2 }); };
   }
 };
@@ -88,7 +88,7 @@ Text.Span.prototype.ATTR = Shape.prototype.ATTR.with({
 });
 
 Text.Span.prototype.delta = function (dAttr) {
-  return new Text.Span(this.deltaAttr(dAttr), this.text, this.bbox);
+  return new Text.Span(this.deltaAttr(dAttr), this.text, this.getBBox());
 }
 
 module.exports = Text;

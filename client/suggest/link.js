@@ -10,18 +10,18 @@ module.exports = function suggestLink(picture, element) {
   var line = (element && !element.removed && Shape.of(element));
   if (line && (line instanceof Line || line instanceof Arc) && !line.hasClass('link')) {
     // Searching within a reasonable distance of the line
-    var searchBox = Shape.delta(_.pick(line.bbox, 'x', 'y', 'width', 'height'), {
-      x : -line.extent/2, y : -line.extent/2, width : line.extent, height : line.extent
+    var searchBox = Shape.delta(_.pick(line.getBBox(), 'x', 'y', 'width', 'height'), {
+      x : -line.getExtent()/2, y : -line.getExtent()/2, width : line.getExtent(), height : line.getExtent()
     });
     function suggestEnd(p) {
       return _.maxBy(_.map(_.without(picture.elements(searchBox), element), function (e) {
         // Confidence is based on the distance of the point from the shape centre or nearest intersect
-        var s = Shape.of(e), end = Shape.closest(line.intersect(s), p) || s.bbox.c,
-            d = Math.min(end.distanceFrom(p), s.bbox.c.distanceFrom(p));
-        return { shape : s, end : end, confidence : 1 - (d / s.extent) };
+        var s = Shape.of(e), end = Shape.closest(line.intersect(s), p) || s.getBBox().c,
+            d = Math.min(end.distanceFrom(p), s.getBBox().c.distanceFrom(p));
+        return { shape : s, end : end, confidence : 1 - (d / s.getExtent()) };
       }), 'confidence');
     }
-    var from = suggestEnd(line.ends[0]), to = suggestEnd(line.ends[1]);
+    var from = suggestEnd(line.getEnds()[0]), to = suggestEnd(line.getEnds()[1]);
     if (from && to && from.confidence > 0 && to.confidence > 0 && from.shape.attr.id !== to.shape.attr.id) {
       return new Mutation(line, line.clone({
         class : 'link',

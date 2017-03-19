@@ -48,26 +48,25 @@ Arc.curveTraversing = function (end1, point, end2) {
 Arc.prototype = Object.create(Path.prototype);
 Arc.prototype.constructor = Arc;
 
-Arc.prototype.computeParams = function () {
-  var params = Shape.prototype.computeParams.call(this);
-  // Intersection params have calculated the centre as a point
-  var pathParams = params.params[0], arcParams = pathParams[0];
-  this.centre = arcParams.params[0];
-  return params;
-}
+Arc.prototype.getChord = function () {
+  return this.chord || (this.chord = vector(this.getEnds()[0], this.getEnds()[1]));
+};
 
-Arc.prototype.computeEnds = function () {
-  var ends = Path.prototype.computeEnds.call(this);
-  this.chord = vector(ends[0], ends[1]);
-  return ends;
+Arc.prototype.getCentre = function () {
+  if (!this.centre) {
+    // Intersection params have calculated the centre as a point
+    var pathParams = this.getParams().params[0], arcParams = pathParams[0];
+    this.centre = arcParams.params[0];
+  }
+  return this.centre;
 };
 
 Arc.prototype.computeBBox = function () {
   // Draw a cross and intersect with the arc to find north, south, east and west points
   var xVec = new Vector(this.path[1].curve.rx, 0), yVec = new Vector(0, this.path[1].curve.ry),
-      xRay = Line.fromPoints(this.centre.subtract(xVec), this.centre.add(xVec)),
-      yRay = Line.fromPoints(this.centre.subtract(yVec), this.centre.add(yVec));
-  return Shape.computeBBox(this.ends.concat(this.intersect(xRay)).concat(this.intersect(yRay)));
+      xRay = Line.fromPoints(this.getCentre().subtract(xVec), this.getCentre().add(xVec)),
+      yRay = Line.fromPoints(this.getCentre().subtract(yVec), this.getCentre().add(yVec));
+  return Shape.computeBBox(this.getEnds().concat(this.intersect(xRay)).concat(this.intersect(yRay)));
 };
 
 Arc.prototype.computeExtent = function () {
@@ -76,12 +75,12 @@ Arc.prototype.computeExtent = function () {
     return this.path[1].curve.rx + this.path[1].curve.ry; // diameter-ish
   } else {
     // Small arc extent is the extent of the begin and end points
-    return this.chord.length();
+    return this.getChord().length();
   }
 };
 
 Arc.prototype.transform = function (matrix) {
-  var ends = _.map(this.ends, _.method('transform', matrix)),
+  var ends = _.map(this.getEnds(), _.method('transform', matrix)),
       s = matrix.getScale(), dr = Math.min(s.scaleX, s.scaleY);
   return this.delta({ d : {
     '0.x' : _.constant(ends[0].x),
@@ -99,24 +98,24 @@ Arc.prototype.mover = function (isEdge, cursor) {
     return function (dx, dy) {
       return this.delta({ d : { '0.x' : dx, '0.y' : dy, '1.x' : dx, '1.y' : dy } });
     };
-  } else if (cursor.contains(this.ends[0])) {
+  } else if (cursor.contains(this.getEnds()[0])) {
     // Move p1
     return function (dx, dy) {
-      var fd = this.ends[0].add(new Point(dx, dy)).distanceFrom(this.ends[1]) / this.chord.length();
+      var fd = this.getEnds()[0].add(new Point(dx, dy)).distanceFrom(this.getEnds()[1]) / this.getChord().length();
       function dr(r) { return r * fd; }
       return this.delta({ d : { '0.x' : dx, '0.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr } });
     };
-  } else if (cursor.contains(this.ends[1])) {
+  } else if (cursor.contains(this.getEnds()[1])) {
     // Move p2
     return function (dx, dy) {
-      var fd = this.ends[1].add(new Point(dx, dy)).distanceFrom(this.ends[0]) / this.chord.length();
+      var fd = this.getEnds()[1].add(new Point(dx, dy)).distanceFrom(this.getEnds()[0]) / this.getChord().length();
       function dr(r) { return r * fd; }
       return this.delta({ d : { '1.x' : dx, '1.y' : dy, '1.curve.rx' : dr, '1.curve.ry' : dr } });
     };
   } else {
     // Re-arrange the world so that the arc still traverses p1, p2 and x,y (circumcentre)
     return function (dx, dy, x, y) {
-      return this.delta({ d : { '1.curve' : Arc.curveTraversing(this.ends[0], new Point(x, y), this.ends[1]) } });
+      return this.delta({ d : { '1.curve' : Arc.curveTraversing(this.getEnds()[0], new Point(x, y), this.getEnds()[1]) } });
     };
   }
 };
@@ -124,25 +123,25 @@ Arc.prototype.mover = function (isEdge, cursor) {
 Arc.prototype.close = function () {
   if (this.path[1].curve.rx === this.path[1].curve.ry) {
     return this.cloneAs('circle', {
-      d : undefined, cx : this.centre.x, cy : this.centre.y, r : this.path[1].curve.rx
+      d : undefined, cx : this.getCentre().x, cy : this.getCentre().y, r : this.path[1].curve.rx
     });
   } else {
     return this.cloneAs('ellipse', {
-      d : undefined, cx : this.centre.x, cy : this.centre.y, rx : this.path[1].curve.rx, ry : this.path[1].curve.ry
+      d : undefined, cx : this.getCentre().x, cy : this.getCentre().y, rx : this.path[1].curve.rx, ry : this.path[1].curve.ry
     });
   }
 };
 
 Arc.prototype.pointAngle = function (p) {
-  return pointAngle(p, this.ends[0], this.ends[1]);
+  return pointAngle(p, this.getEnds()[0], this.getEnds()[1]);
 };
 
 Arc.prototype.minus = function (that) {
   var points = _.sortBy(this.pointsMinus(that), _.bind(function (p) {
     // Point angle reduces as you go from p1 to p2
-    return -Math.abs(p.equals(this.ends[0]) ? Math.PI : this.pointAngle(p));
+    return -Math.abs(p.equals(this.getEnds()[0]) ? Math.PI : this.pointAngle(p));
   }, this));
-  return Arc.arcsBetween(points, this.path[1].curve, this.centre);
+  return Arc.arcsBetween(points, this.path[1].curve, this.getCentre());
 };
 
 Arc.arcsBetween = function (points, curve, centre) {

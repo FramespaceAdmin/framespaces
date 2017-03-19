@@ -44,7 +44,7 @@ function Hand(picture) {
       move = moving.shape.mover && moving.shape.mover(isEdge, cursor, getShapeById);
       if (move) {
         // Capture other elements enclosed by the moving shape
-        others = _.map(picture.elements(moving.shape.bbox, function (e) {
+        others = _.map(picture.elements(moving.shape.getBBox(), function (e) {
           return e !== element && moving.shape.contains(Shape.of(e));
         }), Moving);
       }
@@ -55,10 +55,10 @@ function Hand(picture) {
   // Move something
   function doMove(dx, dy, x, y) {
     // Establish the change as a transform matrix
-    var oldBBox = moving.shape.bbox, newBBox, transform;
+    var oldBBox = moving.shape.getBBox(), newBBox, transform;
     moving.setShape(move.call(moving.shape, dx, dy, x, y));
 
-    newBBox = moving.shape.bbox;
+    newBBox = moving.shape.getBBox();
     if (others.length && oldBBox.width && oldBBox.height) {
       transform = Matrix.IDENTITY
         .scaleNonUniformAt(oldBBox.width, oldBBox.height, newBBox.p).inverse()
@@ -75,7 +75,7 @@ function Hand(picture) {
       if (state.active) { // Started to move something
         // Find something to grab - edges first
         var cursor = Tool.cursor(state, CURSOR_RADIUS);
-        var edgeOf = _.last(picture.elements(cursor.bbox, function (e) {
+        var edgeOf = _.last(picture.elements(cursor.getBBox(), function (e) {
           return cursor.intersect(Shape.of(e)).length;
         }));
         var bodyOf = picture.getElement(state.element);

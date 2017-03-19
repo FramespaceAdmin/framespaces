@@ -11,8 +11,8 @@ describe('Polygon', function () {
     it('should have expected properties', function () {
       var polygon = new Polygon({ points : '0,0,1,0,1,1,0,1' });
       assert.equal(polygon.name, 'polygon');
-      assert.equal(polygon.points.length, 4);
-      assert.equal(polygon.extent, Math.sqrt(2));
+      assert.equal(polygon.getPoints().length, 4);
+      assert.equal(polygon.getExtent(), Math.sqrt(2));
     });
 
     it('should disappear when minused with an occluding shape', function () {
@@ -28,7 +28,7 @@ describe('Polygon', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
       assert.instanceOf(fragments[0], Polygon);
-      assert.deepEqual(fragments[0].points, polygon.points);
+      assert.deepEqual(fragments[0].getPoints(), polygon.getPoints());
     });
 
     it('should become a polyline when minused with shape over an end', function () {
@@ -37,7 +37,7 @@ describe('Polygon', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
       assert.instanceOf(fragments[0], Polyline);
-      assert.deepEqual(fragments[0].points, Polyline.points('1,0,2,0,2,2,0,2,0,1'));
+      assert.deepEqual(fragments[0].getPoints(), Polyline.points('1,0,2,0,2,2,0,2,0,1'));
     });
 
     it('should become a polyline when minused with shape over a point', function () {
@@ -46,7 +46,7 @@ describe('Polygon', function () {
       assert.isOk(fragments);
       assert.lengthOf(fragments, 1);
       assert.instanceOf(fragments[0], Polyline);
-      assert.deepEqual(fragments[0].points, Polyline.points('2,1,2,2,0,2,0,0,1,0'));
+      assert.deepEqual(fragments[0].getPoints(), Polyline.points('2,1,2,2,0,2,0,0,1,0'));
     });
   });
 
@@ -56,8 +56,8 @@ describe('Polygon', function () {
     it('should have expected properties', function () {
       var polygon = Shape.of(paper.polygon(0, 0, 1, 0, 1, 1, 0, 1));
       assert.equal(polygon.name, 'polygon');
-      assert.equal(polygon.points.length, 4);
-      assert.equal(polygon.extent, Math.sqrt(2));
+      assert.equal(polygon.getPoints().length, 4);
+      assert.equal(polygon.getExtent(), Math.sqrt(2));
     });
   });
 });

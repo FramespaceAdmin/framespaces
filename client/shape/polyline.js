@@ -54,37 +54,37 @@ Polyline.prototype.computeParams = function () {
   }));
 };
 
-Polyline.prototype.computePoints = function () {
-  var points = this.points = Shape.prototype.computePoints.call(this);
-
-  // The axis of the first segment if recty, otherwise false
-  this.axis = _.reduceRight(points, _.bind(function (axis, p1, i) {
-    var p2 = points[this.nextPointIndex(i)];
-    if (!p2) {
-      return undefined; // Cannot yet determine (p1 is the last point)
-    } else if (_.isUndefined(axis)) {
-      return p2.x === p1.x ? 'y' : p2.y === p1.y ? 'x' : false; // Determine starting value
-    } else if (axis) {
-      return p2[axis] === p1[axis] ? axis === 'x' ? 'y' : 'x' : false; // Check expected value
-    } else {
-      return false; // Fall through
-    }
-  }, this), undefined);
-
-  return points;
+Polyline.prototype.getAxis = function () {
+  if (!this.axisComputed) {
+    var points = this.getPoints();
+    this.axis = _.reduceRight(points, _.bind(function (axis, p1, i) {
+      var p2 = points[this.nextPointIndex(i)];
+      if (!p2) {
+        return undefined; // Cannot yet determine (p1 is the last point)
+      } else if (_.isUndefined(axis)) {
+        return p2.x === p1.x ? 'y' : p2.y === p1.y ? 'x' : false; // Determine starting value
+      } else if (axis) {
+        return p2[axis] === p1[axis] ? axis === 'x' ? 'y' : 'x' : false; // Check expected value
+      } else {
+        return false; // Fall through
+      }
+    }, this), undefined);
+    this.axisComputed = true;
+  }
+  return this.axis;
 };
 
 Polyline.prototype.computeEnds = function () {
-  return [_.first(this.points), _.last(this.points)];
+  return [_.first(this.getPoints()), _.last(this.getPoints())];
 };
 
 Polyline.prototype.transform = function (matrix) {
-  var points = _.map(this.points, _.method('transform', matrix));
+  var points = _.map(this.getPoints(), _.method('transform', matrix));
   return this.clone({ points : Polyline.pointStr(points) });
 };
 
 Polyline.prototype.nextPointIndex = function (i) {
-  if (i < this.points.length - 1) {
+  if (i < this.getPoints().length - 1) {
     return i + 1;
   }
 };
@@ -98,7 +98,7 @@ Polyline.prototype.prevPointIndex = function (i) {
 Polyline.prototype.pointsMover = function (pointMover/*(dx, dy, p, i, points)*/) {
   return function move(dx, dy) {
     return this.clone({
-      points : Polyline.pointStr(_.map(this.points, _.bind(function (p) {
+      points : Polyline.pointStr(_.map(this.getPoints(), _.bind(function (p) {
         return pointMover.apply(this, [dx, dy].concat(_.toArray(arguments))) || p;
       }, this)))
     });
@@ -107,7 +107,7 @@ Polyline.prototype.pointsMover = function (pointMover/*(dx, dy, p, i, points)*/)
 
 Polyline.prototype.axisEdgeMover = function (cursor) {
   // First decide if we have hold of a point or a segment
-  var pointIndex = _.findIndex(this.points, _.bind(cursor.contains, cursor));
+  var pointIndex = _.findIndex(this.getPoints(), _.bind(cursor.contains, cursor));
   if (pointIndex > -1) {
     // Move the point and its neighbours
     return this.pointsMover(function (dx, dy, p, i, points) {
@@ -120,10 +120,10 @@ Polyline.prototype.axisEdgeMover = function (cursor) {
     });
   } else {
     // Find the nearest segment
-    var segmentIndex = _.findIndex(this.points, _.bind(function (p, i, points) {
+    var segmentIndex = _.findIndex(this.getPoints(), _.bind(function (p, i, points) {
       if (!_.isUndefined(this.nextPointIndex(i))) {
         return cursor.contains(p.x === points[this.nextPointIndex(i)].x ?
-          new Point(p.x, cursor.bbox.c.y) : new Point(cursor.bbox.c.x, p.y));
+          new Point(p.x, cursor.getBBox().c.y) : new Point(cursor.getBBox().c.x, p.y));
       }
     }, this));
     if (segmentIndex > -1) {
@@ -138,12 +138,12 @@ Polyline.prototype.axisEdgeMover = function (cursor) {
 };
 
 Polyline.prototype.freeEdgeMover = function (cursor) {
-  var d = _.reduce(this.points, function (d, p) {
+  var d = _.reduce(this.getPoints(), function (d, p) {
     var prev = _.last(d);
     return d.concat({
       p : p,
       fromBegin : prev ? prev.fromBegin + p.distanceFrom(prev.p) : 0,
-      fromCursor : p.distanceFrom(cursor.bbox.c)
+      fromCursor : p.distanceFrom(cursor.getBBox().c)
     });
   }, []);
   var closest = _.minBy(d, 'fromCursor'), length = _.last(d).fromBegin;
@@ -158,7 +158,7 @@ Polyline.prototype.freeEdgeMover = function (cursor) {
 
 Polyline.prototype.mover = function (isEdge, cursor) {
   if (isEdge) {
-    if (this.axis) { // We are recty
+    if (this.getAxis()) { // We are recty
       return this.axisEdgeMover(cursor);
     } else { // We are not recty
       return this.freeEdgeMover(cursor);
@@ -171,16 +171,16 @@ Polyline.prototype.mover = function (isEdge, cursor) {
 };
 
 Polyline.prototype.close = function () {
-  var points = this.points;
+  var points = this.getPoints();
 
   // For a non-recty line, or if there are an odd number of points, drop the last one
-  if (!this.axis || (this.points.length > 3 && this.points.length % 2)) {
-    points = _.initial(this.points);
+  if (!this.getAxis() || (this.getPoints().length > 3 && this.getPoints().length % 2)) {
+    points = _.initial(this.getPoints());
   }
 
-  if (this.axis) { // We are recty
+  if (this.getAxis()) { // We are recty
     // Adjust the last point to be recty with respect to the first
-    end = _.set({ x : _.last(points).x, y : _.last(points).y }, this.axis, points[0][this.axis]);
+    end = _.set({ x : _.last(points).x, y : _.last(points).y }, this.getAxis(), points[0][this.getAxis()]);
     points = (points.length > 3 ? _.initial(points) : points).concat(new Point(end.x, end.y));
     if (points.length === 4) {
       // A recty polygon with exactly four points is a rect
@@ -192,7 +192,7 @@ Polyline.prototype.close = function () {
 
 Polyline.prototype.reverse = function () {
   return this.cloneAs('polyline', {
-    points : Polyline.pointStr(_.reverse(_.clone(this.points)))
+    points : Polyline.pointStr(_.reverse(_.clone(this.getPoints())))
   });
 }
 
@@ -200,23 +200,23 @@ Polyline.prototype.add = function (that) {
   if (that instanceof Line || that instanceof Polyline) {
     return this.cloneAs('polyline', {
       // Lose our last point
-      points : Polyline.pointStr(_.initial(this.points).concat(that.points))
+      points : Polyline.pointStr(_.initial(this.getPoints()).concat(that.getPoints()))
     });
   }
 };
 
 Polyline.prototype.minus = function (that) {
-  return Polyline.pointsMinus(this.points, that);
+  return Polyline.pointsMinus(this.getPoints(), that);
 };
 
 Polyline.pointsMinus = function (points, shape) {
   // Consider each line segment in turn
   return _.flatten(_.reduce(Line.linesBetween(points), function (fragments, line, i) {
     var prevFragment = _.last(fragments),
-        prevPoint = _.last(_.get(prevFragment, 'points')),
+        prevPoint = _.last(_.invoke(prevFragment, 'getPoints')),
         lineFragments = line.minus(shape);
 
-    if (prevPoint && lineFragments.length && prevPoint.equals(lineFragments[0].points[0])) {
+    if (prevPoint && lineFragments.length && prevPoint.equals(lineFragments[0].getPoints()[0])) {
       // Extend the previous fragment with the new line (consumes first line fragment)
       fragments.splice(fragments.length - 1, 1, prevFragment.add(lineFragments.shift()));
     }

@@ -19,7 +19,7 @@ describe('Snap suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var snapped = Shape.of(action.do(picture));
     assert.instanceOf(snapped, Polyline);
-    assert.equal(snapped.extent, 2);
+    assert.equal(snapped.getExtent(), 2);
   });
 
   it('should snap a line and a polyline together', function () {
@@ -31,7 +31,7 @@ describe('Snap suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var snapped = Shape.of(action.do(picture));
     assert.instanceOf(snapped, Polyline);
-    assert.equal(snapped.extent, Math.sqrt(5));
+    assert.equal(snapped.getExtent(), Math.sqrt(5));
   });
 
   it('should snap a polyline closed', function () {
@@ -42,6 +42,6 @@ describe('Snap suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var snapped = Shape.of(action.do(picture));
     assert.instanceOf(snapped, Rect);
-    assert.equal(snapped.extent, Math.sqrt(2));
+    assert.equal(snapped.getExtent(), Math.sqrt(2));
   });
 });

@@ -14,7 +14,7 @@ function d(p1, p2, axis) {
 module.exports = function suggestRectify(picture, element) {
   var shape = element && !element.removed && Shape.of(element);
   function createAction(points) {
-    if (!shape.ends.length && points.length === 4) {
+    if (!shape.getEnds().length && points.length === 4) {
       return new Replacement(shape, shape.cloneAs('rect', Shape.computeBBox(points)));
     } else {
       return new Mutation(shape, shape.delta(shape instanceof Line ? {
@@ -26,8 +26,8 @@ module.exports = function suggestRectify(picture, element) {
   }
 
   if ((shape instanceof Polyline || shape instanceof Line) && !shape.hasClass('link')) {
-    var rp = _.reduce(shape.points, function (rp, p, i) {
-      var prev = shape.points[shape.prevPointIndex ? shape.prevPointIndex(i) : i - 1];
+    var rp = _.reduce(shape.getPoints(), function (rp, p, i) {
+      var prev = shape.getPoints()[shape.prevPointIndex ? shape.prevPointIndex(i) : i - 1];
       if (prev) {
         var dx = d(prev, p, 'x'), dy = d(prev, p, 'y');
         rp.push({
@@ -40,7 +40,7 @@ module.exports = function suggestRectify(picture, element) {
       return rp;
     }, []);
 
-    if (!_.isEqual(shape.points, _.map(rp, 'p'))) {
+    if (!_.isEqual(shape.getPoints(), _.map(rp, 'p'))) {
       return _.assign(createAction(_.map(rp, 'p')), {
         confidence : _.mean(_.map(rp, 'confidence'))
       });

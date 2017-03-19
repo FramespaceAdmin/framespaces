@@ -12,10 +12,10 @@ describe('Rect', function () {
     it('should have expected properties', function () {
       var rect = new Rect({ x : 0, y : 0, width : 1, height : 1 });
       assert.equal(rect.name, 'rect');
-      assert.equal(rect.points.length, 4);
-      assert.equal(rect.points[0].x, 0);
-      assert.equal(rect.points[0].y, 0);
-      assert.equal(rect.extent, Math.sqrt(2));
+      assert.equal(rect.getPoints().length, 4);
+      assert.equal(rect.getPoints()[0].x, 0);
+      assert.equal(rect.getPoints()[0].y, 0);
+      assert.equal(rect.getExtent(), Math.sqrt(2));
     });
 
     it('should contain a point inside it', function () {
@@ -120,10 +120,10 @@ describe('Rect', function () {
     it('should have expected properties', function () {
       var rect = Shape.of(paper.rect(0, 0, 1, 1));
       assert.equal(rect.name, 'rect');
-      assert.equal(rect.points.length, 4);
-      assert.equal(rect.points[0].x, 0);
-      assert.equal(rect.points[0].y, 0);
-      assert.equal(rect.extent, Math.sqrt(2));
+      assert.equal(rect.getPoints().length, 4);
+      assert.equal(rect.getPoints()[0].x, 0);
+      assert.equal(rect.getPoints()[0].y, 0);
+      assert.equal(rect.getExtent(), Math.sqrt(2));
     });
   });
 });

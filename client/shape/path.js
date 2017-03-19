@@ -49,7 +49,7 @@ Path.prototype.computePoints = function () {
 };
 
 Path.prototype.computeEnds = function () {
-  return [_.first(this.points), _.last(this.points)];
+  return [_.first(this.getPoints()), _.last(this.getPoints())];
 };
 
 Path.prototype.delta = function (dAttr) {

@@ -14,8 +14,8 @@ module.exports = function suggestLabel(picture, e1) {
       if (label && on) {
         // If the label is wholly within the labelee, we are 90% sure
         var ls = Shape.of(label), les = Shape.of(on);
-        var factor = _.every(ls.points, function (p) {
-          return Snap.path.isPointInsideBBox(les.bbox, p.x, p.y);
+        var factor = _.every(ls.getPoints(), function (p) {
+          return Snap.path.isPointInsideBBox(les.getBBox(), p.x, p.y);
         }) ? 10 : 1;
         return candidates.concat(new Mutation(ls, ls.clone({
           class : 'label',
@@ -25,7 +25,7 @@ module.exports = function suggestLabel(picture, e1) {
           // If the labellee is a line, offset by one unit in the line's unit coordinates
           oy : les.name === 'line' ? new Point(0, 1).transform(les.scale(les.rotation()).inverse()).y : 0
         }), {
-          confidence : 1 - (ls.bbox.c.distanceFrom(les.bbox.c) / (les.extent * factor))
+          confidence : 1 - (ls.getBBox().c.distanceFrom(les.getBBox().c) / (les.getExtent() * factor))
         }));
       }
       return candidates;

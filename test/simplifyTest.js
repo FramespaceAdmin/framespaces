@@ -19,7 +19,7 @@ describe('Simplify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var simplified = Shape.of(action.do(picture));
     assert.instanceOf(simplified, Line);
-    assert.equal(simplified.extent, 2);
+    assert.equal(simplified.getExtent(), 2);
   });
 
   it('should simplify two straight segments', function () {
@@ -29,8 +29,8 @@ describe('Simplify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var simplified = Shape.of(action.do(picture));
     assert.instanceOf(simplified, Polyline);
-    assert.equal(simplified.points.length, 3);
-    assert.equal(simplified.extent, Math.sqrt(8));
+    assert.equal(simplified.getPoints().length, 3);
+    assert.equal(simplified.getExtent(), Math.sqrt(8));
   });
 
   it('should simplify two wonky segments', function () {
@@ -40,8 +40,8 @@ describe('Simplify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var simplified = Shape.of(action.do(picture));
     assert.instanceOf(simplified, Polyline);
-    assert.equal(simplified.points.length, 3);
-    assert.equal(simplified.extent, Math.sqrt(8));
+    assert.equal(simplified.getPoints().length, 3);
+    assert.equal(simplified.getExtent(), Math.sqrt(8));
   });
 
   it('should simplify a triangle with redundant points', function () {
@@ -51,8 +51,8 @@ describe('Simplify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var simplified = Shape.of(action.do(picture));
     assert.instanceOf(simplified, Polygon);
-    assert.equal(simplified.points.length, 3);
-    assert.equal(simplified.extent, Math.sqrt(8));
+    assert.equal(simplified.getPoints().length, 3);
+    assert.equal(simplified.getExtent(), Math.sqrt(8));
   });
 
   it('should not simplify a simple triangle', function () {
@@ -68,8 +68,8 @@ describe('Simplify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var simplified = Shape.of(action.do(picture));
     assert.instanceOf(simplified, Polygon);
-    assert.equal(simplified.points.length, 3);
-    assert.equal(simplified.extent, Math.sqrt(8));
+    assert.equal(simplified.getPoints().length, 3);
+    assert.equal(simplified.getExtent(), Math.sqrt(8));
   });
 
   it('should simplify a triangle starting with a redundant point', function () {
@@ -79,7 +79,7 @@ describe('Simplify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var simplified = Shape.of(action.do(picture));
     assert.instanceOf(simplified, Polygon);
-    assert.equal(simplified.points.length, 3);
-    assert.equal(simplified.extent, Math.sqrt(8));
+    assert.equal(simplified.getPoints().length, 3);
+    assert.equal(simplified.getExtent(), Math.sqrt(8));
   });
 });

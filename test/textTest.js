@@ -11,16 +11,16 @@ describe('Text', function () {
       var tspans = [new Text.Span({ x : 0, y : 0 }, 'hello', { x : 0, y : 0, width : 1, height : 1 })];
       var text = new Text({ x : 0, y : 0 }, tspans, { x : 0, y : 0, width : 1, height : 1 });
       assert.equal(text.name, 'text');
-      assert.equal(text.points.length, 4);
-      assert.equal(text.extent, Math.sqrt(2));
+      assert.equal(text.getPoints().length, 4);
+      assert.equal(text.getExtent(), Math.sqrt(2));
       assert.equal(text.children, tspans);
     });
 
     it('should represent tspans', function () {
       var tspan = new Text.Span({ x : 0, y : 0 }, 'hello', { x : 0, y : 0, width : 1, height : 1 });
       assert.equal(tspan.name, 'tspan');
-      assert.equal(tspan.points.length, 4);
-      assert.equal(tspan.extent, Math.sqrt(2));
+      assert.equal(tspan.getPoints().length, 4);
+      assert.equal(tspan.getExtent(), Math.sqrt(2));
       assert.equal(tspan.text, 'hello');
     });
   });

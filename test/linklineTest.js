@@ -11,7 +11,7 @@ describe('Linkline', function () {
       name : 'line', attr : { x1 : 0, y1 : 0, x2 : 1, y2 : 1, class : 'link' }
     });
     assert.equal(linkline.name, 'line');
-    assert.equal(linkline.points.length, 2);
+    assert.equal(linkline.getPoints().length, 2);
   });
 
   it('should load from JSON via Shape', function () {
@@ -19,7 +19,7 @@ describe('Linkline', function () {
       name : 'line', attr : { x1 : 0, y1 : 0, x2 : 1, y2 : 1, class : 'link' }
     });
     assert.equal(linkline.name, 'line');
-    assert.equal(linkline.points.length, 2);
+    assert.equal(linkline.getPoints().length, 2);
   });
 
   var linked = {

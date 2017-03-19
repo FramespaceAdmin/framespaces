@@ -19,7 +19,7 @@ describe('Rectify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var rectified = Shape.of(action.do(picture));
     assert.instanceOf(rectified, Line);
-    assert.equal(rectified.extent, 1);
+    assert.equal(rectified.getExtent(), 1);
   });
 
   it('should not recurse', function () {
@@ -35,10 +35,10 @@ describe('Rectify suggestor', function () {
     assert.isAtLeast(action.confidence, 0.9);
     var rectified = Shape.of(action.do(picture));
     assert.instanceOf(rectified, Polyline);
-    assert.equal(rectified.points.length, 3);
-    assert.deepEqual(rectified.points[0], new Point(0, 0));
-    assert.deepEqual(rectified.points[1], new Point(1, 0));
-    assert.deepEqual(rectified.points[2], new Point(1, 1));
-    assert.equal(rectified.extent, Math.sqrt(2));
+    assert.equal(rectified.getPoints().length, 3);
+    assert.deepEqual(rectified.getPoints()[0], new Point(0, 0));
+    assert.deepEqual(rectified.getPoints()[1], new Point(1, 0));
+    assert.deepEqual(rectified.getPoints()[2], new Point(1, 1));
+    assert.equal(rectified.getExtent(), Math.sqrt(2));
   });
 });

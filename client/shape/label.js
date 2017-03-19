@@ -39,9 +39,9 @@ Label.prototype.label = function (on) {
       offset = new Point(this.attr.ox || 0, this.attr.oy || 0).transform(matrix);
 
   return this.clone({
-    x : on.bbox.cx - this.bbox.width/2 + offset.x,
+    x : on.getBBox().cx - this.getBBox().width/2 + offset.x,
     // NOTE y position of text is the baseline of the first line
-    y : on.bbox.cy - this.bbox.height/2 + this.attr['font-size'] + offset.y,
+    y : on.getBBox().cy - this.getBBox().height/2 + this.attr['font-size'] + offset.y,
     on : on.attr.id
   });
 };
