@@ -28,6 +28,10 @@ Picture.prototype.getElement = function (id) {
   return this.paper.select('#' + id);
 };
 
+Picture.prototype.getShape = function (e, changed) {
+  return (!changed && e.shape) || (e.shape = Shape.of(e));
+};
+
 Picture.SELECTOR = as(String).and(as.size().gt(0)).or({
   x : Number, y : Number, width : Number, height : Number
 });
@@ -63,11 +67,11 @@ Picture.prototype.preview = function (paper, shape/*...*/) {
   if (arguments.length === 2) {
     // For links and labels, include the lined and labelled elements
     if (shape.hasClass('link')) {
-      var fromShape = Shape.of(this.getElement(shape.attr.from)),
-          toShape = Shape.of(this.getElement(shape.attr.to));
+      var fromShape = this.getShape(this.getElement(shape.attr.from)),
+          toShape = this.getShape(this.getElement(shape.attr.to));
       return this.preview(paper, fromShape, toShape, shape.link(fromShape, toShape));
     } else if (shape.hasClass('label')) {
-      var onShape = Shape.of(this.getElement(shape.attr.on));
+      var onShape = this.getShape(this.getElement(shape.attr.on));
       return this.preview(paper, onShape, shape.label(onShape));
     } else {
       return shape.addTo(paper);
@@ -78,7 +82,7 @@ Picture.prototype.preview = function (paper, shape/*...*/) {
 };
 
 Picture.prototype.asUnlinkedShape = function (element) {
-  return Shape.of(element).delta({ on : '', from : '', to : '', class : '-link -label' });
+  return this.getShape(element).delta({ on : '', from : '', to : '', class : '-link -label' });
 };
 
 Picture.prototype.ensureOrder = function (elements) {
@@ -93,17 +97,9 @@ Picture.prototype.ensureOrder = function (elements) {
   });
 };
 
-Picture.ShapeCache = function () {
-  this.shapes = {};
-};
-
-Picture.ShapeCache.prototype.get = function (element) {
-  return this.shapes[element.id] || (this.shapes[element.id] = Shape.of(element));
-};
-
-Picture.ShapeCache.prototype.sortByContains = function (elements) {
+Picture.prototype.sortByContains = function (elements) {
   return elements.sort(_.bind(function (e1, e2) {
-    var s1 = this.get(e1), s2 = this.get(e2);
+    var s1 = this.getShape(e1), s2 = this.getShape(e2);
     return s1.contains(s2) ? -1 : s2.contains(s1) ? 1 : 0;
   }, this));
 };
@@ -113,15 +109,15 @@ Picture.prototype.changed = function (element) {
   if (id) {
     this.rtree.remove({ id : id }, function (a, b) { return a.id === b.id; });
     if (!element.removed) {
-      var shapeCache = new Picture.ShapeCache(), shape = shapeCache.get(element);
+      var shape = this.getShape(element, true);
       this.rtree.insert(_.set(rtreeSelector(shape.bbox), 'id', id));
       // Ensure enclosing shapes are ordered first
-      this.ensureOrder(shapeCache.sortByContains(this.elements(shape.bbox)));
+      this.ensureOrder(this.sortByContains(this.elements(shape.bbox)));
       // Adjust any linked elements
       if (element.hasClass('link')) {
         var from = this.getElement(element.attr('from')), to = this.getElement(element.attr('to'));
         if (from && to) {
-          shape.link(shapeCache.get(from), shapeCache.get(to)).applyTo(element);
+          shape.link(this.getShape(from), this.getShape(to)).applyTo(element);
           this.ensureOrder([from, to, element]); // Ensure sensible Z-ordering for a link
         } else {
           this.asUnlinkedShape(element).applyTo(element);
@@ -129,7 +125,7 @@ Picture.prototype.changed = function (element) {
       } else if (element.hasClass('label')) {
         var on = this.getElement(element.attr('on'));
         if (on) {
-          shape.label(shapeCache.get(on)).applyTo(element);
+          shape.label(this.getShape(on)).applyTo(element);
           this.ensureOrder([on, element]); // Ensure sensible Z-ordering for a label
         } else {
           this.asUnlinkedShape(element).applyTo(element);
