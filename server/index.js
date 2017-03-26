@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 var _ = require('lodash'),
     config = require('config'),
     log = require('../lib/log'),
