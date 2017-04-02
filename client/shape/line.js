@@ -81,6 +81,8 @@ Line.prototype.add = function (that) {
   }
 };
 
+Line.prototype.contains = _.constant(false);
+
 Line.prototype.pointOrder = function (axis) {
   var direction = Math.sign(this.vector[axis]);
   return function (p) {

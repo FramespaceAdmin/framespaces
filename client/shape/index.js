@@ -255,10 +255,17 @@ Shape.prototype.intersect = function (that) {
 Shape.prototype.contains = function (that) {
   if (that instanceof Shape) {
     return _.every(that.getPoints(), _.bind(this.contains, this)) && !this.intersect(that).length;
+  } else {
+    // Check bbox bounds first
+    var bbox = this.getBBox();
+    if (that.x < bbox.x || that.y < bbox.y || that.x > bbox.x2 || that.y > bbox.y2) {
+      return false;
+    } else {
+      var ray = _cap.shape('line', { x1 : bbox.x, y1 : bbox.y, x2 : that.x, y2 : that.y }),
+          intersects = _cap.intersect(this.getParams(), ray).points;
+      return !intersects || intersects.length % 2;
+    }
   }
-  var ray = _cap.shape('line', { x1 : this.getBBox().x, y1 : this.getBBox().y, x2 : that.x, y2 : that.y }),
-      intersects = _cap.intersect(this.getParams(), ray).points;
-  return !intersects || intersects.length % 2;
 };
 
 /**
