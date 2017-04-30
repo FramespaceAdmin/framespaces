@@ -36,9 +36,10 @@ Removal.prototype.toJSON = function () {
 };
 
 Removal.prototype.andCollateral = function (picture) {
-  return this.and(_.map(picture.inLinks(this.shape.id), function (e1) {
+  var collateral = _.map(picture.inLinks(this.shape.id), function (e1) {
     return new Mutation(Shape.of(e1), picture.asUnlinkedShape(e1));
-  }));
+  });
+  return _.isEmpty(collateral) ? this : new Batch(collateral.concat(this));
 };
 
 module.exports = Removal;
