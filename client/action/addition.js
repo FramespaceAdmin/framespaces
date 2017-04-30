@@ -17,7 +17,7 @@ Addition.prototype = Object.create(Action.prototype);
 Addition.prototype.constructor = Addition;
 
 Addition.prototype.do = function (picture) {
-  return picture.changed(this.shape.addTo(picture.paper));
+  return this.shape.addTo(picture.paper);
 };
 
 Addition.prototype.isOK = function (picture) {

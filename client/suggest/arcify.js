@@ -4,12 +4,14 @@ var _ = require('lodash'),
     Line = require('../shape/line'),
     Shape = require('../shape'),
     Point = require('kld-affine').Point2D,
-    Replacement = require('../action/replacement'),
+    Removal = require('../action/removal'),
+    Addition = require('../action/addition'),
     vector = require('kld-affine').Vector2D.fromPoints,
     stdev = require('compute-stdev');
 
-module.exports = function suggestArcify(picture, element) {
-  var shape = element && !element.removed && Shape.of(element);
+module.exports = function suggestArcify(picture, lastAction) {
+  var element = _.last(lastAction.results),
+      shape = element && !element.removed && Shape.of(element);
   if (shape && shape instanceof Polyline && shape.getPoints().length > 3 && shape.getEnds().length) {
     // The centroid, C, of the shape will indicate the direction of the arc
     var p1 = shape.getEnds()[0], p2 = shape.getEnds()[1],
@@ -29,14 +31,14 @@ module.exports = function suggestArcify(picture, element) {
       // Find the distances of all points from the putative centre
       var dists = _.map(shape.getPoints(), _.method('distanceFrom', c));
 
-      return new Replacement(shape, shape.cloneAs('path', {
+      return new Removal(shape).and(new Addition(shape.cloneAs('path', {
         points : undefined, // Unset Polyline points
         d : Arc.d(p1, p2, {
           rx : r, ry : r,
           largeArcFlag : s > r,
           sweepFlag : vector(p1, p2).angleBetween(vector(p1, i)) < 0
         })
-      }), {
+      })), {
         // Confidence is in the distance of all points from the centre, and the number of points
         confidence : (1 - stdev(dists) / r) * (1 - 1 / shape.getPoints().length)
       });

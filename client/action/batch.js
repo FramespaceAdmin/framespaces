@@ -15,14 +15,17 @@ Batch.prototype = Object.create(Action.prototype);
 Batch.prototype.constructor = Batch;
 
 Batch.prototype.do = function (subject) {
-  // Return the result of the last action to succeed
-  return _.reduce(this.batch, function (result, action) {
-    // We only apply OK actions, because inconsistency is possible by batching
-    if (result && action.isOK(subject)) {
-      result = action.do(subject);
+  return _.reduce(this.batch, _.bind(function (batchResults, action, i) {
+    if (batchResults) { // Propagate failure forward
+      // Batching can introduce inconsistency, so check okayness
+      var results = action.isOK(subject) && action.do(subject);
+      if (results) {
+        return batchResults.concat(results);
+      } else while (i) { // Back out those that succeeded, before returning nothing
+        this.batch[--i].un().do(subject);
+      }
     }
-    return result;
-  }, true);
+  }, this), []);
 };
 
 Batch.prototype.isOK = function (subject) {

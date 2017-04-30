@@ -3,7 +3,6 @@ var _ = require('lodash'),
     Vector = require('kld-affine').Vector2D,
     Shape = require('../shape'),
     Removal = require('../action/removal'),
-    Replacement = require('../action/replacement'),
     Addition = require('../action/addition'),
     Batch = require('../action/batch'),
     Tool = require('../tool');
@@ -40,7 +39,7 @@ function Eraser(picture) {
         })));
       }, {}));
     } else if (delta.active) { // Finished erasing
-      // Emit the rolled-up replacements and removals
+      // Emit the rolled-up actions
       var actions = _.map(erased, function (fragments, id) {
         // CAUTION: rolling back temporary changes via side-effects
         var element = picture.getElement(id), fragmentShapes = _.map(fragments, function (fragment) {
@@ -56,7 +55,7 @@ function Eraser(picture) {
         } else {
           return _.reduce(_.tail(fragmentShapes), function (action, fragmentShape) {
             return action.and(new Addition(fragmentShape));
-          }, new Replacement(shape, _.first(fragmentShapes).clone({ id : id })));
+          }, new Removal(shape).and(new Addition(_.first(fragmentShapes).clone({ id : id }))));
         }
       });
 

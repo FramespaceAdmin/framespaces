@@ -13,7 +13,8 @@ var Io = config.get('modules.io') === 'local' ? require('./io/local') : require(
 /**
  * Applies the Framespace actions into the given subject, and wires up IO to handle concurrent
  * actions and interactions from the local and remote users.
- * @param subject the thing to populate and interact with (probably a picture)
+ * @param subject the thing to populate and interact with (probably a picture).
+ *        Must have a changed(objects) member.
  * @param connected a callback function called when all is ready for user interactions,
  *        passing the local user and a function to commit an action.
  * @param ioOptions options passed to IO constructor
@@ -48,13 +49,14 @@ exports.load = function (subject, connected/*(localUser, commit)*/, ioOptions) {
       io.pause('action', pass(function (play) {
         io.get('actions', pass(function (actions) {
           log.info('Replaying ' + actions.length + ' actions in Framespace');
-          // Replay the actions as unknown user.
-          var actionMessages = _.map(actions, function (action) { return [null, action]; });
-          play(actionMessages, function (am) {
+          // Recover the paused actions by resuming with play()
+          actions = _.uniqWith(_.concat(actions, _.map(play(), 1)), function (a1, a2) {
             // This uniqueness check is in case actions seen on the channel have also been loaded.
             // NOTE that undo actions have the same id as their do action.
-            return am[1].id + '_' + !!am[1].isUndo;
+            return a1.id === a2.id && !a1.isUndo === !a2.isUndo; // NOT ensures boolean
           });
+          // Perform all the actions
+          subject.changed(new Batch(_.map(actions, Action.fromJSON)).do(subject));
           // We're done. Return control to the caller with the user and commit function
           connected(user, commit);
         }, io.close, null, io));
@@ -75,14 +77,14 @@ exports.load = function (subject, connected/*(localUser, commit)*/, ioOptions) {
     _.invoke(users, [userId, 'interact'], interactions);
   });
   io.subscribe('action', function (userId, data) {
-    var action = Action.fromJSON(data);
+    var action = Action.fromJSON(data), objects;
     // Do not repeat actions that this user has already done
     if (!localActions.removeHead(action)) {
       // Undo any out of order local actions
-      localActions.un().do(subject);
+      objects = localActions.un().do(subject);
       localActions = new Batch([]);
       // Commit the action
-      action.isOK(subject) && action.do(subject);
+      subject.changed(_.concat(objects, action.isOK(subject) && action.do(subject)));
     }
   });
 };

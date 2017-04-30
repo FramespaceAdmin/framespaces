@@ -57,12 +57,12 @@ function init(action, prev, next) {
 }
 
 function antecedents(action) {
-  var result = [action];
+  var ante = [action];
   while (action = action.prev) {
-    result.unshift(action);
+    ante.unshift(action);
     if (action.isUser) break; // optimisation
   }
-  return result;
+  return ante;
 }
 
 /**
@@ -79,7 +79,7 @@ History.prototype.step = revising(function (action) {
     }
     this.present.next = action;
     init(action, this.present, action.isUser ? null : nextAction);
-    this.next(action.result);
+    this.next(action.results);
   }
 });
 
@@ -115,9 +115,9 @@ History.prototype.next = revising(function (done) {
       this.prev();
     }
     // If we don't have a result for the action, this is the first time
-    var event = done || !action.result ? 'done' : 'redone';
+    var event = done || !action.results ? 'done' : 'redone';
     if (!done) {
-      action.result = new Batch(branch.slice(posPresent + 1)).do(this.subject);
+      action.results = this.subject.changed(new Batch(branch.slice(posPresent + 1)).do(this.subject));
     }
     this.present = action;
     this.emit(event, action);
@@ -132,7 +132,7 @@ History.prototype.next = revising(function (done) {
 History.prototype.prev = revising(function () {
   if (this.present.prev) {
     var action = this.present;
-    action.un().do(this.subject);
+    this.subject.changed(action.un().do(this.subject));
     this.present = this.present.prev;
     this.emit('undone', action);
   }

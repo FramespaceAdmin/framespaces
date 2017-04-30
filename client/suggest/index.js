@@ -14,7 +14,7 @@ var suggest = {
 module.exports = function Suggestor(picture, history) {
   this.suggest = function(lastAction) {
     var suggestions = _(suggest).map(function (suggestor, name) {
-      var action = suggestor(picture, lastAction.result);
+      var action = suggestor(picture, lastAction);
       if (action) {
         action.description = name + ' @ ' + Number(action.confidence.toFixed(3));
         return action;

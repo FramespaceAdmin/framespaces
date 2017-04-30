@@ -18,7 +18,7 @@ Mutation.prototype.constructor = Mutation;
 
 Mutation.prototype.do = function (picture) {
   var element = picture.getElement(this.from.id);
-  picture.changed(this.to.applyTo(element));
+  this.to.applyTo(element);
   return this.to.hasClass('label') ? picture.getElement(this.to.attr.on) : element;
 };
 

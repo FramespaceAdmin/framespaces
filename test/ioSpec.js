@@ -234,47 +234,14 @@ module.exports = function (newIo/*(options, cb(err, io))*/) {
   it('should be able to pause remote messages', function (done) {
     var events = new EventEmitter();
     setupIo.call(this, { events : events }, function () {
-      var paused = true;
-      io.subscribe('action', function (userId, action) {
-        assert.isFalse(paused, 'Event received while paused!');
-        assert.deepEqual(action, TEST_ACTION);
-        done();
-      });
       io.subscribe('user.connected', function () {
         io.pause('action', pass(function (play) {
           events.emit('action', 'uid', TEST_ACTION);
-          // Push the play to after the next tick so that the event is processed
+          // Push the play out for a reasonable time so that the event is processed
           setTimeout(function () {
-            paused = false;
-            play();
-          }, 0);
-        }, done));
-      });
-    }, done);
-  });
-
-  it('should be able to play additional messages', function (done) {
-    var events = new EventEmitter();
-    setupIo.call(this, { events : events }, function () {
-      var paused = true, act1Received = false;
-      io.subscribe('action', function (userId, action) {
-        assert.isFalse(paused, 'Event received while paused!');
-        if (!act1Received) {
-          assert.equal(action, 'act1');
-          act1Received = true;
-        } else {
-          assert.equal(action, 'act2');
-          done();
-        }
-      });
-      io.subscribe('user.connected', function () {
-        io.pause('action', pass(function (play) {
-          events.emit('action', 'uid', 'act2');
-          // Push the play to after the next tick so that the event is processed
-          setTimeout(function () {
-            paused = false;
-            play([['uid', 'act1']], '1');
-          }, 0);
+            assert.deepEqual(play(), [['uid', TEST_ACTION]]);
+            done();
+          }, 10);
         }, done));
       });
     }, done);

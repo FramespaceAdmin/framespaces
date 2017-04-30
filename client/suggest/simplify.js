@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     Mutation = require('../action/mutation'),
-    Replacement = require('../action/replacement'),
+    Removal = require('../action/removal'),
+    Addition = require('../action/addition'),
     Shape = require('../shape'),
     Polyline = require('../shape/polyline'),
     Line = require('../shape/line'),
@@ -49,8 +50,8 @@ function suggestSegments(polyline, begin) {
   }, []);
 }
 
-module.exports = function suggestSimplify(picture, element) {
-  var shape = element && !element.removed && Shape.of(element);
+module.exports = function suggestSimplify(picture, lastAction) {
+  var element = _.last(lastAction.results), shape = element && !element.removed && Shape.of(element);
   if (shape && shape instanceof Polyline && shape.getPoints().length > 2) {
     var segments = suggestSegments(shape, 0), lastSegment = _.last(segments);
     // For a polygon, the last segment may wrap. If so, try again with the last segment end.
@@ -61,10 +62,10 @@ module.exports = function suggestSimplify(picture, element) {
     if (points.length < shape.getPoints().length) {
       return _.assign(points.length > 2 ? new Mutation(shape, shape.delta({
         points : Polyline.pointStr(points)
-      })) : new Replacement(shape, shape.cloneAs('line', {
+      })) : new Removal(shape).and(new Addition(shape.cloneAs('line', {
         x1 : points[0].x, y1 : points[0].y, x2 : points[1].x, y2 : points[1].y,
         points : undefined
-      })), {
+      }))), {
         confidence : _.sumBy(segments, 'confidence') / _.sumBy(segments, 'length')
       });
     }

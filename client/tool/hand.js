@@ -20,12 +20,11 @@ function Hand(picture) {
   }
 
   Moving.prototype.setShape = function (shape) {
-    this.shape = shape;
-    picture.changed(this.shape.applyTo(this.element));
+    picture.changed((this.shape = shape).applyTo(this.element));
   };
 
   Moving.prototype.asMutation = function () {
-    return new Mutation(this.originalShape, this.shape, { result : this.element });
+    return new Mutation(this.originalShape, this.shape, { results : [this.element] });
   }
 
   var moving, move, others;

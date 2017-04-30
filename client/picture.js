@@ -104,38 +104,58 @@ Picture.prototype.sortByContains = function (elements) {
   }, this));
 };
 
-Picture.prototype.changed = function (element) {
-  var id = element.attr('id');
-  if (id) {
-    this.rtree.remove({ id : id }, function (a, b) { return a.id === b.id; });
-    if (!element.removed) {
-      var shape = this.getShape(element, true);
-      this.rtree.insert(_.set(rtreeSelector(shape.getBBox()), 'id', id));
-      // Ensure enclosing shapes are ordered first
-      this.ensureOrder(this.sortByContains(this.elements(shape.getBBox())));
-      // Adjust any linked elements
-      if (element.hasClass('link')) {
-        var from = this.getElement(element.attr('from')), to = this.getElement(element.attr('to'));
-        if (from && to) {
-          shape.link(this.getShape(from), this.getShape(to)).applyTo(element);
-          this.ensureOrder([from, to, element]); // Ensure sensible Z-ordering for a link
-        } else {
-          this.asUnlinkedShape(element).applyTo(element);
-        }
-      } else if (element.hasClass('label')) {
-        var on = this.getElement(element.attr('on'));
-        if (on) {
-          shape.label(this.getShape(on)).applyTo(element);
-          this.ensureOrder([on, element]); // Ensure sensible Z-ordering for a label
-        } else {
-          this.asUnlinkedShape(element).applyTo(element);
+/**
+ * Tells the picture that the given elements have changed.
+ * @param elements an element, or and array of elements
+ * @return the elements (NOTE always an array)
+ */
+Picture.prototype.changed = function (elements) {
+  elements = _.uniq(_.compact(_.castArray(elements)));
+  var blastBBox = _.reduce(elements, _.bind(function (blastBBox, element) {
+    var id = element.attr('id');
+    if (id) {
+      this.rtree.remove({ id : id }, function (a, b) { return a.id === b.id; });
+      if (!element.removed) {
+        var shape = this.getShape(element, true);
+        this.rtree.insert(_.set(rtreeSelector(shape.getBBox()), 'id', id));
+        blastBBox = Shape.bbox(blastBBox, shape);
+        // Adjust any linked elements
+        if (element.hasClass('link')) {
+          this.linkChanged(element);
+        } else if (element.hasClass('label')) {
+          this.labelChanged(element);
         }
       }
+      this.changed(this.inLinks(id));
+      this.emit('changed', element);
     }
-    _.each(this.inLinks(id), _.bind(this.changed, this));
-    this.emit('changed', element);
+    return blastBBox;
+  }, this), null);
+  if (blastBBox) {
+    // Ensure enclosing shapes are ordered first
+    this.ensureOrder(this.sortByContains(this.elements(blastBBox)));
   }
-  return element;
+  return elements;
+};
+
+Picture.prototype.linkChanged = function (element) {
+  var from = this.getElement(element.attr('from')), to = this.getElement(element.attr('to'));
+  if (from && to) {
+    this.getShape(element).link(this.getShape(from), this.getShape(to)).applyTo(element);
+    this.ensureOrder([from, to, element]); // Ensure sensible Z-ordering for a link
+  } else {
+    this.asUnlinkedShape(element).applyTo(element);
+  }
+};
+
+Picture.prototype.labelChanged = function (element) {
+  var on = this.getElement(element.attr('on'));
+  if (on) {
+    this.getShape(element).label(this.getShape(on)).applyTo(element);
+    this.ensureOrder([on, element]); // Ensure sensible Z-ordering for a label
+  } else {
+    this.asUnlinkedShape(element).applyTo(element);
+  }
 };
 
 Picture.prototype.viewBox = function (newBox) {

@@ -454,12 +454,38 @@ Shape.closest = function (points, toPoint) {
   return _.minBy(points, _.bind(toPoint.distanceFrom, toPoint));
 };
 
+Shape.BBOX = as({ x : Number, y : Number, width : Number, height : Number });
+
+/**
+ * Obtains the bounding box of all its arguments
+ * @param args... any combination of bbox-like objects or objects with a getBBox() member
+ * @return the bounding box of all the arguments, or null
+ */
+Shape.bbox = function (/*bboxes or shapes*/) {
+  return _.reduce(arguments, function (bbox, arg) {
+    var argBBox = Shape.BBOX.matches(arg) ? arg : _.get(arg, 'getBBox') ? arg.getBBox() : null;
+    return !bbox ? argBBox : !argBBox ? bbox : (function (x, y) {
+      return {
+        x : x, y : y,
+        width : Math.max(x2(bbox), x2(argBBox)) - x,
+        height : Math.max(y2(bbox), y2(argBBox)) - y
+      }
+    })(Math.min(bbox.x, argBBox.x), Math.min(bbox.y, argBBox.y));
+  }, null);
+};
+
 function strongPoint(point) {
   // Correct all points to have numeric coordinates
   return new Point(Number(point.x), Number(point.y));
 }
 
-Shape.BBOX = as({ x : Number, y : Number, width : Number, height : Number });
+function x2(bbox) {
+  return bbox.x2 || bbox.x + bbox.width;
+}
+
+function y2(bbox) {
+  return bbox.y2 || bbox.y + bbox.height;
+}
 
 /**
  * b must have x, y, width & height. May also have other parameters
@@ -476,8 +502,8 @@ function strongBBox(b) {
     w : b.width,
     height : b.height,
     h : b.height,
-    x2 : b.x2 || b.x + b.width,
-    y2 : b.y2 || b.y + b.height,
+    x2 : x2(b),
+    y2 : y2(b),
     cx : cx,
     cy : cy,
     c : b.c || new Point(cx, cy),

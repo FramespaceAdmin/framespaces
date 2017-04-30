@@ -4,11 +4,16 @@ var _ = require('lodash'),
     SetAction = require('./setAction'),
     assert = require('chai').assert;
 
+function MockSubject() {}
+MockSubject.prototype = Object.create(EventEmitter.prototype);
+MockSubject.prototype.constructor = MockSubject;
+MockSubject.prototype.changed = function (object) { return _.castArray(object); };
+
 describe('History', function () {
   var ok = _.constant(true);
 
   it('should perform an action', function () {
-    var subject = new EventEmitter();
+    var subject = new MockSubject();
     var history = new History(subject);
     var done = false;
     var action = new SetAction({ id : 'a', isUser : true });
@@ -22,7 +27,7 @@ describe('History', function () {
   });
 
   it('should perform two actions', function () {
-    var subject = new EventEmitter();
+    var subject = new MockSubject();
     var history = new History(subject);
     var acted1 = false, acted2 = false;
     var action1 = new SetAction({ id : 'a', isUser : true });
@@ -34,7 +39,7 @@ describe('History', function () {
   });
 
   it('should undo an action', function () {
-    var subject = new EventEmitter();
+    var subject = new MockSubject();
     var history = new History(subject);
     var undone = false;
     var action = new SetAction({ id : 'a', isUser : true });
@@ -49,7 +54,7 @@ describe('History', function () {
   });
 
   it('should redo an action', function () {
-    var subject = new EventEmitter();
+    var subject = new MockSubject();
     var history = new History(subject);
     var redone = false;
     var action = new SetAction({ id : 'a', isUser : true });
@@ -65,7 +70,7 @@ describe('History', function () {
   });
 
   it('should add future suggestions', function () {
-    var subject = new EventEmitter();
+    var subject = new MockSubject();
     var history = new History(subject);
     var action1 = new SetAction({ id : 'a', isUser : true, confidence : 0.9 });
     var action2 = new SetAction({ id : 'b', isUser : true, confidence : 0.8 });
@@ -78,7 +83,7 @@ describe('History', function () {
   });
 
   it('should inject future suggestions by confidence', function () {
-    var subject = new EventEmitter();
+    var subject = new MockSubject();
     var history = new History(subject);
     var action1 = new SetAction({ id : 'a', confidence : 0.9 });
     var action2 = new SetAction({ id : 'b', confidence : 0.8 });
@@ -92,7 +97,7 @@ describe('History', function () {
   });
 
   it('should linearise the past when an action is taken', function () {
-    var subject = new EventEmitter();
+    var subject = new MockSubject();
     var history = new History(subject);
     var action0 = new SetAction({ id : 'a', isUser : true });
     history.step(action0);

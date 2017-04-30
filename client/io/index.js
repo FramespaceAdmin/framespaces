@@ -109,10 +109,8 @@ Io.prototype.emit = function (eventName, data) {
 
 /**
  * Pause the given channel events.
- * The play method given to the callback takes an optional array of messages to play into the
- * channel before also playing any missed events. Each message is an array of subscriber arguments.
- * Also taken is an optional iteratee method to be used to de-duplicate messages
- * per https://lodash.com/docs/#uniqBy
+ * The play method given to the callback returns missed messages.
+ * Each message is an array of subscriber arguments, [eventName, data...].
  * @param eventName channel event name
  * @param cb callback taking error and re-start (play) method
  */
@@ -123,12 +121,11 @@ Io.prototype.pause = function (eventName, cb/*(err, play(messages, [iteratee=_.i
   }
   _.each(subscribers, _.bind(this.unsubscribe, this, eventName));
   this.subscribe(eventName, pausedListener);
-  cb(false, _.bind(function (messages, iteratee) {
+  cb(false, _.bind(function play() {
     this.unsubscribe(eventName, pausedListener);
     _.each(subscribers, _.bind(this.subscribe, this, eventName));
-    // Emit the requested messages, then the paused messages
-    messages = _.uniqBy((messages || []).concat(pausedMessages), iteratee);
-    _.each(messages, _.bind(this.emit, this, eventName));
+    // Emit the paused messages
+    return pausedMessages;
   }, this));
 };
 

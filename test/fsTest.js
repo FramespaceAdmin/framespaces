@@ -16,10 +16,12 @@ var MockPaper = require('./mockPaper'),
     });
 
 var A_ID = guid(), B_ID = guid();
+function MockSubject() {};
+MockSubject.prototype.changed = function () {};
 
 describe('Framespace client', function () {
   it('should report initialisation', function (done) {
-    fs.load({}, function (user, commit) {
+    fs.load(new MockSubject(), function (user, commit) {
       assert.isObject(user);
       assert.isFunction(commit);
       done();
@@ -27,7 +29,7 @@ describe('Framespace client', function () {
   });
 
   it('should publish a local action', function (done) {
-    var events = new EventEmitter(), subject = {};
+    var events = new EventEmitter(), subject = new MockSubject();
     events.on('action', function (userId, data) {
       assert.deepEqual(data, { id : A_ID, type : 'mutation' })
       done();
@@ -40,7 +42,7 @@ describe('Framespace client', function () {
   });
 
   it('should apply a remote action (before loaded)', function (done) {
-    var subject = {};
+    var subject = new MockSubject();
     fs.load(subject, function (user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
@@ -48,7 +50,7 @@ describe('Framespace client', function () {
   });
 
   it('should apply a remote action (during load)', function (done) {
-    var events = new EventEmitter(), subject = {};
+    var events = new EventEmitter(), subject = new MockSubject();
     fs.load(subject, function (user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
@@ -61,7 +63,7 @@ describe('Framespace client', function () {
   });
 
   it('should apply a remote action (after loaded)', function (done) {
-    var events = new EventEmitter(), subject = {};
+    var events = new EventEmitter(), subject = new MockSubject();
     fs.load(subject, function (user, commit) {
       events.emit('action', 'uid', { id : A_ID });
       setTimeout(function () { // Event is received async
@@ -72,15 +74,14 @@ describe('Framespace client', function () {
   });
 
   it('should reset state if local actions not in channel order', function (done) {
-    var events = new EventEmitter(), subject = {
-      set : function (key) {
-        if (key === A_ID) {
-          assert.isTrue(!subject[B_ID], 'Action a should be applied first');
-        } else if (key === B_ID && subject[A_ID]) {
-          done();
-        }
-        subject[key] = true;
+    var events = new EventEmitter(), subject = new MockSubject();
+    subject.set = function (key) {
+      if (key === A_ID) {
+        assert.isTrue(!subject[B_ID], 'Action a should be applied first');
+      } else if (key === B_ID && subject[A_ID]) {
+        done();
       }
+      subject[key] = true;
     };
     fs.load(subject, function (user, commit) {
       var setb = new SetAction({ id : B_ID });

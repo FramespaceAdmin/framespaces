@@ -7,8 +7,8 @@ var _ = require('lodash'),
 
 var MIN_POINTS = 6, MIN_REVERSES = 4, INTERSECTS_FACTOR = 4;
 
-module.exports = function suggestScribble(picture, pline) {
-  var shape = pline && !pline.removed && Shape.of(pline);
+module.exports = function suggestScribble(picture, lastAction) {
+  var pline = _.last(lastAction.results), shape = pline && !pline.removed && Shape.of(pline);
   if (shape && shape instanceof Polyline && shape.getPoints().length >= MIN_POINTS) {
     // Work out how many times the line has reversed on itself
     var reverses = _.reduce(shape.getPoints().slice(1, shape.getPoints().length - 1), function (reverses, p, i) {
@@ -26,7 +26,7 @@ module.exports = function suggestScribble(picture, pline) {
           // Look for shapes we intersect with
           var removeShape = new Removal(otherShape).andCollateral(picture),
               removeScribble = new Removal(shape).andCollateral(picture);
-          candidates.push(_.assign(removeShape.and(removeScribble), {
+          candidates.push(removeShape.and(removeScribble, {
             confidence : 1 - 1 / (shape.intersect(otherShape).length * INTERSECTS_FACTOR)
           }));
           // TODO: Look for shapes we fill

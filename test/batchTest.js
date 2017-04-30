@@ -83,7 +83,7 @@ describe('Batch action', function () {
     it('should apply the batch', function () {
       var subject = {};
       assert.isTrue(new Batch([seta, setb]).isOK(subject));
-      assert.isOk(new Batch([seta, setb]).do(subject));
+      assert.deepEqual(new Batch([seta, setb]).do(subject), [true, true]);
       assert.isOk(subject.a);
       assert.isOk(subject.b);
     });
@@ -93,6 +93,11 @@ describe('Batch action', function () {
       assert.isOk(new Batch([seta, setb]).un().do(subject));
       assert.isNotOk(subject.a);
       assert.isNotOk(subject.b);
+    });
+    it('should back out changes on failure', function () {
+      var subject = {};
+      assert.isNotOk(new Batch([seta, seta]).do(subject));
+      assert.isNotOk(subject.a);
     });
     it('should serialise to two actions', function () {
       assert.deepEqual(new Batch([seta, setb]).toJSON(), [

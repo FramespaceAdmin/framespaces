@@ -18,7 +18,7 @@ Removal.prototype = Object.create(Action.prototype);
 Removal.prototype.constructor = Removal;
 
 Removal.prototype.do = function (picture) {
-  return picture.changed(picture.getElement(this.shape.id).remove());
+  return picture.getElement(this.shape.id).remove();
 };
 
 Removal.prototype.isOK = function (picture) {

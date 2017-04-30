@@ -5,7 +5,8 @@ var _ = require('lodash')
     Mutation = require('../action/mutation'),
     Snap = require('snapsvg');
 
-module.exports = function suggestLabel(picture, e1) {
+module.exports = function suggestLabel(picture, lastAction) {
+  var e1 = _.last(lastAction.results);
   if (e1 && !e1.removed && !e1.hasClass('label')) {
     return _.last(_.sortBy(_.reduce(picture.paper.selectAll('[id]:not(.label)'), function (candidates, e2) {
       var classified = _.partition([e1, e2], function (e) {

@@ -14,7 +14,7 @@ describe('Rectify suggestor', function () {
 
   it('should rectify a straight line', function () {
     var line = paper.line(0, 0, 1, 0.01).attr('id', guid());
-    var action = rectify(picture, line);
+    var action = rectify(picture, { results : [line] });
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
     var rectified = Shape.of(action.do(picture));
@@ -24,13 +24,13 @@ describe('Rectify suggestor', function () {
 
   it('should not recurse', function () {
     var line = paper.line(0, 0, 1, 0.01).attr('id', guid());
-    var action = rectify(picture, rectify(picture, line).do(picture));
+    var action = rectify(picture, { results : rectify(picture, { results : [line] }).do(picture) });
     assert.isUndefined(action);
   });
 
   it('should rectify a polyline', function () {
     var pl = paper.polyline(0, 0, 1, 0.01, 1.01, 1).attr('id', guid());
-    var action = rectify(picture, pl);
+    var action = rectify(picture, { results : [pl] });
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
     var rectified = Shape.of(action.do(picture));

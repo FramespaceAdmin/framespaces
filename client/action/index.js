@@ -16,7 +16,7 @@ Action.OPTIONS = as(_.mapValues({
   isUser : Boolean, // Whether the user took the action (truthy), or the system
   prev : Action, // Set by history
   next : Action, // Set by history
-  result : Object, // the returned value, set by history
+  results : Array, // the returned values from do(), cast to array, set by history
   confidence : as(Number).lt(1), // for futures
   isUndo : Boolean
 }, _.method('or', undefined))); // Options are optional
@@ -29,8 +29,7 @@ Action.constructors = _.once(function () {
     require('./batch'),
     require('./addition'),
     require('./removal'),
-    require('./mutation'),
-    require('./replacement')
+    require('./mutation')
   ];
 });
 
@@ -46,13 +45,15 @@ Action.fromJSON = function (data) {
 
 /**
  * Enacts this Action
- * @returns [Object] Some kind of result
+ * @param subject the subject of the action
+ * @returns [Object] An affected object or array of objects, or falsey if failed
  */
 Action.prototype.do = function (subject) {
   throw undefined;
 };
 
 /**
+ * @param subject the subject of the action
  * @returns [boolean] Can this action be applied
  */
 Action.prototype.isOK = function (subject) {
@@ -88,12 +89,12 @@ Action.prototype.undoOptions = function () {
 /**
  * @returns a batch Action as necessary with this Action and the given Action or array
  */
-Action.prototype.and = function (more) {
+Action.prototype.and = function (more, options) {
   if (_.isEmpty(more)) {
-    return this;
+    return _.assign(this, options);
   } else {
     var Batch = require('./batch');
-    return new Batch([this].concat(more));
+    return new Batch([this].concat(more), options);
   }
 };
 
