@@ -1,5 +1,9 @@
+var modules = require('../../lib/modules');
 
 function Io() {
+  if (!(this instanceof Io) || this.constructor === Io) {
+    return new (require(modules.io))(server);
+  }
 }
 
 /**

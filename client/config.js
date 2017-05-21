@@ -1,3 +1,3 @@
 var _ = require('lodash');
 
-module.exports = _(config); // Configuration as global
+module.exports = _(global.config); // Configuration as global

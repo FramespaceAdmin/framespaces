@@ -2,13 +2,17 @@ var _ = require('lodash'),
     log = require('../../lib/log'),
     jwtDecode = require('jwt-decode'),
     pass = require('pass-error'),
+    browser = require('../browser'),
     BrowserIo = require('./browser');
 
-function AblyIo() {
-  BrowserIo.call(this);
+function AblyIo(name) {
+  BrowserIo.call(this, name);
   // Note that 'Ably.Realtime' is a global from https://cdn.ably.io/lib/ably.min.js
-  this.realtime = global.Ably.Realtime({ authUrl : this.url('channel/auth'), log : { level : log.scale(4, -1) } });
-  this.channel = this.realtime.channels.get(this.name);
+  this.realtime = global.Ably.Realtime({
+    authUrl : browser.url(name, 'channel', 'auth'),
+    log : { level : log.scale(4, -1) }
+  });
+  this.channel = this.realtime.channels.get(name);
 
   this.channel.presence.get(pass(function(members) {
     this.channel.presence.enter(this.user, pass(function () {

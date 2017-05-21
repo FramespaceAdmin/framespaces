@@ -3,8 +3,7 @@ var _ = require('lodash'),
     Matrix = require('kld-affine').Matrix2D,
     Shape = require('../shape'),
     Tool = require('../tool'),
-    Mutation = require('../action/mutation'),
-    Snap = require('snapsvg');
+    Mutation = require('../action/mutation');
 
 var CURSOR_RADIUS = 16;
 

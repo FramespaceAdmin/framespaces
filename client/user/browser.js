@@ -1,12 +1,12 @@
 var _ = require('lodash'),
     _url = require('url'),
-    html = require('html.js'),
+    browser = require('../browser'),
     User = require('../user');
 
 function BrowserUser(json) {
   User.call(this, json);
 
-  this.place = html.query('#users').add(html.query('#user-template').cloneNode(true));
+  this.place = browser.html.query('#users').add(browser.html.query('#user-template').cloneNode(true));
   this.place.id = this.id;
   this.place.style.display = 'block'; // Because template is hidden
 

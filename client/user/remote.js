@@ -1,7 +1,8 @@
 var _ = require('lodash'),
     BrowserUser = require('./browser'),
     tools = require('../tool'),
-    html = require('html.js');
+    html = require('html.js'),
+    browser = require('../browser');
 
 function RemoteUser(data, picture) {
   BrowserUser.call(this, data);
@@ -27,7 +28,7 @@ RemoteUser.prototype.showInteraction = function (delta, state) {
     this.cursor.src = this.tool ? '/web/' + this.tool.constructor.name.toLowerCase() + '.svg' : '';
   }
   if (state.active) {
-    var svgToScr = Snap.matrix(html.query('.paper').getScreenCTM());
+    var svgToScr = browser.svg.matrix(html.query('.paper').getScreenCTM());
     x = svgToScr.x(state.x, state.y);
     y = svgToScr.y(state.x, state.y);
   }

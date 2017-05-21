@@ -5,10 +5,8 @@ var _ = require('lodash'),
     guid = require('../lib/guid');
 
 var OPTIONS = {
-  url : String, // Base URL for the IO
   user : { id : String }, // User with identity
-  events : EventEmitter, // An event emitter which simulates a remote connection
-  resources : { undefined : Object } // Forced get result
+  events : EventEmitter // An event emitter which simulates a remote connection
 };
 
 var TEST_ACTION = {
@@ -16,34 +14,20 @@ var TEST_ACTION = {
   type : 'addition'
 };
 
-var DEFAULT_URL = 'http://localhost:3001/fs';
-
-module.exports = function (newIo/*(options, cb(err, io))*/) {
+module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
   var io;
 
   function setupIo(options, test, done) {
-    newIo.call(this, options, pass(function (nio) {
+    newIo.call(this, 'fs', options, pass(function (nio) {
       io = nio;
+      // Give the IO enough time to complete the most rugged test
+      this.timeout(Math.max(2000, (nio.latency || 0) * 10));
       test.call(this);
     }, done, null, this));
   }
 
   afterEach(function (done) {
     io ? io.close(null, done) : done();
-  });
-
-  it('should derive its name', function (done) {
-    setupIo.call(this, { url : DEFAULT_URL }, function () {
-      assert.equal(io.name, 'fs');
-      done();
-    }, done);
-  });
-
-  it('should report its url', function (done) {
-    setupIo.call(this, { url : DEFAULT_URL }, function () {
-      assert.equal(io.url(), DEFAULT_URL);
-      done();
-    }, done);
   });
 
   it('should report its user', function (done) {
@@ -87,23 +71,6 @@ module.exports = function (newIo/*(options, cb(err, io))*/) {
       io.close(null, pass(function () {
         assert.isTrue(disconnected);
         io = null;
-        done();
-      }, done));
-    }, done);
-  });
-
-  it('should construct derived urls', function (done) {
-    setupIo.call(this, { url : DEFAULT_URL }, function () {
-      assert.equal(io.url('name'), 'http://localhost:3001/fs/name');
-      assert.equal(io.url('n1', 'n2'), 'http://localhost:3001/fs/n1/n2');
-      done();
-    }, done);
-  });
-
-  it('should GET a resource', function (done) {
-    setupIo.call(this, { resources : { resource : 'hello' } }, function () {
-      io.get('resource', pass(function (body) {
-        assert.equal(body, 'hello');
         done();
       }, done));
     }, done);
@@ -241,7 +208,7 @@ module.exports = function (newIo/*(options, cb(err, io))*/) {
           setTimeout(function () {
             assert.deepEqual(play(), [['uid', TEST_ACTION]]);
             done();
-          }, 10);
+          }, io.latency || 0);
         }, done));
       });
     }, done);
@@ -249,4 +216,3 @@ module.exports = function (newIo/*(options, cb(err, io))*/) {
 };
 
 module.exports.OPTIONS = OPTIONS;
-module.exports.DEFAULT_URL = DEFAULT_URL;

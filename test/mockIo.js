@@ -1,34 +1,25 @@
 var _ = require('lodash'),
     guid = require('../lib/guid'),
+    eventsIo = require('../client/io/events'),
     EventEmitter = require('events'),
-    Io = require('../client/io'),
-    LocalIo = require('../client/io/local');
+    Io = require('../client/io');
 
-function MockIo(options) {
-  if (!(this instanceof MockIo)) { return new MockIo(options); }
+function MockIo(name, options) {
+  if (!(this instanceof MockIo)) { return new MockIo(name, options); }
   options = _.defaults(options, {
     url : 'http://mock.io/fs',
     user : { id : guid() },
     events : new EventEmitter(),
     latency : 0
   });
-  Io.call(this, options.url, options.user);
-  _.assign(this, _.pick(options, 'events', 'latency', 'resources'));
+  Io.call(this, name, options.user);
+  _.assign(this, _.pick(options, 'events', 'latency'));
   this._publish('user.connected', this.user);
 }
 
 MockIo.prototype = Object.create(Io.prototype);
 MockIo.prototype.constructor = MockIo;
 
-LocalIo.mixInto(MockIo.prototype);
-
-MockIo.prototype.get = function (path, cb/*(err, body)*/) {
-  if (_.isFunction(this.resources)) {
-    return this.resources.call(this, path, cb);
-  } else {
-    var body = _.get(this, ['resources', path]);
-    return this.latent(cb, [false, body]);
-  }
-};
+eventsIo.mixInto(MockIo.prototype);
 
 module.exports = MockIo;

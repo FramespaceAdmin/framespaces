@@ -1,20 +1,37 @@
-var storageAvailable = require('storage-available');
+var _ = require('lodash'),
+    config = require('config'),
+    browser = require('../browser');
 
-function Journal() {
+function Journal(ns) {
   if (!(this instanceof Journal) || this.constructor === Journal) {
-    if (storageAvailable('localStorage')) {
-      return new (require('./local'))();
+    if (config.get('modules.io') === 'local') {
+      if (browser.localStorage) {
+        return new (require('./local'))();
+      } else {
+        return new (require('./memory'))();
+      }
     } else {
-      return new (require('./memory'))();
+      return new (require('./remote'))();
     }
   }
+  this.ns = ns;
 }
 
-Journal.prototype.addEvent = function (ns, event) {
+/**
+ * Adds an event to the Journal.
+ * @param event the event or array of events to add
+ * @param cb callback with error
+ */
+Journal.prototype.addEvent = function (event, cb/*(err)*/) {
   throw undefined;
 };
 
-Journal.prototype.fetchEvents = function (ns) {
+/**
+ * Fetches events from the Journal.
+ * @param ns namespace ro retrieve from
+ * @param cb callback with error and event array
+ */
+Journal.prototype.fetchEvents = function (cb/*(err, [event])*/) {
   throw undefined;
 };
 

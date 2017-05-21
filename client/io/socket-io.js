@@ -1,10 +1,11 @@
 var _ = require('lodash'),
+    browser = require('../browser'),
     BrowserIo = require('./browser');
 
-function SocketIo() {
-  BrowserIo.call(this);
-  // Note that 'io' is a global from /socket.io/socket.io.js
-  this.socket = global.io(this.url('io'));
+function SocketIo(name) {
+  BrowserIo.call(this, name);
+  // 'io' is a global from /socket.io/socket.io.js
+  this.socket = global.io(browser.url(name, 'io'));
   this.socket.on('connect_error', _.bind(this.close, this));
 
   var jwt = this.jwt, user = this.user;

@@ -2,8 +2,7 @@ var _ = require('lodash')
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
     Label = require('../shape/label'),
-    Mutation = require('../action/mutation'),
-    Snap = require('snapsvg');
+    Mutation = require('../action/mutation');
 
 module.exports = function suggestLabel(picture, lastAction) {
   var e1 = _.last(lastAction.results);
@@ -14,10 +13,7 @@ module.exports = function suggestLabel(picture, lastAction) {
       }), label = _.first(classified[0]), on = _.first(classified[1]);
       if (label && on) {
         // If the label is wholly within the labelee, we are 90% sure
-        var ls = Shape.of(label), les = Shape.of(on);
-        var factor = _.every(ls.getPoints(), function (p) {
-          return Snap.path.isPointInsideBBox(les.getBBox(), p.x, p.y);
-        }) ? 10 : 1;
+        var ls = Shape.of(label), les = Shape.of(on), factor = les.contains(ls) ? 10 : 1;
         return candidates.concat(new Mutation(ls, ls.clone({
           class : 'label',
           // Don't set the ox and oy, so the user sees the suggestion happening

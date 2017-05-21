@@ -2,6 +2,7 @@ var MockPaper = require('./mockPaper'),
     MockIo = require('./mockIo'),
     MockTool = require('./mockTool'),
     MockUser = require('../client/user'),
+    MemoryJournal = require('../client/journal/memory'),
     SetAction = require('./setAction'),
     EventEmitter = require('events'),
     guid = require('../lib/guid'),
@@ -12,7 +13,8 @@ var MockPaper = require('./mockPaper'),
       './user/local' : MockUser,
       './user/remote' : MockUser,
       './action' : SetAction,
-      'io' : MockIo
+      './journal' : MemoryJournal,
+      './io' : MockIo
     });
 
 var A_ID = guid(), B_ID = guid();
@@ -21,60 +23,60 @@ MockSubject.prototype.changed = function () {};
 
 describe('Framespace client', function () {
   it('should report initialisation', function (done) {
-    fs.load(new MockSubject(), function (user, commit) {
+    fs.load('fs', new MockSubject(), function (user, commit) {
       assert.isObject(user);
       assert.isFunction(commit);
       done();
-    }, { resources : { actions : [] } });
+    });
   });
 
   it('should publish a local action', function (done) {
-    var events = new EventEmitter(), subject = new MockSubject();
-    events.on('action', function (userId, data) {
+    var emitter = new EventEmitter(), subject = new MockSubject();
+    emitter.on('action', function (userId, data) {
       assert.deepEqual(data, { id : A_ID, type : 'mutation' })
       done();
     });
-    fs.load(subject, function (user, commit) {
+    fs.load('fs', subject, function (user, commit) {
       var seta = new SetAction({ id : A_ID });
       seta.do(subject);
       commit(seta);
-    }, { resources : { actions : [] }, events : events });
+    }, { events : emitter });
   });
 
   it('should apply a remote action (before loaded)', function (done) {
     var subject = new MockSubject();
-    fs.load(subject, function (user, commit) {
+    fs.load('fs', subject, function (user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
-    }, { resources : { actions : [{ id : A_ID }] } });
+    }, {}, [{ id : A_ID }]);
   });
 
   it('should apply a remote action (during load)', function (done) {
-    var events = new EventEmitter(), subject = new MockSubject();
-    fs.load(subject, function (user, commit) {
+    var emitter = new EventEmitter(), subject = new MockSubject();
+    fs.load('fs', subject, function (user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
-    }, { resources : function (path, cb/*(err, body)*/) {
-      events.emit('action', 'uid', { id : A_ID });
+    }, { events : emitter }, function (cb/*(err, [event])*/) {
+      emitter.emit('action', 'uid', { id : A_ID });
       setTimeout(function () { // Event is received async
         cb(false, []);
       }, 0);
-    }, events : events });
+    });
   });
 
   it('should apply a remote action (after loaded)', function (done) {
-    var events = new EventEmitter(), subject = new MockSubject();
-    fs.load(subject, function (user, commit) {
-      events.emit('action', 'uid', { id : A_ID });
+    var emitter = new EventEmitter(), subject = new MockSubject();
+    fs.load('fs', subject, function (user, commit) {
+      emitter.emit('action', 'uid', { id : A_ID });
       setTimeout(function () { // Event is received async
         assert.isTrue(subject[A_ID]);
         done();
       }, 0);
-    }, { resources : { actions : [] }, events : events });
+    }, { events : emitter });
   });
 
   it('should reset state if local actions not in channel order', function (done) {
-    var events = new EventEmitter(), subject = new MockSubject();
+    var emitter = new EventEmitter(), subject = new MockSubject();
     subject.set = function (key) {
       if (key === A_ID) {
         assert.isTrue(!subject[B_ID], 'Action a should be applied first');
@@ -83,11 +85,11 @@ describe('Framespace client', function () {
       }
       subject[key] = true;
     };
-    fs.load(subject, function (user, commit) {
+    fs.load('fs', subject, function (user, commit) {
       var setb = new SetAction({ id : B_ID });
       setb.do(subject);
-      events.emit('action', 'uid', { id : A_ID }); // Injected remote event
+      emitter.emit('action', 'uid', { id : A_ID }); // Injected remote event
       commit(setb);
-    }, { resources : { actions : [] }, events : events });
+    }, { events : emitter });
   });
 });

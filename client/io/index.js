@@ -1,23 +1,20 @@
 var _ = require('lodash'),
-    _url = require('url'),
-    pass = require('pass-error'),
-    join = require('url-join');
+    config = require('config'),
+    pass = require('pass-error');
 
 /**
  * Base class for client-side IO.
  */
-function Io(baseUrl, user) {
-  this.baseUrl = _url.parse(baseUrl);
-  this.name = Io.nameFromPath(this.baseUrl.pathname);
+function Io(name, user) {
+  if (!(this instanceof Io) || this.constructor === Io) {
+    if (config.get('modules.io') === 'local') {
+      return new (require('./local'))(name);
+    } else {
+      return new (require('io'))(name); // Aliasified, see ../modules.js
+    }
+  }
   this.user = user;
 }
-
-/**
- * Utility to get a Framespace name from a URL pathname
- */
-Io.nameFromPath = function (pathname) {
-  return _.find(pathname.split(/[/?]/g));
-};
 
 /**
  * Available message events and their arguments.
@@ -29,24 +26,6 @@ Io.messages = {
   'user.disconnected' : [String], // Cannot be published, optional parameter is error cause
   'action' : [Object], // Echoed to publisher
   'interactions' : [Array] // NOT echoed to publisher
-};
-
-/**
- * Appends arguments as path names to the base url
- */
-Io.prototype.url = function () {
-  return join.apply(null, [_url.format({
-    protocol : this.baseUrl.protocol,
-    auth : this.baseUrl.auth,
-    host : this.baseUrl.host
-  }), this.name].concat(_.toArray(arguments)));
-};
-
-/**
- * GET method requests JSON from the base url plus the given path
- */
-Io.prototype.get = function (path, cb/*(err, body)*/) {
-  throw undefined;
 };
 
 /**

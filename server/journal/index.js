@@ -1,3 +1,4 @@
+var modules = require('../../lib/modules');
 
 /**
  * Instantiate a Journal. This typically does nothing with persisted data;
@@ -5,8 +6,8 @@
  * @param id the identity of the journal
  */
 function Journal(id) {
-  if (this.constructor === Journal) {
-    throw new Error("Can't instantiate abstract class!");
+  if (!(this instanceof Journal) || this.constructor === Journal) {
+    return new (require(modules.journal))(id);
   }
   this.id = id;
 }

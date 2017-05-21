@@ -1,19 +1,30 @@
-var Journal = require('../journal');
+var _ = require('lodash'),
+    _async = require('async'),
+    Journal = require('../journal');
 
-function MemoryJournal() {
-  Journal.call(this);
-  this.nss = {};
+/**
+ * The events passed here are for unit testing purposes: array or override function
+ */
+function MemoryJournal(ns, events) {
+  Journal.call(this, ns);
+  if (_.isFunction(events)) {
+    this.fetchEvents = events;
+  } else if (_.isArray(events)) {
+    this.events = events;
+  } else {
+    this.events = [];
+  }
 }
 
 MemoryJournal.prototype = Object.create(Journal.prototype);
 MemoryJournal.prototype.constructor = MemoryJournal;
 
-MemoryJournal.prototype.fetchEvents = function (ns) {
-  return this.nss[ns] || [];
-};
+MemoryJournal.prototype.fetchEvents = _async.asyncify(function () {
+  return this.events;
+});
 
-MemoryJournal.prototype.addEvent = function (ns, event) {
-  return (this.nss[ns] || (this.nss[ns] = [])).push(event);
-};
+MemoryJournal.prototype.addEvent = _async.asyncify(function (event) {
+  return this.events.push.apply(this.events, _.castArray(event));
+});
 
 module.exports = MemoryJournal;

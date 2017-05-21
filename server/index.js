@@ -14,9 +14,9 @@ var _ = require('lodash'),
     _async = require('async'),
     auth = require('./auth'),
     port = process.env.PORT || 3000,
-    modules = require('../lib/modules'),
-    io = new (require(modules.io))(server),
-    Journal = (require(modules.journal));
+    Io = require('./io'),
+    Journal = require('./journal'),
+    io = new Io(server);
 
 // Note, this is used from the stop and restart scripts
 process.title = 'Framespaces';

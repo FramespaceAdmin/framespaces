@@ -1,14 +1,13 @@
 var _ = require('lodash'),
     fs = require('./fs'),
-    Snap = require('snapsvg'),
+    browser = require('./browser'),
     Picture = require('./picture'),
     History = require('./history'),
     Toolbar = require('./toolbar'),
     Suggestor = require('./suggest'),
     Point = require('kld-affine').Point2D,
     keycode = require('keycode'),
-    hamster = require('hamsterjs'),
-    paper = Snap('.paper'),
+    paper = browser.svg('.paper'),
     picture = new Picture(paper),
     history = new History(picture),
     tools = require('./tool');
@@ -27,12 +26,12 @@ var pen = makeTool(tools.Pen),
     hand = makeTool(tools.Hand),
     eraser = makeTool(tools.Eraser);
 
-var toolbar = new Toolbar(Snap('#toolbar'), picture);
+var toolbar = new Toolbar(browser.svg('#toolbar'), picture);
 toolbar.prevButton.mousedown(function () { history.prev() });
 toolbar.nextButton.mousedown(function () { history.next() });
 history.on('revised', toolbar.updatePreviews);
 
-fs.load(picture, function (user, commit) {
+fs.load(browser.url.root, picture, function (user, commit) {
   window.onblur = function () {
     user.interacting({ active : false, char : null });
   };
@@ -57,7 +56,7 @@ fs.load(picture, function (user, commit) {
   });
   var mouse;
   function svgPosition() {
-    var screenToSvg = Snap.matrix(paper.node.getScreenCTM()).invert();
+    var screenToSvg = browser.svg.matrix(paper.node.getScreenCTM()).invert();
     return { x : screenToSvg.x(mouse.x, mouse.y), y : screenToSvg.y(mouse.x, mouse.y) };
   }
   function mouseHandler(e, x, y) {
@@ -79,7 +78,7 @@ fs.load(picture, function (user, commit) {
   });
 
   // Zoom with mouse wheel
-  hamster(paper.node).wheel(function (e, d) {
+  browser.hamster(paper.node).wheel(function (e, d) {
     picture.zoom(d, { x : e.originalEvent.clientX, y : e.originalEvent.clientY });
     e.preventDefault();
   });
