@@ -33,13 +33,15 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
   it('should report its user', function (done) {
     setupIo.call(this, { user : { id : 'uid' } }, function () {
       assert.equal(io.user.id, 'uid');
-      done();
+      // Some IOs don't like to be closed before they have initialised properly
+      io.subscribe('user.connected', _.ary(done, 0));
     }, done);
   });
 
   it('should report its user has connected', function (done) {
     setupIo.call(this, { user : { id : 'uid' } }, function () {
-      io.subscribe('user.connected', function (userId, user) {
+      io.subscribe('user.connected', function (userId, timestamp, user) {
+        assert.isNumber(timestamp); // Can do better
         assert.equal(userId, 'uid');
         assert.isOk(user);
         done();
@@ -50,7 +52,7 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
   it('should report a disconnect error when it is closed with one', function (done) {
     setupIo.call(this, {}, function () {
       var disconnected = false;
-      io.subscribe('user.disconnected', function (userId, err) {
+      io.subscribe('user.disconnected', function (userId, timestamp, err) {
         assert.equal(err, 'Error!');
         disconnected = true;
       });
@@ -81,7 +83,7 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
       io.subscribe('user.disconnected', function (userId) {
         assert.notEqual(userId, 'bogus');
       });
-      io.subscribe('user.connected', function (userId, user) {
+      io.subscribe('user.connected', function () {
         io.publish('user.disconnected', { id : 'bogus' });
         done();
       });
@@ -117,7 +119,7 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
 
   it('should echo action events', function (done) {
     setupIo.call(this, { user : { id : 'uid' } }, function () {
-      io.subscribe('action', function (userId, action) {
+      io.subscribe('action', function (userId, timestamp, action) {
         assert.equal(userId, 'uid');
         assert.deepEqual(action, TEST_ACTION);
         done();
@@ -160,7 +162,7 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
   it('should report remote action events', function (done) {
     var events = new EventEmitter();
     setupIo.call(this, { events : events }, function () {
-      io.subscribe('action', function (userId, action) {
+      io.subscribe('action', function (userId, timestamp, action) {
         assert.equal(userId, 'uid');
         assert.deepEqual(action, TEST_ACTION);
         done();
@@ -174,7 +176,7 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
   it('should report remote interaction events', function (done) {
     var events = new EventEmitter();
     setupIo.call(this, { events : events }, function () {
-      io.subscribe('interactions', function (userId, interactions) {
+      io.subscribe('interactions', function (userId, timestamp, interactions) {
         assert.equal(userId, 'uid');
         assert.deepEqual(interactions, ['1', '2']);
         done();
@@ -187,13 +189,13 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
 
   it('should emit (report locally) action events', function (done) {
     setupIo.call(this, {}, function () {
-      io.subscribe('action', function (userId, action) {
+      io.subscribe('action', function (userId, timestamp, action) {
         assert.equal(userId, 'uid');
         assert.deepEqual(action, TEST_ACTION);
         done();
       });
       io.subscribe('user.connected', function () {
-        io.emit('action', ['uid', TEST_ACTION]);
+        io.emit('action', ['uid', new Date().getTime(), TEST_ACTION]);
       });
     }, done);
   });
@@ -202,14 +204,17 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
     var events = new EventEmitter();
     setupIo.call(this, { events : events }, function () {
       io.subscribe('user.connected', function () {
-        io.pause('action', pass(function (play) {
-          events.emit('action', 'uid', TEST_ACTION);
-          // Push the play out for a reasonable time so that the event is processed
-          setTimeout(function () {
-            assert.deepEqual(play(), [['uid', TEST_ACTION]]);
+        var play = io.pause('action');
+        events.emit('action', 'uid', TEST_ACTION);
+        // Push the play out for a reasonable time so that the event is processed
+        setTimeout(function () {
+          play(function (userId, timestamp, action) {
+            assert.equal(userId, 'uid');
+            assert.isNumber(timestamp);
+            assert.deepEqual(action, TEST_ACTION);
             done();
-          }, io.latency || 0);
-        }, done));
+          });
+        }, io.latency || 0);
       });
     }, done);
   });

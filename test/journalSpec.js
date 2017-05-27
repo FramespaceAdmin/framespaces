@@ -4,6 +4,12 @@ var _ = require('lodash'),
 
 // Tests & specifies Journal functionality
 module.exports = function (newJournal) {
+  var timestamp;
+
+  beforeEach(function () {
+    timestamp = new Date().getTime();
+  });
+
   it('should store some details', function (done) {
     newJournal('a').putDetails({ name : 'A' }, pass(function () {
       newJournal('a').fetchDetails(pass(function (details) {
@@ -31,11 +37,12 @@ module.exports = function (newJournal) {
 
   it('should store an event', function (done) {
     newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').addEvent({ id : '1' }, pass(function () {
+      newJournal('a').addEvent({ id : '1' }, timestamp, pass(function () {
         newJournal('a').fetchEvents(pass(function (events) {
           assert.isArray(events);
           assert.lengthOf(events, 1);
           assert.equal(events[0].id, '1');
+          assert.equal(events[0].timestamp, timestamp);
           done();
         }, done));
       }, done));
@@ -44,12 +51,14 @@ module.exports = function (newJournal) {
 
   it('should store an array of events', function (done) {
     newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').addEvent([{ id : '1' }, { id : '2' }], pass(function () {
+      newJournal('a').addEvent([{ id : '1' }, { id : '2' }], timestamp, pass(function () {
         newJournal('a').fetchEvents(pass(function (events) {
           assert.isArray(events);
           assert.lengthOf(events, 2);
           assert.equal(events[0].id, '1');
           assert.equal(events[1].id, '2');
+          assert.equal(events[0].timestamp, timestamp);
+          assert.equal(events[1].timestamp, timestamp);
           done();
         }, done));
       }, done));
@@ -58,13 +67,15 @@ module.exports = function (newJournal) {
 
   it('should store two consecutive events', function (done) {
     newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').addEvent({ id : '1' }, pass(function () {
-        newJournal('a').addEvent({ id : '2' }, pass(function () {
+      newJournal('a').addEvent({ id : '1' }, timestamp, pass(function () {
+        newJournal('a').addEvent({ id : '2' }, timestamp, pass(function () {
           newJournal('a').fetchEvents(pass(function (events) {
             assert.isArray(events);
             assert.lengthOf(events, 2);
             assert.equal(events[0].id, '1');
             assert.equal(events[1].id, '2');
+            assert.equal(events[0].timestamp, timestamp);
+            assert.equal(events[1].timestamp, timestamp);
             done();
           }, done));
         }, done));

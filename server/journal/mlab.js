@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     _async = require('async'),
+    _events = require('../../lib/events'),
     log = require('../../lib/log'),
     mongodb = require('mongodb'),
     pass = require('pass-error'),
@@ -73,9 +74,9 @@ MLabJournal.prototype.nextEventSeq = MLabJournal.connected(function (inc, cb/*(e
     }, cb, null, this));
 });
 
-MLabJournal.prototype.addEvent = MLabJournal.connected(function (event, cb/*(err)*/) {
+MLabJournal.prototype.addEvent = MLabJournal.connected(function (data, timestamp, cb/*(err)*/) {
   // Atomically get a block of sequence numbers from the database
-  var events = _.castArray(event);
+  var events = _events.from(data, timestamp);
   this.nextEventSeq(events.length, pass(function (nextSeq) {
     MLabJournal.events.insert(_.map(events, _.bind(function (event) {
       return _.assign(event, {

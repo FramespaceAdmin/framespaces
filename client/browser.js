@@ -23,7 +23,7 @@ Object.defineProperties(exports, {
           return window.location.pathname;
         }
       },
-      root : {
+      rootname : {
         get : function () {
           return _.find(window.location.pathname && window.location.pathname.split('/'));
         }

@@ -25,7 +25,7 @@ Addition.prototype.isOK = function (picture) {
 };
 
 Addition.prototype.un = function () {
-  return new (require('./removal'))(this.shape, this.undoOptions());
+  return new (require('./removal'))(this.shape, { undoOf : this.id });
 };
 
 Addition.prototype.preview = function (picture, paper) {

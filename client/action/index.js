@@ -7,7 +7,7 @@ function Action(options) {
   this.description = _.get(options, 'description', '');
   this.confidence = _.get(options, 'confidence');
   this.isUser = _.get(options, 'isUser', false);
-  this.isUndo = _.get(options, 'isUndo', false);
+  this.undoOf = _.get(options, 'undoOf');
 }
 
 Action.OPTIONS = as(_.mapValues({
@@ -18,7 +18,7 @@ Action.OPTIONS = as(_.mapValues({
   next : Action, // Set by history
   results : Array, // the returned values from do(), cast to array, set by history
   confidence : as(Number).lt(1), // for futures
-  isUndo : Boolean
+  undoOf : String // GUID of action which this is undoing
 }, _.method('or', undefined))); // Options are optional
 
 /**
@@ -76,14 +76,7 @@ Action.prototype.preview = undefined;
  * @returns [JSON] Serialiseable data for this Action
  */
 Action.prototype.toJSON = function () {
-  return { id : this.id, isUndo : this.isUndo };
-};
-
-/**
- * @returns [Action.OPTIONS] The expected options to be applied to an undo Action
- */
-Action.prototype.undoOptions = function () {
-  return { id : this.id, isUndo : true };
+  return { id : this.id, undoOf : this.undoOf };
 };
 
 /**

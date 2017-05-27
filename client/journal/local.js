@@ -1,5 +1,5 @@
 var _ = require('lodash'),
-    _async = require('async'),
+    _events = require('../../lib/events'),
     browser = require('../browser'),
     Journal = require('../journal');
 
@@ -14,21 +14,21 @@ LocalJournal.prototype.length = function () {
   return Number(browser.localStorage.getItem(this.ns + ':length')) || 0;
 };
 
-LocalJournal.prototype.fetchEvents = _async.asyncify(function () {
+LocalJournal.prototype.fetchEvents = function (cb/*(err, snapshot, [event])*/) {
   var events = new Array(this.length());
   for (var i = 0; i < events.length; i++) {
     events[i] = JSON.parse(browser.localStorage.getItem(this.ns + ':' + i));
   }
-  return events;
-});
+  setTimeout(function () { cb(false, null, events) }, 0);
+};
 
-LocalJournal.prototype.addEvent = _async.asyncify(function (event) {
+LocalJournal.prototype.addEvent = function (subject, data, timestamp, cb/*(err, n)*/) {
   var len = this.length();
-  _.each(_.castArray(event), _.bind(function (e) {
+  _.each(_events.from(data, timestamp), _.bind(function (e) {
     browser.localStorage.setItem(this.ns + ':' + len, JSON.stringify(e));
     browser.localStorage.setItem(this.ns + ':length', ++len);
   }, this));
-  return len;
-});
+  setTimeout(function () { cb(false, len) }, 0);
+};
 
 module.exports = LocalJournal;

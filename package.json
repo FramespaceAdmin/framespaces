@@ -60,6 +60,7 @@
     "stop": "pkill -SIGINT Framespaces",
     "test": "mocha test",
     "unit": "NODE_ENV=development mocha",
+    "integration": "NODE_ENV=production mocha",
     "start:dev": "npm run build:dev && NODE_ENV=development node server/index.js",
     "restart:dev": "npm run build:dev && npm stop && NODE_ENV=development node server/index.js",
     "assets": "mkdir -p dist && cp -R web/* dist/",

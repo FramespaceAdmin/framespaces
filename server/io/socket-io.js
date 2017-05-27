@@ -26,29 +26,31 @@ SocketIo.prototype.createChannel = function (name, Journal, cb/*(err)*/) {
         log.debug('User', socket.user.id, 'connected');
 
         socket.broadcast.emit('user.connected', socket.user.id, socket.user);
-        socket.emit('user.connected', socket.user.id, socket.user);
+        socket.emit('user.connected', socket.user.id, new Date().getTime(), socket.user);
 
         _.each(ns.connected, function (otherSocket) {
           if (otherSocket !== socket && otherSocket.user) {
-            socket.emit('user.connected', otherSocket.user.id, otherSocket.user);
+            socket.emit('user.connected', otherSocket.user.id, new Date().getTime(), otherSocket.user);
           }
         });
 
         socket.on('action', function (action, cb) {
           cb || (cb = _.noop);
-          socket.broadcast.emit('action', socket.user.id, action);
-          socket.emit('action', socket.user.id, action); // Actions are echoed
+          var timestamp = new Date().getTime(), args = ['action', socket.user.id, timestamp, action];
+          socket.broadcast.emit.apply(socket.broadcast, args);
+          socket.emit.apply(socket, args); // Actions are echoed
+          
           validate.action(action, pass(function () {
-            Journal(name).addEvent(action, cb);
+            Journal(name).addEvent(action, timestamp, cb);
           }, cb));
         });
 
         socket.on('interactions', function (interactions) {
-          socket.broadcast.emit('interactions', socket.user.id, interactions);
+          socket.broadcast.emit('interactions', socket.user.id, new Date().getTime(), interactions);
         });
 
         socket.on('disconnect', function () {
-          socket.broadcast.emit('user.disconnected', socket.user.id);
+          socket.broadcast.emit('user.disconnected', socket.user.id, new Date().getTime());
           log.debug('User', socket.user.id, 'disconnected');
         });
       });
@@ -58,8 +60,10 @@ SocketIo.prototype.createChannel = function (name, Journal, cb/*(err)*/) {
 };
 
 SocketIo.prototype.publish = function (name, eventName, userId, data/*...*/, cb/*(err)*/) {
-  var args = ['emit'].concat(_.slice(arguments, 1));
-  _.each(this.namespaces[name].connected, _.method.apply(_, args));
+  var dataAndCb = _.slice(arguments, 3), timestamp = new Date().getTime();
+  _.each(this.namespaces[name].connected, function (ns) {
+    ns.emit.apply(ns, [eventName, userId, timestamp].concat(dataAndCb));
+  });
 };
 
 module.exports = SocketIo;

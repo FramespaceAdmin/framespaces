@@ -19,6 +19,6 @@ describe('Browser wrapper', function () {
 
   it('should report the pathname and root', function () {
     assert.equal(browser.url.pathname, '/fs');
-    assert.equal(browser.url.root, 'fs');
+    assert.equal(browser.url.rootname, 'fs');
   });
 });

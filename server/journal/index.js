@@ -37,11 +37,11 @@ Journal.prototype.putDetails = function (details, cb/*(details, err)*/) {
 };
 
 /**
- * Adds and persists events to this journal.
+ * Adds and persists events to this journal based on the given data.
  * @param events the events to add
  * @param cb callback with error and removed count
  */
-Journal.prototype.addEvent = function (event, cb/*(err)*/) {
+Journal.prototype.addEvent = function (data, timestamp, cb/*(err)*/) {
   throw undefined;
 };
 

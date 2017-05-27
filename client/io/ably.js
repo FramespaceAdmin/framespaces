@@ -15,11 +15,13 @@ function AblyIo(name) {
   this.channel = this.realtime.channels.get(name);
 
   this.channel.presence.get(pass(function(members) {
-    this.channel.presence.enter(this.user, pass(function () {
-      // Notify ourselves of connected user and existing users
-      _.each([this.user].concat(_.map(members, 'data')), _.bind(function (user) {
-        this.emit('user.connected', [user.id, user]);
-      }, this));
+    this.realtime.time(pass(function (timestamp) {
+      this.channel.presence.enter(this.user, pass(function () {
+        // Notify ourselves of existing users
+        _.each([{ data : this.user, timestamp : timestamp }].concat(members), _.bind(function (message) {
+          this.emit('user.connected', [message.data.id, message.timestamp, message.data]);
+        }, this));
+      }, this.close, null, this));
     }, this.close, null, this));
   }, this.close, null, this));
 
@@ -40,7 +42,7 @@ AblyIo.prototype.subscribe = function (eventName, subscriber) {
   // Ably subscribers get a Message object, not just data
   var ablySubscriber = _.bind(function (message) {
     if (event.echo || message.clientId !== this.user.id) {
-      subscriber.apply(this, [message.clientId].concat(message.data));
+      subscriber.apply(this, [message.clientId, message.timestamp].concat(message.data));
     }
   }, this);
   event.emitter.subscribe(event.name, ablySubscriber);

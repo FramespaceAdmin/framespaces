@@ -22,10 +22,10 @@ function Io(name, user) {
  * When subscribing, the arguments have the userId prepended.
  */
 Io.messages = {
-  'user.connected' : [{ id : String }], // Cannot be published
-  'user.disconnected' : [String], // Cannot be published, optional parameter is error cause
-  'action' : [Object], // Echoed to publisher
-  'interactions' : [Array] // NOT echoed to publisher
+  'user.connected' : { id : String }, // Cannot be published
+  'user.disconnected' : String, // Cannot be published, optional parameter is error cause
+  'action' : Object, // Echoed to publisher
+  'interactions' : Array // NOT echoed to publisher
 };
 
 /**
@@ -45,13 +45,13 @@ Io.prototype.close = function (err, cb/*(err)*/) {
  * @param subscriber event subscriber
  * @return this, for chaining
  */
-Io.prototype.subscribe = function (eventName, subscriber/*(userId, data...)*/) {
+Io.prototype.subscribe = function (eventName, subscriber/*(userId, timestamp, data...)*/) {
   throw undefined;
 };
 
 /**
  * Publish to the io channel.
- * NOTE a userId will be prepended to the arguments for subscribers.
+ * A userId and timestamp will be prepended to the arguments for subscribers.
  * @param eventName channel event name
  * @param data... data to publish
  * @param cb optional callback with error
@@ -78,7 +78,7 @@ Io.prototype.subscribers = function (eventName) {
 /**
  * Emits the given data locally (not to the IO channel).
  * Useful when simulating or batching channel IO.
- * @param data array of message arguments, including user id.
+ * @param data array of message arguments, including user id and timestamp.
  */
 Io.prototype.emit = function (eventName, data) {
   _.each(this.subscribers(eventName), function (subscriber) {
@@ -88,24 +88,27 @@ Io.prototype.emit = function (eventName, data) {
 
 /**
  * Pause the given channel events.
- * The play method given to the callback returns missed messages.
- * Each message is an array of subscriber arguments, [eventName, data...].
+ * The play method returned takes a function with a normal subscriber signature, which
+ * is called as expected for each event in turn.
+ * Each message is an array of subscriber arguments, [userId, timestamp, data...].
  * @param eventName channel event name
- * @param cb callback taking error and re-start (play) method
+ * @return re-start (play) method
  */
-Io.prototype.pause = function (eventName, cb/*(err, play(messages, [iteratee=_.identity]))*/) {
+Io.prototype.pause = function (eventName) {
   var subscribers = this.subscribers(eventName), pausedMessages = [];
   function pausedListener() {
     pausedMessages.push(_.toArray(arguments));
   }
   _.each(subscribers, _.bind(this.unsubscribe, this, eventName));
   this.subscribe(eventName, pausedListener);
-  cb(false, _.bind(function play() {
+  return _.bind(function play(subscriber) {
     this.unsubscribe(eventName, pausedListener);
     _.each(subscribers, _.bind(this.subscribe, this, eventName));
     // Emit the paused messages
-    return pausedMessages;
-  }, this));
+    _.each(pausedMessages, function (args) {
+      subscriber.apply(null, args);
+    });
+  }, this);
 };
 
 module.exports = Io;

@@ -10,7 +10,7 @@ SetAction.prototype = _.assign(Object.create(Action.prototype), {
     return s.set ? s.set(this.id) : (s[this.id] = true);
   },
   isOK : function (s) { return !s[this.id]; },
-  un : function () { return new UnsetAction(this.undoOptions()); },
+  un : function () { return new UnsetAction({ id : this.id, undoOf : this.id }); },
   toJSON : function () { return { id : this.id, type : 'mutation' }; }
 });
 SetAction.fromJSON = function (data) {
@@ -23,11 +23,11 @@ function UnsetAction(options) {
 UnsetAction.prototype = _.assign(Object.create(Action.prototype), {
   constructor : UnsetAction,
   do : function (s) {
-    s.unset ? s.unset(this.id) : (delete s[this.id]);
+    s.unset ? s.unset(this.id) : _.unset(s, this.id);
     return true;
   },
   isOK : function (s) { return !!s[this.id]; },
-  un : function () { return new SetAction(this.undoOptions()); }
+  un : function () { return new SetAction({ id : this.id, undoOf : this.id }); }
 });
 
 module.exports = SetAction;

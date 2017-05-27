@@ -11,10 +11,10 @@ exports.mixInto = function (prototype) {
     }, this.latency || 0);
   }
 
-  prototype.subscribe = function (eventName, subscriber/*(userId, data...)*/) {
+  prototype.subscribe = function (eventName, subscriber/*(userId, timestamp, data...)*/) {
     this.events.on(eventName, _.assign(_.bind(function (userId) {
       if (eventName !== 'interactions' || userId !== this.user.id) { // Interactions not echoed
-        this.latent(subscriber, arguments);
+        this.latent(subscriber, [userId, new Date().getTime()].concat(_.slice(arguments, 1)));
       }
     }, this), { subscriber : subscriber, io : this }));
   };

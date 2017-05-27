@@ -47,7 +47,7 @@
     "type" : { "type" : "string", "enum" : ["addition", "removal", "replacement", "mutation"] },
     "from" : { "$ref" : "#/definitions/shape" },
     "to" : { "$ref" : "#/definitions/shape" },
-    "isUndo" : { "type" : "boolean" }
+    "undoOf" : { "$ref": "#/definitions/guid" }
   },
   "required" : ["id", "type"],
   "additionalProperties" : false

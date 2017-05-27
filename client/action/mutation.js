@@ -28,7 +28,7 @@ Mutation.prototype.isOK = function (picture) {
 };
 
 Mutation.prototype.un = function () {
-  return new Mutation(this.to, this.from, this.undoOptions());
+  return new Mutation(this.to, this.from, { undoOf : this.id });
 };
 
 Mutation.prototype.preview = function (picture, paper) {

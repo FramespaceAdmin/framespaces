@@ -16,7 +16,7 @@ BrowserIo.prototype = Object.create(Io.prototype);
 BrowserIo.prototype.constructor = BrowserIo;
 
 BrowserIo.prototype.close = function (err, cb) {
-  this.emit('user.disconnected', [this.user.id, err]);
+  this.emit('user.disconnected', [this.user.id, new Date().getTime(), err]);
   cb && cb(false); // Do this before moving the window
   err && browser.goto('error?cause=' + encodeURIComponent(err));
 };

@@ -7,15 +7,22 @@ var assert = require('chai').assert,
     LocalJournal = require('../client/journal/local');
 
 function itIsJournal(Journal) {
+  var subject, timestamp;
+
+  beforeEach(function () {
+    subject = {};
+    timestamp = new Date().getTime();
+  });
+
   it('should initialise to an empty array', function (done) {
-    new Journal('ns').fetchEvents(pass(function (events) {
+    new Journal('ns').fetchEvents(pass(function (snapshot, events) {
       assert.deepEqual(events, []);
       done();
     }, done));
   });
 
   it('should store an event', function (done) {
-    new Journal('ns').addEvent({}, pass(function (n) {
+    new Journal('ns').addEvent(subject, {}, timestamp, pass(function (n) {
       assert.equal(n, 1);
       done();
     }, done));
@@ -23,9 +30,9 @@ function itIsJournal(Journal) {
 
   it('should report an event', function (done) {
     var journal = new Journal('ns');
-    journal.addEvent({}, pass(function () {
-      journal.fetchEvents(pass(function (events) {
-        assert.deepEqual(events, [{}]);
+    journal.addEvent(subject, {}, timestamp, pass(function () {
+      journal.fetchEvents(pass(function (snapshot, events) {
+        assert.deepEqual(events, [{ timestamp : timestamp }]);
         done();
       }, done));
     }, done));
@@ -33,10 +40,10 @@ function itIsJournal(Journal) {
 
   it('should store events in order', function (done) {
     var journal = new Journal('ns');
-    journal.addEvent({ a : 1 }, pass(function () {
-      journal.addEvent({ a : 2 }, pass(function () {
-        journal.fetchEvents(pass(function (events) {
-          assert.deepEqual(events, [{ a : 1 }, { a : 2 }]);
+    journal.addEvent(subject, { a : 1 }, timestamp, pass(function () {
+      journal.addEvent(subject, { a : 2 }, timestamp, pass(function () {
+        journal.fetchEvents(pass(function (snapshot, events) {
+          assert.deepEqual(events, [{ a : 1, timestamp : timestamp }, { a : 2, timestamp, timestamp }]);
           done();
         }, done));
       }, done));

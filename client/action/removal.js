@@ -26,7 +26,7 @@ Removal.prototype.isOK = function (picture) {
 };
 
 Removal.prototype.un = function () {
-  return new (require('./addition'))(this.shape, this.undoOptions());
+  return new (require('./addition'))(this.shape, { undoOf : this.id });
 };
 
 Removal.prototype.toJSON = function () {

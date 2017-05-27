@@ -25,7 +25,7 @@ AblyIo.prototype.createChannel = function (name, Journal, cb/*(err, channel)*/) 
     // TODO: Replace with a webtask to achieve stateless nirvana
     channel.subscribe('action', function (message) {
       validate.action(message.data, pass(function () {
-        Journal(name).addEvent(message.data, pass(_.noop, log.error));
+        Journal(name).addEvent(message.data, message.timestamp, pass(_.noop, log.error));
       }, log.error));
     });
   }

@@ -35,7 +35,7 @@ Batch.prototype.isOK = function (subject) {
 
 Batch.prototype.un = function () {
   var undoActions = _.reverse(_.map(this.batch, _.method('un')));
-  return new Batch(undoActions, this.undoOptions());
+  return new Batch(undoActions, { undoOf : this.id });
 };
 
 Batch.prototype.preview = function () {

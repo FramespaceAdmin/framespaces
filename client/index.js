@@ -6,6 +6,8 @@ var _ = require('lodash'),
     Toolbar = require('./toolbar'),
     Suggestor = require('./suggest'),
     Point = require('kld-affine').Point2D,
+    Io = require('./io'),
+    Journal = require('./journal'),
     keycode = require('keycode'),
     paper = browser.svg('.paper'),
     picture = new Picture(paper),
@@ -31,7 +33,8 @@ toolbar.prevButton.mousedown(function () { history.prev() });
 toolbar.nextButton.mousedown(function () { history.next() });
 history.on('revised', toolbar.updatePreviews);
 
-fs.load(browser.url.root, picture, function (user, commit) {
+var name = browser.url.rootname;
+fs.load(picture, new Io(name), new Journal(name), function (user, commit) {
   window.onblur = function () {
     user.interacting({ active : false, char : null });
   };
