@@ -1,7 +1,6 @@
 var Io = require('../io'),
     browser = require('../browser'),
-    jwtDecode = require('jwt-decode'),
-    request = require('request');
+    jwtDecode = require('jwt-decode');
 
 /**
  * Base class for browser-based IO.

@@ -54,5 +54,10 @@ Object.defineProperties(exports, {
     get : function() {
       return require('hamsterjs');
     }
+  },
+  domParser : {
+    value : function() {
+      return new DOMParser();
+    }
   }
 });

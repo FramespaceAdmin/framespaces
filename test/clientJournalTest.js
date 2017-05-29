@@ -1,45 +1,63 @@
-require('jsdom-global')();
-
-var assert = require('chai').assert,
+var _ = require('lodash'),
+    _async = require('async'),
+    _events = require('../lib/events'),
+    assert = require('chai').assert,
     pass = require('pass-error'),
+    proxyquire = require('proxyquire').noCallThru(),
+    nock = require('nock'),
     Storage = require('dom-storage'),
-    MemoryJournal = require('../client/journal/memory'),
-    LocalJournal = require('../client/journal/local');
+    browser = {
+      localStorage : new Storage(null, { strict: true }),
+      url : function () { return _.concat(['http://localhost'], arguments).join('/'); }
+    },
+    config = _({ // Settable config
+      snapshotFrequency : 10
+    }),
+    Journal = proxyquire('../client/journal', {
+      '../browser' : browser,
+      'config' : config
+    }),
+    requires = {
+      '../browser' : browser,
+      '../journal' : Journal
+    },
+    MemoryJournal = proxyquire('../client/journal/memory', requires),
+    LocalJournal = proxyquire('../client/journal/local', requires),
+    RemoteJournal = proxyquire('../client/journal/remote', requires);
 
 function itIsJournal(Journal) {
-  var subject, timestamp;
+  var journal, subject, timestamp;
 
   beforeEach(function () {
-    subject = {};
+    journal = new Journal('ns');
+    subject = { getState : _.constant('snapshot') };
     timestamp = new Date().getTime();
   });
 
   it('should initialise to an empty array', function (done) {
-    new Journal('ns').fetchEvents(pass(function (snapshot, events) {
+    journal.fetchEvents(pass(function (snapshot, events) {
       assert.deepEqual(events, []);
       done();
     }, done));
   });
 
   it('should store an event', function (done) {
-    new Journal('ns').addEvent(subject, {}, timestamp, pass(function (n) {
+    journal.addEvent(subject, { a : 1 }, timestamp, pass(function (n) {
       assert.equal(n, 1);
       done();
     }, done));
   });
 
   it('should report an event', function (done) {
-    var journal = new Journal('ns');
-    journal.addEvent(subject, {}, timestamp, pass(function () {
+    journal.addEvent(subject, { a : 1 }, timestamp, pass(function () {
       journal.fetchEvents(pass(function (snapshot, events) {
-        assert.deepEqual(events, [{ timestamp : timestamp }]);
+        assert.deepEqual(events, [{ a : 1, timestamp : timestamp }]);
         done();
       }, done));
     }, done));
   });
 
   it('should store events in order', function (done) {
-    var journal = new Journal('ns');
     journal.addEvent(subject, { a : 1 }, timestamp, pass(function () {
       journal.addEvent(subject, { a : 2 }, timestamp, pass(function () {
         journal.fetchEvents(pass(function (snapshot, events) {
@@ -49,7 +67,62 @@ function itIsJournal(Journal) {
       }, done));
     }, done));
   });
+
+  it('should store an array of events', function (done) {
+    journal.addEvent(subject, [{ a : 1 }, { a : 2 }], timestamp, pass(function () {
+      journal.fetchEvents(pass(function (snapshot, events) {
+        assert.deepEqual(events, [{ a : 1, timestamp : timestamp }, { a : 2, timestamp, timestamp }]);
+        done();
+      }, done));
+    }, done));
+  });
+
+  it('should take a snapshot after enough events', function (done) {
+    _async.timesSeries(10, function (n, cb) {
+      journal.addEvent(subject, { a : 1 }, timestamp, cb);
+    }, pass(function () {
+        journal.fetchEvents(pass(function (snapshot, events) {
+          assert.deepEqual(events, []);
+          assert.deepEqual(snapshot, { state : 'snapshot', timestamp : timestamp });
+          done();
+        }, done));
+    }, done));
+  });
+
+  it('should report events after a snapshot', function (done) {
+    _async.timesSeries(10, function (n, cb) {
+      journal.addEvent(subject, { a : 1 }, timestamp, cb);
+    }, pass(function () {
+      journal.addEvent(subject, { a : 2 }, timestamp, pass(function () {
+        journal.fetchEvents(pass(function (snapshot, events) {
+          assert.deepEqual(snapshot, { state : 'snapshot', timestamp : timestamp });
+          assert.deepEqual(events, [{ a : 2, timestamp : timestamp }]);
+          done();
+        }, done));
+      }, done));
+    }, done));
+  });
 }
+
+describe('Client journal selection', function () {
+  var localStorage = browser.localStorage;
+  it('selects a remote journal unless local is asked for', function () {
+    assert.instanceOf(Journal(), RemoteJournal);
+  });
+  it('selects a local journal if local is asked for', function () {
+    config.set('modules.io', 'local').value();
+    assert.instanceOf(Journal(), LocalJournal);
+  });
+  it('selects a memory journal if not local storage available', function () {
+    config.set('modules.io', 'local').value();
+    delete browser.localStorage;
+    assert.instanceOf(Journal(), MemoryJournal);
+  });
+  afterEach(function () {
+    _.unset(config.value(), 'modules.io');
+    browser.localStorage = localStorage;
+  });
+});
 
 describe('Client memory journal', function () {
   itIsJournal(MemoryJournal);
@@ -57,14 +130,27 @@ describe('Client memory journal', function () {
 
 describe('Client local journal', function () {
   beforeEach(function () {
-    window.localStorage = new Storage(null, { strict: true });
-    global.localStorage = window.localStorage;
+    browser.localStorage.clear();
   });
-
   itIsJournal(LocalJournal);
+});
 
-  afterEach(function () {
-    delete window.localStorage;
-    delete global.localStorage;
+describe('Client remote journal', function () {
+  var events, snapshot;
+  beforeEach(function () {
+    events = [];
+    nock('http://localhost').get('/ns/events').twice().reply(200, function () {
+      return { snapshot : snapshot, events : events };
+    });
+    nock('http://localhost').post('/ns/snapshot', function (body) {
+      return body.state && body.timestamp && (events = []) && !!(snapshot = body);
+    }).reply(202);
   });
+  // Simulate the adding of events to the remote journal
+  var nativeAddEvent = RemoteJournal.prototype.addEvent;
+  RemoteJournal.prototype.addEvent = function (subject, data, timestamp, cb) {
+    events.push.apply(events, _events.from(data, timestamp));
+    return nativeAddEvent.call(this, subject, data, timestamp, cb);
+  };
+  itIsJournal(RemoteJournal);
 });

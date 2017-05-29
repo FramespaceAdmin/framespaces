@@ -182,4 +182,12 @@ Picture.prototype.zoom = function (amount, clientCentre) {
   this.viewBox({ x : x, y : y, width : width, height : height });
 };
 
+Picture.prototype.getState = function () {
+  return this.paper.innerSVG();
+};
+
+Picture.prototype.setState = function (state) {
+  this.paper.node.innerHTML = state;
+};
+
 module.exports = Picture;

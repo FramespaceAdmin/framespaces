@@ -3,5 +3,6 @@
   "modules" : {
     "io" : "socket-io",
     "journal" : "taffy"
-  }
+  },
+  "snapshotFrequency" : 100
 }
