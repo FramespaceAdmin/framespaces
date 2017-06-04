@@ -5,7 +5,7 @@ var _ = require('lodash'),
     guid = require('../lib/guid');
 
 function setReqUser(req, jwt, next) {
-  _jwt.verify(jwt, process.env.FS_JWT_SECRET, pass(function (user) {
+  _jwt.verify(jwt, process.env.FS_SECRET, pass(function (user) {
     log.trace('%s: %s authorised for user %s', req.method, req.url, user.id);
     req.user = user;
     next();
@@ -14,7 +14,7 @@ function setReqUser(req, jwt, next) {
 
 function generateUser(req, res, next) {
   var user = { id : guid() };
-  _jwt.sign(user, process.env.FS_JWT_SECRET, {}, pass(function (jwt) {
+  _jwt.sign(user, process.env.FS_SECRET, {}, pass(function (jwt) {
     req.user = user;
     res.cookie('jwt', jwt);
     next();

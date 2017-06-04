@@ -8,7 +8,7 @@ var _ = require('lodash'),
     Io = require('../io');
 
 function initParams() {
-  return { key : process.env.FS_ABLY_DEV_KEY, log : { level : log.scale(4, -1) } };
+  return { key : process.env.FS_ABLY_KEY, log : { level : log.scale(4, -1) } };
 }
 
 function AblyIo() {

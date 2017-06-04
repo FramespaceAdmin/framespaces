@@ -14,9 +14,9 @@ To re-start, `npm run restart:dev`
 See `package.json` for other exciting scripts.
 
 The following environment variables need to be set up in the development environment:
-* `FS_JWT_SECRET` (for signing temporary JWTs for anonymous users)
-* `FS_MLAB_DEV_URL` (if active config has `modules.journal` as `mlab`)
-* `FS_ABLY_DEV_KEY` (if active config has `modules.io` as `ably`)
+* `FS_SECRET` (for general encryption e.g. signing temporary JWTs for anonymous users)
+* `FS_MONGO_URL` (if active config has `modules.journal` as `mongodb`)
+* `FS_ABLY_KEY` (if active config has `modules.io` as `ably`)
 
 ## Dependencies
 Browser tabs I have permanently open:

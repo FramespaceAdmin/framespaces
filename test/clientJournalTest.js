@@ -2,6 +2,7 @@ var _ = require('lodash'),
     _async = require('async'),
     _events = require('../lib/events'),
     assert = require('chai').assert,
+    guid = require('../lib/guid'),
     pass = require('pass-error'),
     proxyquire = require('proxyquire').noCallThru(),
     nock = require('nock'),
@@ -26,12 +27,17 @@ var _ = require('lodash'),
     RemoteJournal = proxyquire('../client/journal/remote', requires);
 
 function itIsJournal(Journal) {
-  var journal, subject, timestamp;
+  var journal, subject, timestamp,
+      data1 = { id : guid(), a : 1 },
+      data2 = { id : guid(), a : 2 },
+      event1, event2;
 
   beforeEach(function () {
     journal = new Journal('ns');
     subject = { getState : _.constant('snapshot') };
     timestamp = new Date().getTime();
+    event1 = { id : data1.id, a : 1, timestamp : timestamp };
+    event2 = { id : data2.id, a : 2, timestamp : timestamp };
   });
 
   it('should initialise to an empty array', function (done) {
@@ -42,26 +48,26 @@ function itIsJournal(Journal) {
   });
 
   it('should store an event', function (done) {
-    journal.addEvent(subject, { a : 1 }, timestamp, pass(function (n) {
+    journal.addEvent(subject, data1, timestamp, pass(function (n) {
       assert.equal(n, 1);
       done();
     }, done));
   });
 
   it('should report an event', function (done) {
-    journal.addEvent(subject, { a : 1 }, timestamp, pass(function () {
+    journal.addEvent(subject, data1, timestamp, pass(function () {
       journal.fetchEvents(pass(function (snapshot, events) {
-        assert.deepEqual(events, [{ a : 1, timestamp : timestamp }]);
+        assert.deepEqual(events, [event1]);
         done();
       }, done));
     }, done));
   });
 
   it('should store events in order', function (done) {
-    journal.addEvent(subject, { a : 1 }, timestamp, pass(function () {
-      journal.addEvent(subject, { a : 2 }, timestamp, pass(function () {
+    journal.addEvent(subject, data1, timestamp, pass(function () {
+      journal.addEvent(subject, data2, timestamp, pass(function () {
         journal.fetchEvents(pass(function (snapshot, events) {
-          assert.deepEqual(events, [{ a : 1, timestamp : timestamp }, { a : 2, timestamp, timestamp }]);
+          assert.deepEqual(events, [event1, event2]);
           done();
         }, done));
       }, done));
@@ -69,9 +75,9 @@ function itIsJournal(Journal) {
   });
 
   it('should store an array of events', function (done) {
-    journal.addEvent(subject, [{ a : 1 }, { a : 2 }], timestamp, pass(function () {
+    journal.addEvent(subject, [data1, data2], timestamp, pass(function () {
       journal.fetchEvents(pass(function (snapshot, events) {
-        assert.deepEqual(events, [{ a : 1, timestamp : timestamp }, { a : 2, timestamp, timestamp }]);
+        assert.deepEqual(events, [event1, event2]);
         done();
       }, done));
     }, done));
@@ -79,11 +85,15 @@ function itIsJournal(Journal) {
 
   it('should take a snapshot after enough events', function (done) {
     _async.timesSeries(10, function (n, cb) {
-      journal.addEvent(subject, { a : 1 }, timestamp, cb);
+      journal.addEvent(subject, data1, timestamp, cb);
     }, pass(function () {
         journal.fetchEvents(pass(function (snapshot, events) {
           assert.deepEqual(events, []);
-          assert.deepEqual(snapshot, { state : 'snapshot', timestamp : timestamp });
+          assert.deepEqual(snapshot, {
+            lastEventId : data1.id,
+            state : 'snapshot',
+            timestamp : timestamp
+          });
           done();
         }, done));
     }, done));
@@ -91,12 +101,16 @@ function itIsJournal(Journal) {
 
   it('should report events after a snapshot', function (done) {
     _async.timesSeries(10, function (n, cb) {
-      journal.addEvent(subject, { a : 1 }, timestamp, cb);
+      journal.addEvent(subject, data1, timestamp, cb);
     }, pass(function () {
-      journal.addEvent(subject, { a : 2 }, timestamp, pass(function () {
+      journal.addEvent(subject, data2, timestamp, pass(function () {
         journal.fetchEvents(pass(function (snapshot, events) {
-          assert.deepEqual(snapshot, { state : 'snapshot', timestamp : timestamp });
-          assert.deepEqual(events, [{ a : 2, timestamp : timestamp }]);
+          assert.deepEqual(snapshot, {
+            lastEventId : data1.id,
+            state : 'snapshot',
+            timestamp : timestamp
+          });
+          assert.deepEqual(events, [event2]);
           done();
         }, done));
       }, done));

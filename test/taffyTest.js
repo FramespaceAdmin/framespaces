@@ -1,6 +1,9 @@
 var _ = require('lodash'),
     itIsAJournal = require('./journalSpec'),
-    TaffyJournal = require('../server/journal/taffy');
+    proxyquire = require('proxyquire'),
+    TaffyJournal = proxyquire('../server/journal/taffy', {
+      'config' : _({ snapshotFrequency : 0 })
+    });
 
 // Tests Taffy implementation of Journal functionality.
 describe('Journal (taffy)', function () {

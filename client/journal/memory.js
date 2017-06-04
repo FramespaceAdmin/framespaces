@@ -1,5 +1,4 @@
 var _ = require('lodash'),
-    _events = require('../../lib/events'),
     Journal = require('../journal');
 
 /**
@@ -29,12 +28,13 @@ MemoryJournal.prototype.fetchEvents = function (cb/*(err, snapshot, [event])*/) 
 };
 
 MemoryJournal.prototype.addEvent = function (subject, data, timestamp, cb/*(err, length)*/) {
-  var length = this.events.push.apply(this.events, _events.from(data, timestamp)),
-      snapshot = this.maybeSnapshot(0, subject, timestamp);
-  if (snapshot) {
+  var length, maybeSnapshot = this.maybeSnapshot(subject, data, timestamp);
+  if (maybeSnapshot.snapshot) {
     this.events = [];
-    this.snapshot = snapshot;
+    this.snapshot = maybeSnapshot.snapshot;
     length = 0;
+  } else {
+    length = this.events.push.apply(this.events, maybeSnapshot.events)
   }
   this.asyncSuccess(cb, length);
 };

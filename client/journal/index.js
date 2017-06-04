@@ -1,5 +1,5 @@
 var _ = require('lodash'),
-    as = require('yavl'),
+    _events = require('../../lib/events'),
     config = require('config'),
     browser = require('../browser');
 
@@ -17,14 +17,6 @@ function Journal(ns) {
   }
   this.ns = ns;
 }
-
-/**
- * Snapshot structure
- */
-Journal.SNAPSHOT = {
-  state : as(Object, String/*, Element*/),
-  timestamp : Number
-};
 
 /**
  * @return the number of events since the last snapshot (not in the whole journal)
@@ -54,16 +46,21 @@ Journal.prototype.fetchEvents = function (cb/*(err, snapshot, [event])*/) {
 };
 
 /**
- * Utility function to take a snapshot if one is due.
+ * Utility function to take a snapshot if one is due. Returns: {
+ *   snapshot : snapshot taken from subject, as _events.SNAPSHOT, or undefined
+ *   events : events taken from the given data, as array of _events.EVENT
+ * }
  * @param subject the subject of the journal, from which it may collect a snapshot
- * @param count the number of incoming events
+ * @param data the event data (array or single object)
  * @param timestamp when the events occurred
- * @return the snapshot state, or undefined if not due
+ * @return the snapshot and new events
  */
-Journal.prototype.maybeSnapshot = function (count, subject, timestamp) {
-  if (this.length() + count >= config.get('snapshotFrequency')) {
-    return { state : subject.getState(), timestamp : timestamp };
+Journal.prototype.maybeSnapshot = function (subject, data, timestamp) {
+  var events = _events.from(data, timestamp), snapshot;
+  if (events.length && this.length() + events.length >= config.get('snapshotFrequency')) {
+    snapshot = { lastEventId : _.last(events).id, state : subject.getState(), timestamp : timestamp };
   }
+  return { snapshot : snapshot, events : events };
 };
 
 /**

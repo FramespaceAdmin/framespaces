@@ -76,11 +76,24 @@ app.get('/:fsName', auth.setCookie, function (req, res, next) {
 });
 
 /**
- * GETting the actions for a framespace.
+ * GETting the events for a framespace.
  */
-app.get('/:fsName/actions', auth.cookie, function (req, res, next) {
-  Journal(req.params.fsName).fetchEvents(pass(function (actions) {
-    return res.send(actions);
+app.get('/:fsName/events', auth.cookie, function (req, res, next) {
+  Journal(req.params.fsName).fetchEvents(pass(function (snapshot, events) {
+    return res.send({ snapshot : snapshot, events : events });
+  }, next));
+});
+
+/**
+ * POSTing a snapshot to the namespace.
+ */
+app.post('/:fsName/snapshot', auth.cookie, function (req, res, next) {
+  // TODO: 100 - Continue dance
+  var journal = Journal(req.params.fsName);
+  return journal.offerSnapshot(req.body.timestamp, pass(function (nonce) {
+    return nonce ? journal.addSnapshot(nonce, req.body, pass(function () {
+      return res.send(201); // Created
+    }, next)) : res.send(409); // Conflict
   }, next));
 });
 

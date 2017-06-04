@@ -1,5 +1,4 @@
 var _ = require('lodash'),
-    _events = require('../../lib/events'),
     browser = require('../browser'),
     Journal = require('../journal');
 
@@ -27,14 +26,17 @@ LocalJournal.prototype.item = function (key, str) {
 LocalJournal.prototype.snapshotItem = function (snapshot) {
   if (_.isUndefined(snapshot)) {
     var state = this.item('snapshot:state'),
-        timestamp = Number(this.item('snapshot:timestamp')) || 0;
+        timestamp = Number(this.item('snapshot:timestamp')) || 0,
+        lastEventId = this.item('snapshot:lastEventId');
     if (state != null) {
-      return { state : state, timestamp : timestamp };
+      return { lastEventId : lastEventId, state : state, timestamp : timestamp };
     }
   } else if (snapshot == null) {
+    this.item('snapshot:lastEventId', null);
     this.item('snapshot:state', null);
     this.item('snapshot:timestamp', null);
   } else {
+    this.item('snapshot:lastEventId', snapshot.lastEventId);
     this.item('snapshot:state', snapshot.state);
     this.item('snapshot:timestamp', snapshot.timestamp);
   }
@@ -42,19 +44,22 @@ LocalJournal.prototype.snapshotItem = function (snapshot) {
 
 LocalJournal.prototype.fetchEvents = function (cb/*(err, snapshot, [event])*/) {
   var events = new Array(this.length()), snapshot = this.snapshotItem();
-  _.times(events.length, _.bind(function (i) { events[i] = JSON.parse(this.item('events:' + i)); }, this));
+  _.times(events.length, _.bind(function (i) {
+    events[i] = JSON.parse(this.item('events:' + i));
+  }, this));
   this.asyncSuccess(cb, snapshot, events);
 };
 
 LocalJournal.prototype.addEvent = function (subject, data, timestamp, cb/*(err, n)*/) {
-  var length = this.length(), events = _events.from(data, timestamp),
-      snapshot = this.maybeSnapshot(events.length, subject, timestamp);
-  if (snapshot) {
+  var length = this.length(), maybeSnapshot = this.maybeSnapshot(subject, data, timestamp);
+  if (maybeSnapshot.snapshot) {
     _.times(length, _.bind(function (i) { this.item('events:' + i, null); }, this));
     this.item('events:length', length = 0);
-    this.snapshotItem(snapshot);
+    this.snapshotItem(maybeSnapshot.snapshot);
   } else {
-    _.each(events, _.bind(function (e) { this.item('events:' + length++, JSON.stringify(e)); }, this));
+    _.each(maybeSnapshot.events, _.bind(function (e) {
+      this.item('events:' + length++, JSON.stringify(e));
+    }, this));
     this.item('events:length', length);
   }
   this.asyncSuccess(cb, length);
