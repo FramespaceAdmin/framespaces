@@ -128,6 +128,7 @@ MongoDbJournal.prototype.addEvent = MongoDbJournal.connected(function (data, tim
 
 MongoDbJournal.prototype.nonce = function (timestamp) {
   var hmac = _crypto.createHmac('sha256', process.env.FS_SECRET);
+  hmac.update(this.id);
   hmac.update('' + timestamp);
   return hmac.digest('base64');
 };
@@ -135,9 +136,9 @@ MongoDbJournal.prototype.nonce = function (timestamp) {
 MongoDbJournal.prototype.offerSnapshot = MongoDbJournal.connected(function (timestamp, cb/*(err, nonce)*/) {
   // Basic policy: accept anything with a timestamp that we don't already have
   // TODO: Root out snapshots for which the last event never arrives
-  MongoDbJournal.snapshots.findOne({ fs : this.id, timestamp : timestamp }, { fields : {
-    lastEventId : 1, _id : 1
-  } }, pass(function (existing) {
+  MongoDbJournal.snapshots.findOne({ fs : this.id, timestamp : timestamp }, {
+    fields : { lastEventId : 1, _id : 1 }
+  }, pass(function (existing) {
     // Shortcut if we already have a snapshot at this timestamp
     return existing ? cb(false) : this.lastValidSnapshot({ timestamp : 1 }, pass(function (snapshot) {
       return MongoDbJournal.events.count({
