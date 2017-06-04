@@ -2,6 +2,7 @@ var _ = require('lodash'),
     _async = require('async'),
     _events = require('../../lib/events'),
     _crypto = require('crypto'),
+    config = require('config'),
     log = require('../../lib/log'),
     pass = require('pass-error'),
     Journal = require('../journal');
@@ -61,20 +62,28 @@ MongoDbJournal.prototype.fetchDetails = MongoDbJournal.connected(function (cb/*(
   }, cb));
 });
 
-MongoDbJournal.prototype.fetchEvents = MongoDbJournal.connected(function (cb/*(err, snapshot, [event])*/) {
+MongoDbJournal.prototype.lastValidSnapshot = function (fields, cb/*(err, snapshot, lastEventSeq)*/) {
   // Get the last snapshot for which an event exists
-  var ssCursor = MongoDbJournal.snapshots.find({ fs : this.id }).sort({ timestamp : -1 });
+  var ssCursor = MongoDbJournal.snapshots.find(
+    { fs : this.id },
+    { fields : _.set(fields, 'lastEventId', 1) } // Require this field for finding the event
+    ).sort({ timestamp : -1 });
+
   _async.doUntil(function (cb) {
-      return ssCursor.nextObject(pass(function (snapshot) {
-        return snapshot ? MongoDbJournal.events.findOne({
-          _id : snapshot.lastEventId
-        }, { fields : { seq : 1 } }, pass(function (lastEvent) {
-          return cb(false, snapshot, lastEvent ? lastEvent.seq : -1);
-        }, cb)) : cb(false, null, -1); // No more snapshots, return events from beginning
+    return ssCursor.nextObject(pass(function (snapshot) {
+      return snapshot ? MongoDbJournal.events.findOne({
+        _id : snapshot.lastEventId
+      }, { fields : { seq : 1 } }, pass(function (lastEvent) {
+        return cb(false, snapshot, lastEvent ? lastEvent.seq : -1);
+      }, cb)) : cb(false, null, -1); // No more snapshots, return events from beginning
     }, cb));
   }, function (snapshot, lastEventSeq) {
     return !snapshot || lastEventSeq > -1;
-  }, pass(function (snapshot, lastEventSeq) {
+  }, cb);
+};
+
+MongoDbJournal.prototype.fetchEvents = MongoDbJournal.connected(function (cb/*(err, snapshot, [event])*/) {
+  this.lastValidSnapshot({ lastEventId : 1, state : 1, timestamp : 1 }, pass(function (snapshot, lastEventSeq) {
     return MongoDbJournal.events.find({
       fs : this.id, seq : { $gt : lastEventSeq }
     }).sort({ seq : 1 }).toArray(pass(function (events) {
@@ -125,12 +134,18 @@ MongoDbJournal.prototype.nonce = function (timestamp) {
 
 MongoDbJournal.prototype.offerSnapshot = MongoDbJournal.connected(function (timestamp, cb/*(err, nonce)*/) {
   // Basic policy: accept anything with a timestamp that we don't already have
-  // TODO: Enforce snapshot frequency
   // TODO: Root out snapshots for which the last event never arrives
   MongoDbJournal.snapshots.findOne({ fs : this.id, timestamp : timestamp }, { fields : {
     lastEventId : 1, _id : 1
   } }, pass(function (existing) {
-    return cb(false, existing ? undefined : this.nonce(timestamp));
+    // Shortcut if we already have a snapshot at this timestamp
+    return existing ? cb(false) : this.lastValidSnapshot({ timestamp : 1 }, pass(function (snapshot) {
+      return MongoDbJournal.events.count({
+        timestamp : { $gt : _.get(snapshot, 'timestamp', 0) }
+      }, pass(function (count) {
+        return cb(false, count >= config.get('snapshotFrequency') ? this.nonce(timestamp) : undefined);
+      }, cb, null, this));
+    }, cb, null, this));
   }, cb, null, this));
 });
 
