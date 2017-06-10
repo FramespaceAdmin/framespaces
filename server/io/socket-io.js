@@ -4,7 +4,6 @@ var _ = require('lodash'),
     validate = require('../../lib/validate'),
     log = require('../../lib/log'),
     pass = require('pass-error'),
-    modules = require('../../lib/modules'),
     Io = require('../io');
 
 function SocketIo(server) {

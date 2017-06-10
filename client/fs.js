@@ -43,7 +43,7 @@ exports.load = function (subject, io, journal, connected/*(localUser, commit)*/)
          * This leaves the tiny possibility that we duplicate the last millisecond of events
          * leading to a snapshot. This should be covered by action idempotency.
          */
-        subject.setState(_.get(snapshot, 'data'));
+        subject.setState(_.get(snapshot, 'state'));
         playStartupEvents(function (userId, timestamp, data) {
           if (timestamp >= _.get(_.last(events) || snapshot, 'timestamp', 0) && !_.find(events, { id : data.id })) {
             events.push(data);

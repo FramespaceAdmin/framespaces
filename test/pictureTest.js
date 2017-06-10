@@ -78,4 +78,24 @@ describe('Picture', function () {
     picture.changed([rect1, rect2]);
     assert.deepEqual(_.toArray(paper.node.getElementsByTagName('rect')), [rect2.node, rect1.node]);
   });
+
+  it('should report its state', function () {
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
+    var rect = paper.rect(1, 1, 1, 1).attr('id', 'guid');
+    assert.equal(picture.getState(), '<rect x="1" y="1" width="1" height="1" id="guid"/>');
+  });
+
+  it('should recover elements from state', function () {
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
+    picture.setState('<rect x="1" y="1" width="1" height="1" id="guid"/>');
+    var rect = picture.elements('rect')[0];
+    assert.equal(rect.attr('id'), 'guid');
+  });
+
+  it('should recover indexes from state', function () {
+    var paper = MockPaper(10, 10), picture = new Picture(paper);
+    picture.setState('<rect x="1" y="1" width="1" height="1" id="guid"/>');
+    var rect = picture.elements({ x : 0, y : 0, width : 10, height : 10 })[0];
+    assert.equal(rect.attr('id'), 'guid');
+  });
 });

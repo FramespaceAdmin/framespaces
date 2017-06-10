@@ -4,7 +4,6 @@ var _ = require('lodash'),
     validate = require('../../lib/validate'),
     pass = require('pass-error'),
     guid = require('../../lib/guid'),
-    modules = require('../../lib/modules'),
     Io = require('../io');
 
 function initParams() {

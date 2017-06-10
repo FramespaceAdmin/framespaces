@@ -7,12 +7,12 @@ function Journal(ns) {
   if (!(this instanceof Journal) || this.constructor === Journal) {
     if (config.get('modules.io') === 'local') {
       if (browser.localStorage) {
-        return new (require('./local'))();
+        return new (require('./local'))(ns);
       } else {
-        return new (require('./memory'))();
+        return new (require('./memory'))(ns);
       }
     } else {
-      return new (require('./remote'))();
+      return new (require('./remote'))(ns);
     }
   }
   this.ns = ns;

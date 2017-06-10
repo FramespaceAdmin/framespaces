@@ -188,6 +188,7 @@ Picture.prototype.getState = function () {
 
 Picture.prototype.setState = function (state) {
   this.paper.node.innerHTML = state;
+  this.changed(this.elements('*'));
 };
 
 module.exports = Picture;

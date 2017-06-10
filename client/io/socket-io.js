@@ -8,7 +8,7 @@ function SocketIo(name) {
   this.socket = global.io(browser.url(name, 'io'));
   this.socket.on('connect_error', _.bind(this.close, this));
 
-  var jwt = this.jwt, user = this.user;
+  var jwt = this.jwt;
   this.socket.on('user.token', function (tokenIs) { tokenIs(jwt); });
 }
 

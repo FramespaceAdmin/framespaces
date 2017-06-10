@@ -18,7 +18,7 @@ Text.fromElement = function (e) {
     var tspans = node.querySelectorAll('tspan'),
         content = tspans.length ? _.map(tspans, Text.Span.fromElement) : node.textContent;
     return new Text(Text.elementAttr(e), content, bbox);
-  })(e.node|| e, e.getBBox());
+  })(e.node || e, e.getBBox());
 };
 
 Text.elementAttr = function (e) {

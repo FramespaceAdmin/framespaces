@@ -40,6 +40,10 @@ function itIsJournal(Journal) {
     event2 = { id : data2.id, a : 2, timestamp : timestamp };
   });
 
+  it('should have the given namespace', function () {
+    assert.equal(journal.ns, 'ns');
+  });
+
   it('should initialise to an empty array', function (done) {
     journal.fetchEvents(pass(function (snapshot, events) {
       assert.deepEqual(events, []);

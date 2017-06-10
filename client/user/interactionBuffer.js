@@ -1,3 +1,6 @@
+var _ = require('lodash'),
+    config = require('config');
+
 function InteractionBuffer(io) {
   this.buffer = [];
   this.io = io;
@@ -5,7 +8,7 @@ function InteractionBuffer(io) {
 
 InteractionBuffer.prototype.push = function (state) {
   if (!this.buffer.length) {
-    setTimeout(_.bind(this.flush, this), 100);
+    setTimeout(_.bind(this.flush, this), config.get('interactionDelay'));
   }
   this.buffer.push(state);
 };

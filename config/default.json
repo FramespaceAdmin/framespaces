@@ -4,5 +4,6 @@
     "io" : "socket-io",
     "journal" : "taffy"
   },
+  "interactionDelay" : 100,
   "snapshotFrequency" : 100
 }

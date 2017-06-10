@@ -7,7 +7,7 @@ var modules = require('../../lib/modules');
  */
 function Journal(id) {
   if (!(this instanceof Journal) || this.constructor === Journal) {
-    return new (require(modules.journal))(id);
+    return new (require('../' + modules.journal))(id);
   }
   this.id = id;
 }

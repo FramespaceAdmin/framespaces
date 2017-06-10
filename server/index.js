@@ -18,13 +18,19 @@ var _ = require('lodash'),
     Journal = require('./journal'),
     io = new Io(server);
 
-// Note, this is used from the stop and restart scripts
+// This is used from the stop and restart scripts
 process.title = 'Framespaces';
 
 app.set('view engine', 'ejs');
 app.use('/web', express.static('dist'));
 app.use(bodyParser.json());
 app.use(cookieParser());
+
+function clientConfig(overrides) {
+  return _.transform(overrides, function (result, value, path) {
+    return _.set(result, path, value);
+  }, _.pick(config, require('./clientConfigs')), overrides);
+}
 
 /**
  * GETting the base URL creates a browser-local framespace
@@ -33,7 +39,7 @@ app.use(cookieParser());
 app.get('/', auth.setCookie, function (req, res, next) {
   res.render('index', {
     fs : { name : 'anonymouse' },
-    config : _.set(_.pick(config, 'log'), 'modules.io', 'local' ) // Local IO for anonymous fs
+    config : clientConfig({ 'modules.io' : 'local' }) // Local IO for anonymous fs
   })
 });
 
@@ -69,14 +75,14 @@ app.get('/:fsName', auth.setCookie, function (req, res, next) {
     return fs ? io.createChannel(fs.name, Journal, pass(function () {
       return res.render('index', {
         fs : fs,
-        config : _.pick(config, 'log', 'modules.io')
+        config : clientConfig()
       });
     }, next)) : res.sendStatus(404);
   }, next));
 });
 
 /**
- * GETting the events for a framespace.
+ * GETting the last snapshot and subsequent events for a framespace.
  */
 app.get('/:fsName/events', auth.cookie, function (req, res, next) {
   Journal(req.params.fsName).fetchEvents(pass(function (snapshot, events) {

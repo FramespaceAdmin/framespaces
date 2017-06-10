@@ -33,7 +33,7 @@ toolbar.prevButton.mousedown(function () { history.prev() });
 toolbar.nextButton.mousedown(function () { history.next() });
 history.on('revised', toolbar.updatePreviews);
 
-var name = browser.url.rootname;
+var name = browser.url.rootname || 'anonymouse';
 fs.load(picture, new Io(name), new Journal(name), function (user, commit) {
   window.onblur = function () {
     user.interacting({ active : false, char : null });
