@@ -33,6 +33,8 @@ Third-party services for production use:
 - Deployment (proposed) https://zeit.co/now
 - Random words http://developer.wordnik.com/docs.html
 - Random robots! https://robohash.org/
+- Avatars https://en.gravatar.com/
+- Face recognition https://www.kairos.com/
 
 Also used:
 
