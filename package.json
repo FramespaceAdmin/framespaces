@@ -41,6 +41,7 @@
     "storage-available": "^1.0.0",
     "svg-intersections": "^0.3.0",
     "svg-points": "^2.0.1",
+    "tab-elect": "^0.1.2",
     "taffydb": "^2.7.2",
     "url-join": "^1.1.0",
     "vex-js": "^3.1.1",

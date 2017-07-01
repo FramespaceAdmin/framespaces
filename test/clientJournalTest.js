@@ -9,7 +9,8 @@ var _ = require('lodash'),
     Storage = require('dom-storage'),
     browser = {
       localStorage : new Storage(null, { strict: true }),
-      url : function () { return _.concat(['http://localhost'], arguments).join('/'); }
+      url : function () { return _.concat(['http://localhost'], arguments).join('/'); },
+      tabElect : _.constant({ isLeader : true, on : _.noop })
     },
     config = _({ // Settable config
       snapshotFrequency : 10

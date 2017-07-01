@@ -69,5 +69,15 @@ Object.defineProperties(exports, {
       }
       return this.vex.dialog;
     }
+  },
+  tabElect : {
+    get : function () {
+      return require('tab-elect');
+    }
+  },
+  on : {
+    get : function () {
+      return _.bind(window.addEventListener, window);
+    }
   }
 });

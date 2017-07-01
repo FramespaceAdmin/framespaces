@@ -1,9 +1,15 @@
 var _ = require('lodash'),
     browser = require('../browser'),
+    log = require('../../lib/log'),
     Journal = require('../journal');
 
 function LocalJournal(ns) {
   Journal.call(this, ns);
+
+  this.tabElect = browser.tabElect(ns);
+  this.tabElect.on('elected', _.bind(log.info, log, 'Elected Local Journal leader'));
+  this.tabElect.on('deposed', _.bind(log.info, log, 'Unelected Local Journal leader'));
+  this.tabElect.on('error', _.bind(log.error, log, 'Journal leadership error: %s'));
 }
 
 LocalJournal.prototype = Object.create(Journal.prototype);
@@ -19,6 +25,7 @@ LocalJournal.prototype.length = function () {
 LocalJournal.prototype.item = function (key, str) {
   var itemKey = this.ns + ':' + key;
   return _.isUndefined(str) ? browser.localStorage.getItem(itemKey) : 
+    !this.tabElect.isLeader ? undefined :
     str == null ? browser.localStorage.removeItem(itemKey) :
     browser.localStorage.setItem(itemKey, str);
 };

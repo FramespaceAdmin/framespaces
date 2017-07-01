@@ -23,8 +23,7 @@ MemoryJournal.prototype.length = function () {
 };
 
 MemoryJournal.prototype.fetchEvents = function (cb/*(err, snapshot, [event])*/) {
-  var events = this.events, snapshot = this.snapshot;
-  this.asyncSuccess(cb, snapshot, events);
+  this.asyncSuccess(cb, this.snapshot, this.events);
 };
 
 MemoryJournal.prototype.addEvent = function (subject, data, timestamp, cb/*(err, length)*/) {
