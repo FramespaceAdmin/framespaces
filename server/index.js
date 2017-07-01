@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 var _ = require('lodash'),
+    _url = require('url'),
     config = require('config'),
     log = require('../lib/log'),
     express = require('express'),
@@ -9,6 +10,7 @@ var _ = require('lodash'),
     validate = require('../lib/validate'),
     app = express(),
     server = require('http').createServer(app),
+    mailer = require('express-mailer'),
     _word = require('./word'),
     pass = require('pass-error'),
     _async = require('async'),
@@ -26,6 +28,14 @@ app.use('/web', express.static('dist'));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
+mailer.extend(app, _.assign(_.clone(config.get('login.email')), {
+  auth : {
+    type : 'LOGIN', // The default 'PLAIN' is rejected by secureserver
+    user : config.get('login.email.from'),
+    pass : process.env.EMAIL_PASSWORD
+  }
+}));
+
 function clientConfig(overrides) {
   return _.transform(overrides, function (result, value, path) {
     return _.set(result, path, value);
@@ -40,7 +50,7 @@ app.get('/', auth.setCookie, function (req, res, next) {
   res.render('index', {
     fs : { name : 'anonymouse' },
     config : clientConfig({ 'modules.io' : 'local' }) // Local IO for anonymous fs
-  })
+  });
 });
 
 /**
@@ -98,8 +108,8 @@ app.post('/:fsName/snapshot', auth.cookie, function (req, res, next) {
   var journal = Journal(req.params.fsName);
   return journal.offerSnapshot(req.body.timestamp, pass(function (nonce) {
     return nonce ? journal.addSnapshot(nonce, req.body, pass(function () {
-      return res.send(201); // Created
-    }, next)) : res.send(409); // Conflict
+      return res.sendStatus(201); // Created
+    }, next)) : res.sendStatus(409); // Conflict
   }, next));
 });
 
@@ -108,6 +118,33 @@ app.post('/:fsName/snapshot', auth.cookie, function (req, res, next) {
  */
 app.get('/:fsName/channel/auth', auth.cookie, function (req, res, next) {
   io.authorise(req.params.fsName, req.user.id, pass(_.bind(res.send, res), next));
+});
+
+/**
+ * POSTing a login request. Note that this operates on anonymous and named framespaces.
+ */
+app.post(['/login', '/:fsName/login'], auth.cookie, function (req, res, next) {
+  auth.loginQuery({
+    timestamp : new Date().getTime(),
+    user : _.set(req.user, 'email', req.body.email)
+  }, pass(function (query) {
+    // Send a login email to the given address
+    app.mailer.send('loginEmail', {
+      to : req.body.email,
+      subject : 'Log into Framespaces',
+      // Login URL directs us back to this framespace with a login key
+      loginUrl : _url.format({
+        protocol : req.protocol,
+        host : req.header('X-Forwarded-Host') || req.header('Host'),
+        pathname : '/' + (req.params.fsName || ''),
+        query : query
+      }),
+      fsName : req.params.fsName,
+      invitedBy : req.body.invitedBy
+    }, pass(function () {
+      return res.sendStatus(202); // Accepted
+    }, next));
+  }, next));
 });
 
 /**

@@ -34,7 +34,7 @@ function BrowserUser(json) {
   var toolbar = new BrowserUser.Toolbar(toolbarSvg, _.concat(userButton, auxButtons));
   userButton.mouseover(_.bind(toolbar.show, toolbar));
   toolbarSvg.node.onmouseleave = _.bind(toolbar.unshow, toolbar);
-};
+}
 
 BrowserUser.prototype = Object.create(User.prototype);
 BrowserUser.prototype.constructor = BrowserUser;

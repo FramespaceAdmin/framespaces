@@ -45,3 +45,9 @@
   transform: translate(3px, 3px);
   filter: none;
 }
+.vex.vex-theme-wireframe .vex-content {
+  /* Override of vex defaults */
+  font-family: 'Comic Sans', 'Comic Sans MS', cursive;
+  stroke: none;
+  letter-spacing: -1px;
+}

@@ -1,7 +1,9 @@
 <html>
   <head>
     <title>Framespace <%= fs.name %></title>
-    <link rel="stylesheet" type="text/css" href="/web/style.css">
+    <link rel="stylesheet" href="/web/vex.css" />
+    <link rel="stylesheet" href="/web/vex-theme-wireframe.css" />
+    <link rel="stylesheet" href="/web/style.css">
     <% if (config.modules.io == 'socket-io') { %>
       <script src="/socket.io/socket.io.js"></script>
     <% } else if (config.modules.io == 'ably') { %>

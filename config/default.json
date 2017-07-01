@@ -5,5 +5,14 @@
     "journal" : "taffy"
   },
   "interactionDelay" : 100,
-  "snapshotFrequency" : 100
+  "snapshotFrequency" : 100,
+  "login" : {
+    "timeout" : 600000,
+    "email" : {
+      "from": "login@framespaces.com",
+      "host": "smtpout.secureserver.net",
+      "secureConnection": true,
+      "port": 465
+    }
+  }
 }

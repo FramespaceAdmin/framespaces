@@ -41,23 +41,33 @@ Object.defineProperties(exports, {
     }
   },
   html : {
-    get : function() {
+    get : function () {
       return require('html.js');
     }
   },
   svg : {
-    get : function() {
+    get : function () {
       return require('snapsvg');
     }
   },
   hamster : {
-    get : function() {
+    get : function () {
       return require('hamsterjs');
     }
   },
   domParser : {
-    value : function() {
+    value : function () {
       return new DOMParser();
+    }
+  },
+  dialog : {
+    get : function () {
+      if (!this.vex) {
+        this.vex = require('vex-js');
+        this.vex.registerPlugin(require('vex-dialog'));
+        this.vex.defaultOptions.className = 'vex-theme-wireframe';
+      }
+      return this.vex.dialog;
     }
   }
 });
