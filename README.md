@@ -24,7 +24,7 @@ Browser tabs I have permanently open:
 - https://lodash.com/docs
 - http://caolan.github.io/async/
 - http://chaijs.com/api/assert/
-- http://snapsvg.io/docs/ (all references to SVG elements and "paper" are Snap objects)
+- http://svgjs.com/ (all references to SVG elements and "paper" are SVG.js Elements)
 
 Third-party services for production use:
 - Realtime message delivery https://www.ably.io/documentation (for dev & test using http://socket.io/docs/)

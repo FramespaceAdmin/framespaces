@@ -1,5 +1,7 @@
 var _ = require('lodash'),
     BrowserUser = require('./browser'),
+    Shape = require('../shape'),
+    Point = require('kld-affine').Point2D,
     tools = require('../tool'),
     html = require('html.js'),
     browser = require('../browser');
@@ -21,20 +23,19 @@ RemoteUser.prototype = Object.create(BrowserUser.prototype);
 RemoteUser.prototype.constructor = RemoteUser;
 
 RemoteUser.prototype.showInteraction = function (delta, state) {
-  var x = 0, y = 0;
+  var scrPoint = new Point(0, 0);
   if (!delta || delta.active) {
     this.avatar.style.position = state.active ? 'fixed' : 'absolute';
     this.cursor.style.display = state.active && this.tool ? 'block' : 'none';
     this.cursor.src = this.tool ? '/web/' + this.tool.constructor.name.toLowerCase() + '.svg' : '';
   }
   if (state.active) {
-    var svgToScr = browser.svg.matrix(html.query('.paper').getScreenCTM());
-    x = svgToScr.x(state.x, state.y);
-    y = svgToScr.y(state.x, state.y);
+    var svgToScr = Shape.matrix(html.query('.paper').getScreenCTM());
+    scrPoint = new Point(state.x, state.y).transform(svgToScr);
   }
-  _.assign(this.avatar.style, { left : x, top : y });
+  _.assign(this.avatar.style, { left : scrPoint.x, top : scrPoint.y });
   var cursorOffset = _.get(this.tool, 'offset') || { x : 0, y : 0 };
-  _.assign(this.cursor.style, { left : x - cursorOffset.x, top : y - cursorOffset.y });
+  _.assign(this.cursor.style, { left : scrPoint.x - cursorOffset.x, top : scrPoint.y - cursorOffset.y });
 };
 
 RemoteUser.prototype.interact = function (interactions) {

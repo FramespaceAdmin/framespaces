@@ -54,7 +54,7 @@ describe('Polygon', function () {
     var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
-      var polygon = Shape.of(paper.polygon(0, 0, 1, 0, 1, 1, 0, 1));
+      var polygon = Shape.of(paper.polygon([0, 0, 1, 0, 1, 1, 0, 1]));
       assert.equal(polygon.name, 'polygon');
       assert.equal(polygon.getPoints().length, 4);
       assert.equal(polygon.getExtent(), Math.sqrt(2));

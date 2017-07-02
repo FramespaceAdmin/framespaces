@@ -231,6 +231,13 @@ Shape.prototype.scale = function (matrix) {
 };
 
 /**
+ * Trivial utility to construct a matrix from anything with a, b, c, d, e & f properties.
+ */
+Shape.matrix = function (m) {
+  return new Matrix(m.a, m.b, m.c, m.d, m.e, m.f);
+};
+
+/**
  * Transform this shape according to the given matrix, as best possible while keeping the
  * shape's class. For example, a circle should not become an ellipse.
  * @param matrix the transformation matrix
@@ -381,12 +388,20 @@ Shape.applyAttr = function (e, attr) {
  * Add this shape (and children or text) to the given SVG paper (or paper wrapper, e.g. from Snap.svg)
  */
 Shape.prototype.addTo = function (paper) {
-  var e = paper.el ? paper.el(this.name, this.attr) : (function (shape) {
-    var e = paper.ownerDocument.createElementNS('http://www.w3.org/2000/svg', shape.name);
-    shape.applyTo(e);
-    paper.appendChild(e);
-    return e;
-  })(this);
+  var e = (function () {
+    if (paper.el) {
+      return paper.el(this.name, this.attr); // Snap-like
+    } else if (paper.element) {
+      return paper.element(this.name).attr(this.attr); // svg.js-like
+    } else if (_.isElement(paper)) {
+      var e = paper.ownerDocument.createElementNS('http://www.w3.org/2000/svg', this.name);
+      this.applyTo(e);
+      paper.appendChild(e);
+      return e;
+    } else {
+      throw new Error('Don\'t know how to draw on ' + paper);
+    }
+  }).call(this);
 
   if (this.text) {
     (e.node || e).textContent = this.text;
@@ -432,7 +447,7 @@ Shape.elementName = function (e) {
 };
 
 /**
- * Returns the attributes of the given element (or element wrapper, e.g. from Snap.svg).
+ * Returns the attributes of the given element or element wrapper, e.g. from Snap.svg.
  * If an attribute name is passed, returns the attribute value.
  */
 Shape.elementAttr = function (e, name) {
@@ -445,6 +460,36 @@ Shape.elementAttr = function (e, name) {
       return _.set(attr, attribute.name, attribute.textContent);
     }, {});
   }
+};
+
+/**
+ * Returns the given named style attribute of the element or element wrapper, e.g. from Snap.svg.
+ */
+Shape.elementStyle = function (e, name) {
+  return Shape.elementAttr(e, name) || (e.node || e).style[name];
+};
+
+/**
+ * Gets a bbox for the given element or element wrapper, e.g. from Snap.svg,
+ * as best is available natively. Note that Shapes are usually capable of generating
+ * a bbox for themselves.
+ */
+Shape.elementBBox = function (e) {
+  return (e.bbox || e.getBBox).call(e);
+};
+
+/**
+ * Selects child elements for the given element or element wrapper, e.g. from Snap.svg
+ */
+Shape.elementSelectAll = function (e, selector) {
+  return (e.node || e).querySelectorAll(selector);
+};
+
+/**
+ * Returns text content for the given element or element wrapper, e.g. from Snap.svg
+ */
+Shape.elementText = function (e) {
+  return (e.node || e).textContent;
 };
 
 /**

@@ -25,7 +25,7 @@ Picture.prototype = Object.create(EventEmitter.prototype);
 Picture.prototype.constructor = Picture;
 
 Picture.prototype.getElement = function (id) {
-  return this.paper.select('#' + id);
+  return this.paper.select('#' + id).first();
 };
 
 Picture.prototype.getShape = function (e, changed) {
@@ -38,12 +38,14 @@ Picture.SELECTOR = as(String).and(as.size().gt(0)).or({
 
 Picture.prototype.elements = function (selector, filter) {
   Picture.SELECTOR.validate(selector);
-  if (_.isString(selector)) {
-    elements = this.paper.selectAll(selector + '[id]');
-  } else {
-    elements = _(this.rtree.search(rtreeSelector(selector)))
-      .map('id').uniq().map(_.bind(this.getElement, this)).compact().value();
-  }
+  var elements = (function (picture) {
+    if (_.isString(selector)) {
+      return picture.paper.select(selector + '[id]').members;
+    } else {
+      return _(picture.rtree.search(rtreeSelector(selector)))
+        .map('id').uniq().map(_.bind(picture.getElement, picture)).compact().value();
+    }
+  })(this);
   return _.filter(elements, function (e) {
     return _.get(e.node, 'style.display') !== 'none' && e.node.id && (!filter || filter(e));
   });
@@ -115,7 +117,7 @@ Picture.prototype.changed = function (elements) {
     var id = element.attr('id');
     if (id) {
       this.rtree.remove({ id : id }, function (a, b) { return a.id === b.id; });
-      if (!element.removed) {
+      if (element.parent()) {
         var shape = this.getShape(element, true);
         this.rtree.insert(_.set(rtreeSelector(shape.getBBox()), 'id', id));
         blastBBox = Shape.bbox(blastBBox, shape);
@@ -183,7 +185,7 @@ Picture.prototype.zoom = function (amount, clientCentre) {
 };
 
 Picture.prototype.getState = function () {
-  return this.paper.innerSVG();
+  return this.paper.node.innerHTML;
 };
 
 Picture.prototype.setState = function (state) {

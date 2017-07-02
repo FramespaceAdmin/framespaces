@@ -6,6 +6,7 @@ var _ = require('lodash'),
     Toolbar = require('./toolbar'),
     Suggestor = require('./suggest'),
     Point = require('kld-affine').Point2D,
+    Shape = require('./shape'),
     Io = require('./io'),
     Journal = require('./journal'),
     keycode = require('keycode'),
@@ -59,12 +60,13 @@ fs.load(picture, new Io(name), new Journal(name), function (user, commit) {
   });
   var mouse;
   function svgPosition() {
-    var screenToSvg = browser.svg.matrix(paper.node.getScreenCTM()).invert();
-    return { x : screenToSvg.x(mouse.x, mouse.y), y : screenToSvg.y(mouse.x, mouse.y) };
+    var screenToSvg = Shape.matrix(paper.node.getScreenCTM()).inverse(),
+        svgMouse = mouse.transform(screenToSvg);
+    return { x : svgMouse.x, y : svgMouse.y };
   }
-  function mouseHandler(e, x, y) {
-    mouse = new Point(x, y);
-    var element = document.elementFromPoint(x, y);
+  function mouseHandler(e) {
+    mouse = new Point(e.screenX, e.screenY);
+    var element = document.elementFromPoint(mouse.x, mouse.y);
     if (_.get(element, 'nodeName') === 'tspan') {
       element = element.parentElement;
     }

@@ -14,17 +14,16 @@ Text.fromJSON = function (data) {
 };
 
 Text.fromElement = function (e) {
-  return Shape.elementName(e) === 'text' && (function (node, bbox) {
-    var tspans = node.querySelectorAll('tspan'),
-        content = tspans.length ? _.map(tspans, Text.Span.fromElement) : node.textContent;
-    return new Text(Text.elementAttr(e), content, bbox);
-  })(e.node || e, e.getBBox());
+  return Shape.elementName(e) === 'text' && (function (tspans) {
+    var content = tspans.length ? _.map(tspans, Text.Span.fromElement) : Shape.elementText(e);
+    return new Text(Text.elementAttr(e), content, Shape.elementBBox(e));
+  })(Shape.elementSelectAll(e, 'tspan'));
 };
 
 Text.elementAttr = function (e) {
   var attr = Shape.elementAttr(e);
   // Grab a font-size inline style attribute, if in pixels
-  var fsStr = attr['font-size'] || (e.node || e).style.getPropertyValue('font-size'),
+  var fsStr = Shape.elementStyle(e, 'font-size'),
       fsParts = fsStr && /([0-9\.]+)(\w{2})?/.exec(fsStr);
   if (fsParts && (!fsParts[2] || fsParts[2] === 'px')) {
     attr['font-size'] = Number(fsParts[1]);

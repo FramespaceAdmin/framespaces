@@ -25,7 +25,7 @@ describe('Snap suggestor', function () {
   it('should snap a line and a polyline together', function () {
     var paper = MockPaper(10, 10), picture = new Picture(paper);
     var oldline = paper.line(0, 0, 0.99, 0).attr('id', guid());
-    var polyline = paper.polyline(1, 0, 2, 0, 2, 1).attr('id', guid());
+    var polyline = paper.polyline([1, 0, 2, 0, 2, 1]).attr('id', guid());
     var action = snap(picture, { results : [polyline] });
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
@@ -36,7 +36,7 @@ describe('Snap suggestor', function () {
 
   it('should snap a polyline closed', function () {
     var paper = MockPaper(10, 10), picture = new Picture(paper);
-    var polyline = paper.polyline(0, 0, 1, 0, 1, 1, 0, 1, 0, 0.01).attr('id', guid());
+    var polyline = paper.polyline([0, 0, 1, 0, 1, 1, 0, 1, 0, 0.01]).attr('id', guid());
     var action = snap(picture, { results : [polyline] });
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);

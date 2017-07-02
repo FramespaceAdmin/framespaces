@@ -29,7 +29,7 @@ describe('Rectify suggestor', function () {
   });
 
   it('should rectify a polyline', function () {
-    var pl = paper.polyline(0, 0, 1, 0.01, 1.01, 1).attr('id', guid());
+    var pl = paper.polyline([0, 0, 1, 0.01, 1.01, 1]).attr('id', guid());
     var action = rectify(picture, { results : [pl] });
     assert.isOk(action);
     assert.isAtLeast(action.confidence, 0.9);
