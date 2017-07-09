@@ -74,7 +74,7 @@ Text.Span.fromJSON = function (data) {
 
 Text.Span.fromElement = function (e) {
   return Shape.elementName(e) === 'tspan' &&
-    new Text.Span(Shape.elementAttr(e), (e.node || e).textContent, e.getBBox());
+    new Text.Span(Shape.elementAttr(e), Shape.elementText(e), Shape.elementBBox(e));
 };
 
 Text.Span.prototype = Object.create(Text.prototype);

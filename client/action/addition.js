@@ -5,7 +5,9 @@ var _ = require('lodash'),
 
 function Addition(shape, options) {
   Action.call(this, options);
-  this.shape = shape.id ? shape : shape.clone({ id : guid() });
+  // Keep a wary eye out for temporary SVG.js guids
+  this.shape = shape.id && shape.id.match(/^[a-f][a-f0-9]{31}$/) ?
+    shape : shape.clone({ id : guid() });
 }
 
 Addition.fromJSON = function (data) {

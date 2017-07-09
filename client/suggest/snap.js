@@ -12,7 +12,7 @@ function getConfidence(p1, p2, s1, s2) {
 }
 
 module.exports = function suggestSnap(picture, lastAction) {
-  var element = _.last(lastAction.results), shape = element && !element.removed && Shape.of(element);
+  var element = _.last(lastAction.results), shape = Shape.ofAttached(element);
   if (shape && shape.getEnds().length) {
     var reverseShape = _.invoke(shape, 'reverse'), snaps = [];
 

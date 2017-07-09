@@ -40,14 +40,14 @@ Picture.prototype.elements = function (selector, filter) {
   Picture.SELECTOR.validate(selector);
   var elements = (function (picture) {
     if (_.isString(selector)) {
-      return picture.paper.select(selector + '[id]').members;
+      return Shape.elementSelectAll(picture.paper, selector + '[id]');
     } else {
       return _(picture.rtree.search(rtreeSelector(selector)))
         .map('id').uniq().map(_.bind(picture.getElement, picture)).compact().value();
     }
   })(this);
   return _.filter(elements, function (e) {
-    return _.get(e.node, 'style.display') !== 'none' && e.node.id && (!filter || filter(e));
+    return e.style('display') !== 'none' && e.attr('id') && (!filter || filter(e));
   });
 };
 
@@ -117,7 +117,7 @@ Picture.prototype.changed = function (elements) {
     var id = element.attr('id');
     if (id) {
       this.rtree.remove({ id : id }, function (a, b) { return a.id === b.id; });
-      if (element.parent()) {
+      if (!Shape.elementRemoved(element)) {
         var shape = this.getShape(element, true);
         this.rtree.insert(_.set(rtreeSelector(shape.getBBox()), 'id', id));
         blastBBox = Shape.bbox(blastBBox, shape);
@@ -162,12 +162,12 @@ Picture.prototype.labelChanged = function (element) {
 
 Picture.prototype.viewBox = function (newBox) {
   if (newBox) {
-    this.paper.attr('viewBox', [newBox.x, newBox.y, newBox.width, newBox.height].join(' '));
+    this.paper.viewbox(newBox.x, newBox.y, newBox.width, newBox.height);
     this.emit('viewChanged', newBox);
     return newBox;
   } else {
     // Establish the current view box (client rect at 0,0 if not available)
-    var vb = this.paper.attr('viewBox') || this.paper.node.getBoundingClientRect();
+    var vb = this.paper.viewbox() || this.paper.node.getBoundingClientRect();
     return _.defaults(_.pick(vb, 'x', 'y', 'width', 'height'), { x : 0, y : 0 });
   }
 };

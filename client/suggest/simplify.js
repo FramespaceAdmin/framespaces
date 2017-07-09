@@ -51,7 +51,7 @@ function suggestSegments(polyline, begin) {
 }
 
 module.exports = function suggestSimplify(picture, lastAction) {
-  var element = _.last(lastAction.results), shape = element && !element.removed && Shape.of(element);
+  var element = _.last(lastAction.results), shape = Shape.ofAttached(element);
   if (shape && shape instanceof Polyline && shape.getPoints().length > 2) {
     var segments = suggestSegments(shape, 0), lastSegment = _.last(segments);
     // For a polygon, the last segment may wrap. If so, try again with the last segment end.

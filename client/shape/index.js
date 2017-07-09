@@ -117,6 +117,13 @@ Shape.of = function (element) {
 };
 
 /**
+ * Utility that checks the element is not falsey and has not been removed from the DOM
+ */
+Shape.ofAttached = function (element) {
+  return element && !Shape.elementRemoved(element) && Shape.of(element);
+};
+
+/**
  * Lazily computed property
  */
 Shape.prototype.getParams = function () {
@@ -392,7 +399,7 @@ Shape.prototype.addTo = function (paper) {
     if (paper.el) {
       return paper.el(this.name, this.attr); // Snap-like
     } else if (paper.element) {
-      return paper.element(this.name).attr(this.attr); // svg.js-like
+      return paper.element(this.name).attr(this.attr).attr('id', this.id || ''); // svg.js-like
     } else if (_.isElement(paper)) {
       var e = paper.ownerDocument.createElementNS('http://www.w3.org/2000/svg', this.name);
       this.applyTo(e);
@@ -482,7 +489,13 @@ Shape.elementBBox = function (e) {
  * Selects child elements for the given element or element wrapper, e.g. from Snap.svg
  */
 Shape.elementSelectAll = function (e, selector) {
-  return (e.node || e).querySelectorAll(selector);
+  if (e.selectAll) {
+    return e.selectAll(selector); // Snap.svg style
+  } else if (e.select) {
+    return _.get(e.select(selector), 'members', []); // SVG.js parent style
+  } else if (_.isElement(e.node || e)) {
+    return (e.node || e).querySelectorAll(selector);
+  }
 };
 
 /**
@@ -490,6 +503,13 @@ Shape.elementSelectAll = function (e, selector) {
  */
 Shape.elementText = function (e) {
   return (e.node || e).textContent;
+};
+
+/**
+ * Determines if the given element has been removed from the DOM
+ */
+Shape.elementRemoved = function (e) {
+  return _.isFunction(e.parent) ? !e.parent() : e.removed || !e.parentNode;
 };
 
 /**
@@ -551,10 +571,7 @@ function strongBBox(b) {
     y2 : y2(b),
     cx : cx,
     cy : cy,
-    c : b.c || new Point(cx, cy),
-    r1 : b.r1 || Math.min(b.width, b.height)/2,
-    r2 : b.r2 || Math.max(b.width, b.height)/2,
-    r0 : b.r0 || Math.sqrt(b.width*b.width + b.height*b.height)/2
+    c : b.c || new Point(cx, cy)
   };
 }
 

@@ -65,7 +65,7 @@ fs.load(picture, new Io(name), new Journal(name), function (user, commit) {
     return { x : svgMouse.x, y : svgMouse.y };
   }
   function mouseHandler(e) {
-    mouse = new Point(e.screenX, e.screenY);
+    mouse = new Point(e.clientX, e.clientY);
     var element = document.elementFromPoint(mouse.x, mouse.y);
     if (_.get(element, 'nodeName') === 'tspan') {
       element = element.parentElement;
@@ -79,7 +79,7 @@ fs.load(picture, new Io(name), new Journal(name), function (user, commit) {
   paper.mousedown(mouseHandler).mouseup(mouseHandler).mousemove(mouseHandler);
   // If the picture view changes, silently update the user position
   picture.on('viewChanged', function () {
-    user.update(svgPosition());
+    mouse && user.update(svgPosition());
   });
 
   // Zoom with mouse wheel
