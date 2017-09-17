@@ -52,12 +52,13 @@ describe('Framespace client', function () {
 
   it('should apply a remote action received during load', function (done) {
     var emitter = new EventEmitter();
-    var journal = new MemoryJournal('fs', function fetchEvents(cb/*(err, snapshot, [event])*/) {
+    var journal = new MemoryJournal('fs');
+    journal.fetchEvents = function (cb/*(err, snapshot, [event])*/) {
       emitter.emit('action', 'uid', { id: A_ID }); // Send the action while events are being fetched
       setTimeout(function () { // Wait 10ms for the event to be async received
         cb(false, null, []); // No fetched snapshot or events
       }, 10);
-    });
+    };
     fs.load(subject, new MockIo('fs', { events: emitter }), journal, function connected(user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
@@ -66,12 +67,13 @@ describe('Framespace client', function () {
 
   it('should not re-apply an action received during load', function (done) {
     var emitter = new EventEmitter();
-    var journal = new MemoryJournal('fs', function fetchEvents(cb/*(err, snapshot, [event])*/) {
+    var journal = new MemoryJournal('fs')
+    journal.fetchEvents = function (cb/*(err, snapshot, [event])*/) {
       emitter.emit('action', 'uid', { id: A_ID }); // Send the action while events are being fetched
       setTimeout(function () { // Wait 10ms for the event to be async received
         cb(false, null, [{ id: A_ID }]); // Emitted event is also fetched
       }, 10);
-    });
+    };
     subject.set = function expectA(key) {
       assert.equal(key, A_ID);
       assert.isNotOk(subject[A_ID]); // Only set once
