@@ -50,40 +50,53 @@ describe('Framespace client', function () {
     });
   });
 
-  it('should apply a remote action (before loaded)', function (done) {
-    fs.load(subject, new MockIo('fs'), new MemoryJournal('fs', [{ id : A_ID }]), function (user, commit) {
+  it('should apply a remote action received during load', function (done) {
+    var emitter = new EventEmitter();
+    var journal = new MemoryJournal('fs', function fetchEvents(cb/*(err, snapshot, [event])*/) {
+      emitter.emit('action', 'uid', { id: A_ID }); // Send the action while events are being fetched
+      setTimeout(function () { // Wait 10ms for the event to be async received
+        cb(false, null, []); // No fetched snapshot or events
+      }, 10);
+    });
+    fs.load(subject, new MockIo('fs', { events: emitter }), journal, function connected(user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
     });
   });
 
-  it('should apply a remote action (during load)', function (done) {
+  it('should not re-apply an action received during load', function (done) {
     var emitter = new EventEmitter();
-    fs.load(subject, new MockIo('fs', { events : emitter }), new MemoryJournal('fs', function (cb/*(err, [event])*/) {
-      emitter.emit('action', 'uid', { id : A_ID });
-      setTimeout(function () { // Event is received async
-        cb(false, null, []);
-      }, 0);
-    }), function (user, commit) {
+    var journal = new MemoryJournal('fs', function fetchEvents(cb/*(err, snapshot, [event])*/) {
+      emitter.emit('action', 'uid', { id: A_ID }); // Send the action while events are being fetched
+      setTimeout(function () { // Wait 10ms for the event to be async received
+        cb(false, null, [{ id: A_ID }]); // Emitted event is also fetched
+      }, 10);
+    });
+    subject.set = function expectA(key) {
+      assert.equal(key, A_ID);
+      assert.isNotOk(subject[A_ID]); // Only set once
+      subject[key] = true;
+    };
+    fs.load(subject, new MockIo('fs', { events: emitter }), journal, function connected(user, commit) {
       assert.isTrue(subject[A_ID]);
       done();
     });
   });
 
-  it('should apply a remote action (after loaded)', function (done) {
+  it('should apply a remote action after loaded', function (done) {
     var emitter = new EventEmitter();
-    fs.load(subject, new MockIo('fs', { events : emitter }), new MemoryJournal('fs'), function (user, commit) {
+    fs.load(subject, new MockIo('fs', { events : emitter }), new MemoryJournal('fs'), function connected(user, commit) {
       emitter.emit('action', 'uid', { id : A_ID });
       setTimeout(function () { // Event is received async
         assert.isTrue(subject[A_ID]);
         done();
-      }, 0);
+      }, 10);
     });
   });
 
   it('should reset state if local actions not in channel order', function (done) {
     var emitter = new EventEmitter();
-    subject.set = function (key) {
+    subject.set = function expectAThenB(key) {
       if (key === A_ID) {
         assert.isTrue(!subject[B_ID], 'Action a should be applied first');
       } else if (key === B_ID && subject[A_ID]) {
@@ -91,7 +104,7 @@ describe('Framespace client', function () {
       }
       subject[key] = true;
     };
-    fs.load(subject, new MockIo('fs', { events : emitter }), new MemoryJournal('fs'), function (user, commit) {
+    fs.load(subject, new MockIo('fs', { events : emitter }), new MemoryJournal('fs'), function connected(user, commit) {
       var setb = new SetAction({ id : B_ID });
       setb.do(subject);
       emitter.emit('action', 'uid', { id : A_ID }); // Injected remote event

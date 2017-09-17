@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     config = require('config'),
-    pass = require('pass-error');
+    pass = require('pass-error'),
+    log = require('../../lib/log');
 
 /**
  * Base class for client-side IO.
@@ -90,25 +91,33 @@ Io.prototype.emit = function (eventName, data) {
  * Pause the given channel events.
  * The play method returned takes a function with a normal subscriber signature, which
  * is called as expected for each event in turn.
- * Each message is an array of subscriber arguments, [userId, timestamp, data...].
+ * It also takes a callback for when all messages have been played. This callback is passed an unpause function which
+ * resumes the normal processing of messages.
+ * If not unpaused, the play function can be called again and will receive all events from the original pause.
  * @param eventName channel event name
  * @return re-start (play) method
  */
 Io.prototype.pause = function (eventName) {
-  var subscribers = this.subscribers(eventName), pausedMessages = [];
+  var self = this, subscribers = self.subscribers(eventName), pausedMessages = [], unpaused = false;
   function pausedListener() {
+    log.trace('Received while paused', _.toArray(arguments));
     pausedMessages.push(_.toArray(arguments));
   }
-  _.each(subscribers, _.bind(this.unsubscribe, this, eventName));
-  this.subscribe(eventName, pausedListener);
-  return _.bind(function play(subscriber) {
-    this.unsubscribe(eventName, pausedListener);
-    _.each(subscribers, _.bind(this.subscribe, this, eventName));
+  _.each(subscribers, _.bind(self.unsubscribe, self, eventName));
+  self.subscribe(eventName, pausedListener);
+  return function play(subscriber, done/*(unpause)*/) {
+    if (unpaused) throw new Error('Already un-paused');
     // Emit the paused messages
     _.each(pausedMessages, function (args) {
-      subscriber.apply(null, args);
+      subscriber.apply(self, args);
     });
-  }, this);
+    done(function unpause() {
+      log.trace('Unpausing');
+      self.unsubscribe(eventName, pausedListener);
+      _.each(subscribers, _.bind(self.subscribe, self, eventName));
+      unpaused = true;
+    });
+  };
 };
 
 module.exports = Io;
