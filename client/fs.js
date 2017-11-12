@@ -20,7 +20,7 @@ var _ = require('lodash'),
 exports.load = function (subject, io, journal, connected/*(localUser, commit)*/) {
   var localActions = new Batch([]), users = {}, playStartupEvents;
   var die = _.bind(io.close, io), noopOrDie = pass(_.noop, die);
-  io.subscribe('user.connected', function (userId, timestamp, data) {
+  io.subscribe('user.connected', function (userId, connectedTimestamp, data) {
     var user; // NOTE this is the Framespace user, not the IO user
     if (userId === io.user.id) {
       user = new LocalUser(data, subject);

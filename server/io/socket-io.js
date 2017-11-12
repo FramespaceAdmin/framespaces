@@ -14,7 +14,7 @@ function SocketIo(server) {
 SocketIo.prototype = Object.create(Io.prototype);
 SocketIo.prototype.constructor = SocketIo;
 
-SocketIo.prototype.createChannel = function (name, Journal, cb/*(err)*/) {
+SocketIo.prototype.createChannel = function (name, journal, cb/*(err)*/) {
   if (!_.has(this.namespaces, name)) {
     log.debug('Creating channel', name);
     var ns = this.namespaces[name] = this.io.of('/' + name + '/io');
@@ -40,7 +40,7 @@ SocketIo.prototype.createChannel = function (name, Journal, cb/*(err)*/) {
           socket.emit.apply(socket, args); // Actions are echoed
           
           validate.action(action, pass(function () {
-            Journal(name).addEvent(action, timestamp, cb);
+            journal.addEvent(name, action, timestamp, cb);
           }, cb));
         });
 

@@ -3,20 +3,20 @@ var modules = require('../../lib/modules');
 /**
  * Instantiate a Journal. This typically does nothing with persisted data;
  * use the methods to retrieve and persist data.
- * @param id the identity of the journal
+ * @param server a node http server
+ * @param app an express app
  */
-function Journal(id) {
+function Journal(server, app) {
   if (!(this instanceof Journal) || this.constructor === Journal) {
-    return new (require('../' + modules.journal))(id);
+    return new (require('../' + modules.journal))(server, app);
   }
-  this.id = id;
 }
 
 /**
  * Fetch the top-level details of the journal object.
  * @param cb callback with error and journal details
  */
-Journal.prototype.fetchDetails = function (cb/*(err, details)*/) {
+Journal.prototype.fetchDetails = function (name, cb/*(err, details)*/) {
   throw undefined;
 };
 
@@ -26,7 +26,7 @@ Journal.prototype.fetchDetails = function (cb/*(err, details)*/) {
  * @see /lib/events for event and snapshot schemas
  * @param cb callback with error and events
  */
-Journal.prototype.fetchEvents = function (cb/*(err, snapshot, [event])*/) {
+Journal.prototype.fetchEvents = function (name, cb/*(err, snapshot, [event])*/) {
   throw undefined;
 };
 
@@ -34,7 +34,7 @@ Journal.prototype.fetchEvents = function (cb/*(err, snapshot, [event])*/) {
  * Persists details of this journal.
  * @param cb callback
  */
-Journal.prototype.putDetails = function (details, cb/*(details, err)*/) {
+Journal.prototype.putDetails = function (name, details, cb/*(details, err)*/) {
   throw undefined;
 };
 
@@ -43,7 +43,7 @@ Journal.prototype.putDetails = function (details, cb/*(details, err)*/) {
  * @param events the events to add
  * @param cb callback with error and removed count
  */
-Journal.prototype.addEvent = function (data, timestamp, cb/*(err)*/) {
+Journal.prototype.addEvent = function (name, data, timestamp, cb/*(err)*/) {
   throw undefined;
 };
 
@@ -55,7 +55,7 @@ Journal.prototype.addEvent = function (data, timestamp, cb/*(err)*/) {
  * However, even in these cases the snapshot might be accepted to cross-check with
  * another client's view of the world, to mitigate against rogue clients.
  */
-Journal.prototype.offerSnapshot = function (timestamp, cb/*(err, nonce)*/) {
+Journal.prototype.offerSnapshot = function (name, timestamp, cb/*(err, nonce)*/) {
   throw undefined;
 };
 
@@ -64,7 +64,7 @@ Journal.prototype.offerSnapshot = function (timestamp, cb/*(err, nonce)*/) {
  * nonce is valid the snapshot may still not actually be persisted, for example due to
  * concurrency with a more recent offer. In this case the return is success.
  */
-Journal.prototype.addSnapshot = function (nonce, snapshot, cb/*(err)*/) {
+Journal.prototype.addSnapshot = function (name, nonce, snapshot, cb/*(err)*/) {
   throw undefined;
 };
 

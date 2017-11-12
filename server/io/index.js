@@ -1,18 +1,18 @@
 var modules = require('../../lib/modules');
 
-function Io(server) {
+function Io(server, app) {
   if (!(this instanceof Io) || this.constructor === Io) {
-    return new (require('../' + modules.io))(server);
+    return new (require('../' + modules.io))(server, app);
   }
 }
 
 /**
  * Create a channel for io.
  * @param name channel name
- * @param Journal a constructor for adding events
+ * @param journal a journal for adding events
  * @param cb callback with error and channel object (implementation specific)
  */
-Io.prototype.createChannel = function (name, Journal, cb/*(err, channel)*/) {
+Io.prototype.createChannel = function (name, journal, cb/*(err, channel)*/) {
   throw undefined;
 };
 
