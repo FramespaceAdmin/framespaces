@@ -27,9 +27,9 @@ function BrowserUser(json) {
   var toolbarSvg = browser.svg(this.place.query('.user-toolbar'));
 
   // User button and additional buttons
-  var userButton = toolbarSvg.select('.user-button').mousedown(_.bind(this.show, this));
+  var userButton = toolbarSvg.select('.user-button').get(0).mousedown(_.bind(this.show, this));
   var auxButtons = _.map(this.constructor.buttons, _.bind(function (name) {
-    return toolbarSvg.select('.' + name + '-button').mousedown(_.bind(this[name], this));
+    return toolbarSvg.select('.' + name + '-button').get(0).mousedown(_.bind(this[name], this));
   }, this));
   var toolbar = new BrowserUser.Toolbar(toolbarSvg, _.concat(userButton, auxButtons));
   userButton.mouseover(_.bind(toolbar.show, toolbar));

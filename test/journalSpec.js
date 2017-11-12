@@ -7,16 +7,17 @@ var _ = require('lodash'),
  * Tests & specifies Journal functionality.
  * @param {Function} newJournal creates a new Journal. Must have config snapshot frequency set to 0.
  */
-module.exports = function (newJournal/*(name)*/) {
-  var timestamp;
+module.exports = function (newJournal/*(server, app)*/) {
+  var timestamp, journal;
 
   beforeEach(function () {
     timestamp = new Date().getTime();
+    journal = newJournal(); // No server or app for now
   });
 
   it('should store some details', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').fetchDetails(pass(function (details) {
+    journal.putDetails('a', { name : 'A' }, pass(function () {
+      journal.fetchDetails('a', pass(function (details) {
         assert.equal(details.name, 'A');
         done();
       }, done));
@@ -24,12 +25,12 @@ module.exports = function (newJournal/*(name)*/) {
   });
 
   it('should store details by id', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function (a) {
+    journal.putDetails('a', { name : 'A' }, pass(function (a) {
       assert.equal(a.name, 'A');
-      newJournal('b').putDetails({ name : 'B' }, pass(function (b) {
+      journal.putDetails('b', { name : 'B' }, pass(function (b) {
         assert.equal(b.name, 'B');
-        newJournal('a').fetchDetails(pass(function (aDetails) {
-          newJournal('b').fetchDetails(pass(function (bDetails) {
+        journal.fetchDetails('a', pass(function (aDetails) {
+          journal.fetchDetails('b', pass(function (bDetails) {
             assert.equal(aDetails.name, 'A');
             assert.equal(bDetails.name, 'B');
             done();
@@ -40,9 +41,9 @@ module.exports = function (newJournal/*(name)*/) {
   });
 
   it('should store an event', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').addEvent({ id : '1' }, timestamp, pass(function () {
-        newJournal('a').fetchEvents(pass(function (snapshot, events) {
+    journal.putDetails('a', { name : 'A' }, pass(function () {
+      journal.addEvent('a', { id : '1' }, timestamp, pass(function () {
+        journal.fetchEvents('a', pass(function (snapshot, events) {
           assert.isNull(snapshot);
           assert.isArray(events);
           assert.lengthOf(events, 1);
@@ -55,9 +56,9 @@ module.exports = function (newJournal/*(name)*/) {
   });
 
   it('should store an array of events', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').addEvent([{ id : '1' }, { id : '2' }], timestamp, pass(function () {
-        newJournal('a').fetchEvents(pass(function (snapshot, events) {
+    journal.putDetails('a', { name : 'A' }, pass(function () {
+      journal.addEvent('a', [{ id : '1' }, { id : '2' }], timestamp, pass(function () {
+        journal.fetchEvents('a', pass(function (snapshot, events) {
           assert.isNull(snapshot);
           assert.isArray(events);
           assert.lengthOf(events, 2);
@@ -72,10 +73,10 @@ module.exports = function (newJournal/*(name)*/) {
   });
 
   it('should store two consecutive events', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').addEvent({ id : '1' }, timestamp, pass(function () {
-        newJournal('a').addEvent({ id : '2' }, timestamp, pass(function () {
-          newJournal('a').fetchEvents(pass(function (snapshot, events) {
+    journal.putDetails('a', { name : 'A' }, pass(function () {
+      journal.addEvent('a', { id : '1' }, timestamp, pass(function () {
+        journal.addEvent('a', { id : '2' }, timestamp, pass(function () {
+          journal.fetchEvents('a', pass(function (snapshot, events) {
             assert.isNull(snapshot);
             assert.isArray(events);
             assert.lengthOf(events, 2);
@@ -91,8 +92,8 @@ module.exports = function (newJournal/*(name)*/) {
   });
 
   it('should accept a snapshot offer', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').offerSnapshot(timestamp, pass(function (nonce) {
+    journal.putDetails('a', { name : 'A' }, pass(function () {
+      journal.offerSnapshot('a', timestamp, pass(function (nonce) {
         assert.isOk(nonce);
         done();
       }, done));
@@ -100,9 +101,9 @@ module.exports = function (newJournal/*(name)*/) {
   });
 
   it('should store a snapshot', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').offerSnapshot(timestamp, pass(function (nonce) {
-        newJournal('a').addSnapshot(nonce, {
+    journal.putDetails('a', { name : 'A' }, pass(function () {
+      journal.offerSnapshot('a', timestamp, pass(function (nonce) {
+        journal.addSnapshot('a', nonce, {
           lastEventId : guid(), state : {}, timestamp : timestamp
         }, pass(function () {
           // Apparent success
@@ -113,8 +114,8 @@ module.exports = function (newJournal/*(name)*/) {
   });
 
   it('should reject a duff nonce', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').addSnapshot(guid(), {
+    journal.putDetails('a', { name : 'A' }, pass(function () {
+      journal.addSnapshot('a', guid(), {
         lastEventId : guid(), state : {}, timestamp : timestamp
       }, function (err) {
         assert.isOk(err);
@@ -124,12 +125,12 @@ module.exports = function (newJournal/*(name)*/) {
   });
 
   it('should reject another snapshot with the same timestamp', function (done) {
-    newJournal('a').putDetails({ name : 'A' }, pass(function () {
-      newJournal('a').offerSnapshot(timestamp, pass(function (nonce) {
-        newJournal('a').addSnapshot(nonce, {
+    journal.putDetails('a', { name : 'A' }, pass(function () {
+      journal.offerSnapshot('a', timestamp, pass(function (nonce) {
+        journal.addSnapshot('a', nonce, {
           lastEventId : guid(), state : {}, timestamp : timestamp
         }, pass(function () {
-          newJournal('a').offerSnapshot(timestamp, pass(function (nonce) {
+          journal.offerSnapshot('a', timestamp, pass(function (nonce) {
             assert.isUndefined(nonce);
             done();
           }, done));

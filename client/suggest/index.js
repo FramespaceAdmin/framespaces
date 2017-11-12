@@ -7,7 +7,7 @@ var suggest = {
   snap : require('./snap'),
   arcify : require('./arcify'),
   link : require('./link'),
-  label : require('./label'),
+  label : require('./labelify'),
   scribble : require('./scribble')
 };
 

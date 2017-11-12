@@ -17,7 +17,7 @@ Label.fromJSON = function (data) {
 Label.fromElement = function (e) {
   return Shape.elementName(e) === 'text' && (function (attr) {
     return Shape.hasClass(attr, 'label') &&
-      new Label(attr, _.map(e.selectAll('tspan'), Text.Span.fromElement), e.getBBox());
+      new Label(attr, _.map(Shape.elementSelectAll(e, 'tspan'), Text.Span.fromElement), Shape.elementBBox(e));
   })(Text.elementAttr(e));
 };
 

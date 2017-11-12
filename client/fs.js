@@ -18,9 +18,9 @@ var _ = require('lodash'),
  * @param events initial data passed to Journal constructor (for unit testing)
  */
 exports.load = function (subject, io, journal, connected/*(localUser, commit)*/) {
-  var localActions = new Batch([]), users = {};
-  var noopOrDie = pass(_.noop, io.close, null, io);
-  io.subscribe('user.connected', function (userId, timestamp, data) {
+  var localActions = new Batch([]), users = {}, playStartupEvents;
+  var die = _.bind(io.close, io), noopOrDie = pass(_.noop, die);
+  io.subscribe('user.connected', function (userId, connectedTimestamp, data) {
     var user; // NOTE this is the Framespace user, not the IO user
     if (userId === io.user.id) {
       user = new LocalUser(data, subject);
@@ -29,37 +29,52 @@ exports.load = function (subject, io, journal, connected/*(localUser, commit)*/)
         interactions.push(state);
       });
 
-      journal.fetchEvents(pass(function (snapshot, events) {
+      journal.fetchEvents(pass(function stateFetched(snapshot, events) {
         log.info('Replaying ' + events.length + ' actions in Framespace');
-        /**
-         * Recover the paused actions by resuming with playStartupEvents().
-         * Async loading possibilities:
-         * - subscribed events pre-date the loaded events (with a gap)
-         * - subscribed events overlap the loaded events
-         * - subscribed events post-date the loaded events (with a gap)
-         * Resolved by filtering subscribed events:
-         * - to after or equal to the last loaded event and snapshot timestamp
-         * - to be distinct by id with the loaded events
-         * This leaves the tiny possibility that we duplicate the last millisecond of events
-         * leading to a snapshot. This should be covered by action idempotency.
-         */
-        subject.setState(_.get(snapshot, 'state'));
-        playStartupEvents(function (userId, timestamp, data) {
-          if (timestamp >= _.get(_.last(events) || snapshot, 'timestamp', 0) && !_.find(events, { id : data.id })) {
+
+        var lastEventId = _.get(_.last(events), 'id') || _.get(snapshot, 'lastEventId'),
+            lastTimestamp = _.get(_.last(events) || snapshot, 'timestamp', 0),
+            lastEventArrived = !lastEventId, laterEventsArrived = false;
+
+        playStartupEvents(function subscriber(userId, timestamp, data) {
+          lastEventArrived = lastEventArrived || data.id === lastEventId;
+          if (timestamp >= lastTimestamp && !_.find(events, { id : data.id })) {
             events.push(data);
+            laterEventsArrived = true;
           }
+        }, function done(unpause) {
+          // Async loading possibilities (|: snapshot, -: loaded event, =: subscribed event)
+          // NOTE fetched and subscribed events are always contiguous
+          if (lastEventArrived) {
+            // |---
+            //    ===
+            unpause(); // Unpause because we are done
+            subject.setState(_.get(snapshot, 'state'));
+            // Map the events to Actions and perform them on the subject
+            subject.changed(new Batch(_.map(events, Action.fromJSON)).do(subject));
+            // We're done. Return control to the caller with the user and commit function
+            connected(user, function commit(action) {
+              interactions.flush();
+              // This will be echoed to the subscriber
+              io.publish('action', action.toJSON(), noopOrDie);
+              // Local actions are applied pre-emptively and so may be out of order, see below
+              localActions = localActions.and(action);
+            });
+          } else if (laterEventsArrived) {
+            // |---
+            //      ===
+            // Re-fetch events until ids overlap
+            journal.fetchEvents(pass(stateFetched, die));
+          } else {
+            //  |--- OR     |---
+            // ===      ===
+            // Wait until last loaded event arrives
+            setTimeout(_.partial(stateFetched, snapshot, events), 100);
+          }
+          // This leaves the tiny possibility that we duplicate the last millisecond of events
+          // leading to a snapshot. This should be covered by action idempotency.
         });
-        // Map the events to Actions and perform them on the subject
-        subject.changed(new Batch(_.map(events, Action.fromJSON)).do(subject));
-        // We're done. Return control to the caller with the user and commit function
-        connected(user, function commit(action) {
-          interactions.flush();
-          // This will be echoed to the subscriber
-          io.publish('action', action.toJSON(), noopOrDie);
-          // Local actions are applied pre-emptively and so may be out of order, see below
-          localActions = localActions.and(action);
-        });
-      }, io.close, null, io));
+      }, die));
     } else {
       user = new RemoteUser(data, subject);
       user.on('interacting', function (delta, state) {
@@ -76,6 +91,7 @@ exports.load = function (subject, io, journal, connected/*(localUser, commit)*/)
     _.invoke(users, [userId, 'interact'], interactions);
   });
   io.subscribe('action', function (userId, timestamp, event) {
+    log.trace('Recieved action', event);
     // Store the event and maybe take a snapshot
     journal.addEvent(subject, event, timestamp, noopOrDie);
     var action = Action.fromJSON(event), objects;
@@ -89,5 +105,5 @@ exports.load = function (subject, io, journal, connected/*(localUser, commit)*/)
     }
   });
   // Pause the action until fully connected
-  var playStartupEvents = io.pause('action');
+  playStartupEvents = io.pause('action');
 };

@@ -1,4 +1,5 @@
 var _ = require('lodash'),
+    guid = require('../../lib/guid'),
     Point = require('kld-affine').Point2D,
     Shape = require('../shape'),
     Addition = require('../action/addition'),
@@ -11,7 +12,7 @@ function Pen(picture) {
   var element, activity;
 
   function processLFs(text) {
-    _.reduce(text.selectAll('tspan'), function (prev, tspan) {
+    _.reduce(Shape.elementSelectAll(text, 'tspan'), function (prev, tspan) {
       if (prev.node.textContent.length) {
         var a = prev.node.getStartPositionOfChar(0).x,
             b = prev.node.getEndPositionOfChar(prev.node.textContent.length - 1).x;
@@ -42,14 +43,22 @@ function Pen(picture) {
 
   this.using = function using(delta, state) {
     function text() {
-      return paper.text(state.x, state.y, toLines(_.map(activity, 'char')))
-        .attr('font-size', _.get(paper.attr(), 'font-size'));
+      return paper.text(toLines(_.map(activity, 'char'))).move(state.x, state.y)
+        .attr('font-size', _.get(paper.attr(), 'font-size')).attr('id', '');
+    }
+    function dot() {
+      return paper.circle(0).move(state.x, state.y).addClass('dot').attr('id', '');
+    }
+    function polyline() {
+      return paper.polyline(_(activity).map(function (state) {
+        return [state.x, state.y];
+      }).uniqBy(_.toString).flatten().value()).attr('id', '');
     }
 
     if (delta.active) {
       if (state.active) { // Started something new
         activity = [state];
-        element = state.char ? text() : paper.circle(state.x, state.y, 0).addClass('dot');
+        element = state.char ? text() : dot();
         processLFs(element);
       } else { // Finished an element
         activity = undefined;
@@ -59,9 +68,7 @@ function Pen(picture) {
     } else if (state.active) { // Drawing or typing
       element.remove();
       activity.push(state);
-      element = state.char ? text() : paper.polyline(_(activity).map(function (state) {
-        return [state.x, state.y];
-      }).uniqBy(_.toString).flatten().value());
+      element = state.char ? text() : polyline();
       processLFs(element);
     }
   };

@@ -6,8 +6,9 @@ var _ = require('lodash')
 
 module.exports = function suggestLabel(picture, lastAction) {
   var e1 = _.last(lastAction.results);
-  if (e1 && !e1.removed && !e1.hasClass('label')) {
-    return _.last(_.sortBy(_.reduce(picture.paper.selectAll('[id]:not(.label)'), function (candidates, e2) {
+  if (e1 && !Shape.elementRemoved(e1) && !e1.hasClass('label')) {
+    // TODO: Improve performance by using picture.elements(bbox)
+    return _.last(_.sortBy(_.reduce(picture.elements(':not(.label)'), function (candidates, e2) {
       var classified = _.partition([e1, e2], function (e) {
         return Shape.elementName(e) === 'text';
       }), label = _.first(classified[0]), on = _.first(classified[1]);

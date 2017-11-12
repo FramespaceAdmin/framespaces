@@ -17,9 +17,7 @@ Mutation.prototype = Object.create(Action.prototype);
 Mutation.prototype.constructor = Mutation;
 
 Mutation.prototype.do = function (picture) {
-  var element = picture.getElement(this.from.id);
-  this.to.applyTo(element);
-  return this.to.hasClass('label') ? picture.getElement(this.to.attr.on) : element;
+  return this.to.applyTo(picture.getElement(this.from.id));
 };
 
 Mutation.prototype.isOK = function (picture) {

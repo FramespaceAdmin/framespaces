@@ -46,8 +46,9 @@ Object.defineProperties(exports, {
     }
   },
   svg : {
-    get : function () {
-      return require('snapsvg');
+    value : function (selector) {
+      var arg = _.isElement(selector) ? selector : document.querySelector(selector);
+      return require('svgjs').call(null, arg);
     }
   },
   hamster : {

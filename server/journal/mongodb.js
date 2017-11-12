@@ -10,13 +10,12 @@ var _ = require('lodash'),
 /**
  * MongoDB Journal driver.
  * NOTE use of 1.4.x client only, due to testing dependencies.
- * @param {String} id namepsace for stored journal data
  */
-function MongoDbJournal(id) {
+function MongoDbJournal(server, app) {
   if (!(this instanceof MongoDbJournal)) {
-    return new MongoDbJournal(id);
+    return new MongoDbJournal(server, app);
   }
-  Journal.call(this, id);
+  Journal.call(this, server, app);
 }
 
 MongoDbJournal.client = function (cb/*(err, db)*/) {
@@ -54,18 +53,18 @@ MongoDbJournal.close = function (cb) {
 MongoDbJournal.prototype = Object.create(Journal.prototype);
 MongoDbJournal.prototype.constructor = MongoDbJournal;
 
-MongoDbJournal.prototype.fetchDetails = MongoDbJournal.connected(function (cb/*(err, details)*/) {
-  log.debug('Fetching details for', this.id);
-  return MongoDbJournal.journals.findOne({ _id : this.id }, pass(function (details) {
+MongoDbJournal.prototype.fetchDetails = MongoDbJournal.connected(function (name, cb/*(err, details)*/) {
+  log.debug('Fetching details for', name);
+  return MongoDbJournal.journals.findOne({ _id : name }, pass(function (details) {
     log.debug('Fetched details', details);
     cb(false, details);
   }, cb));
 });
 
-MongoDbJournal.prototype.lastValidSnapshot = function (fields, cb/*(err, snapshot, lastEventSeq)*/) {
+MongoDbJournal.prototype.lastValidSnapshot = function (name, fields, cb/*(err, snapshot, lastEventSeq)*/) {
   // Get the last snapshot for which an event exists
   var ssCursor = MongoDbJournal.snapshots.find(
-    { fs : this.id },
+    { fs : name },
     { fields : _.set(fields, 'lastEventId', 1) } // Require this field for finding the event
     ).sort({ timestamp : -1 });
 
@@ -82,28 +81,28 @@ MongoDbJournal.prototype.lastValidSnapshot = function (fields, cb/*(err, snapsho
   }, cb);
 };
 
-MongoDbJournal.prototype.fetchEvents = MongoDbJournal.connected(function (cb/*(err, snapshot, [event])*/) {
-  this.lastValidSnapshot({ lastEventId : 1, state : 1, timestamp : 1 }, pass(function (snapshot, lastEventSeq) {
+MongoDbJournal.prototype.fetchEvents = MongoDbJournal.connected(function (name, cb/*(err, snapshot, [event])*/) {
+  this.lastValidSnapshot(name, { lastEventId : 1, state : 1, timestamp : 1 }, pass(function (snapshot, lastEventSeq) {
     return MongoDbJournal.events.find({
-      fs : this.id, seq : { $gt : lastEventSeq }
+      fs : name, seq : { $gt : lastEventSeq }
     }).sort({ seq : 1 }).toArray(pass(function (events) {
       cb(false, snapshot, events);
     }, cb));
   }, cb, null, this));
 });
 
-MongoDbJournal.prototype.putDetails = MongoDbJournal.connected(function (details, cb/*(err)*/) {
+MongoDbJournal.prototype.putDetails = MongoDbJournal.connected(function (name, details, cb/*(err)*/) {
   return MongoDbJournal.journals.insert(_.assign(details, {
-    _id : this.id,
+    _id : name,
     nextSeq : 0
   }), pass(function (result) {
     return cb(false, details);
   }, cb));
 });
 
-MongoDbJournal.prototype.nextEventSeq = MongoDbJournal.connected(function (inc, cb/*(err, nextSeq)*/) {
+MongoDbJournal.prototype.nextEventSeq = MongoDbJournal.connected(function (name, inc, cb/*(err, nextSeq)*/) {
   MongoDbJournal.journals.findAndModify(
-    { _id : this.id }, // Query
+    { _id : name }, // Query
     [], // Sort
     { $inc : { nextSeq : inc } }, // Doc (to be updated)
     { fields : { nextSeq : true } }, // Options
@@ -112,49 +111,49 @@ MongoDbJournal.prototype.nextEventSeq = MongoDbJournal.connected(function (inc, 
     }, cb, null, this));
 });
 
-MongoDbJournal.prototype.addEvent = MongoDbJournal.connected(function (data, timestamp, cb/*(err)*/) {
+MongoDbJournal.prototype.addEvent = MongoDbJournal.connected(function (name, data, timestamp, cb/*(err)*/) {
   // Atomically get a block of sequence numbers from the database
   var events = _events.from(data, timestamp);
-  this.nextEventSeq(events.length, pass(function (nextSeq) {
+  this.nextEventSeq(name, events.length, pass(function (nextSeq) {
     MongoDbJournal.events.insert(_.map(events, _.bind(function (event) {
       return _.assign(event, {
         _id : event.id,
         seq : nextSeq++,
-        fs : this.id
+        fs : name
       });
     }, this)), cb);
   }, cb, null, this));
 });
 
-MongoDbJournal.prototype.nonce = function (timestamp) {
+MongoDbJournal.prototype.nonce = function (name, timestamp) {
   var hmac = _crypto.createHmac('sha256', process.env.FS_SECRET);
-  hmac.update(this.id);
+  hmac.update(name);
   hmac.update('' + timestamp);
   return hmac.digest('base64');
 };
 
-MongoDbJournal.prototype.offerSnapshot = MongoDbJournal.connected(function (timestamp, cb/*(err, nonce)*/) {
+MongoDbJournal.prototype.offerSnapshot = MongoDbJournal.connected(function (name, timestamp, cb/*(err, nonce)*/) {
   // Basic policy: accept anything with a timestamp that we don't already have
   // TODO: Root out snapshots for which the last event never arrives
-  MongoDbJournal.snapshots.findOne({ fs : this.id, timestamp : timestamp }, {
+  MongoDbJournal.snapshots.findOne({ fs : name, timestamp : timestamp }, {
     fields : { lastEventId : 1, _id : 1 }
   }, pass(function (existing) {
     // Shortcut if we already have a snapshot at this timestamp
-    return existing ? cb(false) : this.lastValidSnapshot({ timestamp : 1 }, pass(function (snapshot) {
+    return existing ? cb(false) : this.lastValidSnapshot(name, { timestamp : 1 }, pass(function (snapshot) {
       return MongoDbJournal.events.count({
         timestamp : { $gt : _.get(snapshot, 'timestamp', 0) }
       }, pass(function (count) {
-        return cb(false, count >= config.get('snapshotFrequency') ? this.nonce(timestamp) : undefined);
+        return cb(false, count >= config.get('snapshotFrequency') ? this.nonce(name, timestamp) : undefined);
       }, cb, null, this));
     }, cb, null, this));
   }, cb, null, this));
 });
 
-MongoDbJournal.prototype.addSnapshot = MongoDbJournal.connected(function (nonce, snapshot, cb/*(err)*/) {
-  if (nonce !== this.nonce(snapshot.timestamp)) {
+MongoDbJournal.prototype.addSnapshot = MongoDbJournal.connected(function (name, nonce, snapshot, cb/*(err)*/) {
+  if (nonce !== this.nonce(name, snapshot.timestamp)) {
     _async.setImmediate(cb, 'Bad nonce');
   } else {
-    MongoDbJournal.snapshots.insert(_.set(snapshot, 'fs', this.id), cb);
+    MongoDbJournal.snapshots.insert(_.set(snapshot, 'fs', name), cb);
   }
 });
 

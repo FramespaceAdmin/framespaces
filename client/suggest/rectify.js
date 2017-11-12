@@ -13,7 +13,7 @@ function d(p1, p2, axis) {
 }
 
 module.exports = function suggestRectify(picture, lastAction) {
-  var element = _.last(lastAction.results), shape = element && !element.removed && Shape.of(element);
+  var element = _.last(lastAction.results), shape = Shape.ofAttached(element);
   function createAction(points) {
     if (!shape.getEnds().length && points.length === 4) {
       return new Removal(shape).and(new Addition(shape.cloneAs('rect', Shape.computeBBox(points))));

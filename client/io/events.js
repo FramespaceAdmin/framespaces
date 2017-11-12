@@ -1,4 +1,5 @@
-var _ = require('lodash');
+var _ = require('lodash'),
+    log = require('../../lib/log');
 
 /**
  * Mixes in methods to the prototype that implement a local IO based on an EventEmitter.
@@ -14,6 +15,7 @@ exports.mixInto = function (prototype) {
   prototype.subscribe = function (eventName, subscriber/*(userId, timestamp, data...)*/) {
     this.events.on(eventName, _.assign(_.bind(function (userId) {
       if (eventName !== 'interactions' || userId !== this.user.id) { // Interactions not echoed
+        log.trace('Sending', eventName, _.toArray(arguments));
         this.latent(subscriber, [userId, new Date().getTime()].concat(_.slice(arguments, 1)));
       }
     }, this), { subscriber : subscriber, io : this }));

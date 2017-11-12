@@ -11,7 +11,7 @@ var _ = require('lodash'),
     setCookie = require('js-cookie').set,
     Io = require('../client/io'),
     itIsIO = require('./ioSpec'),
-    Journal = require('../server/journal/taffy');
+    journal = new (require('../server/journal/taffy'))();
 
 // Additional options passed to newClientIo
 var OPTIONS = _.assign(itIsIO.OPTIONS, {
@@ -40,7 +40,7 @@ module.exports = function (newClientIo/*(name, options, cb(err, io))*/, newServe
     options.user || (options.user = { id : guid() });
     jsdom.changeURL(window, 'http://localhost:3001/' + name);
     _jwt.sign(options.user, 'JWT_SECRET', {}, pass(function (jwt) {
-      serverIo.createChannel(name, Journal, pass(function () {
+      serverIo.createChannel(name, journal, pass(function () {
         setCookie('jwt', jwt);
         // Handle remote events appearing on the optional events bus
         options.events && _.each(_.keys(Io.messages), function (eventName) {

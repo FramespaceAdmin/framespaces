@@ -212,6 +212,8 @@ module.exports = function (newIo/*(name, options, cb(err, io, latency))*/) {
             assert.equal(userId, 'uid');
             assert.isNumber(timestamp);
             assert.deepEqual(action, TEST_ACTION);
+          }, function finished(unpause) {
+            unpause();
             done();
           });
         }, io.latency || 0);

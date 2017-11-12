@@ -1,18 +1,9 @@
 var _ = require('lodash'),
     Journal = require('../journal');
 
-/**
- * The events passed here are for unit testing purposes: array or override function
- */
-function MemoryJournal(ns, events) {
+function MemoryJournal(ns) {
   Journal.call(this, ns);
-  if (_.isFunction(events)) {
-    this.fetchEvents = events;
-  } else if (_.isArray(events)) {
-    this.events = events;
-  } else {
-    this.events = [];
-  }
+  this.events = [];
 }
 
 MemoryJournal.prototype = Object.create(Journal.prototype);

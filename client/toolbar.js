@@ -6,19 +6,19 @@ module.exports = function Toolbar(toolPaper, picture) {
       return dir + '-' + type;
     }
     function select(type) {
-      return toolPaper.select('#' + elementId(type));
+      return toolPaper.select('#' + elementId(type)).get(0);
     }
     return function (present) {
       select('preview') && select('preview').remove();
       select('icon').attr('display', 'block');
 
       if (_.get(present, [dir, 'preview'])) {
-        var paper = toolPaper.svg().attr('id', elementId('preview')),
+        var paper = select('button').nested().attr('id', elementId('preview')),
             preview = present[dir].preview(picture, paper), bbox, icon;
         if (preview) {
-          bbox = preview.getBBox();
+          bbox = preview.bbox();
           icon = select('icon').attr('display', 'none');
-          preview.attr('stroke-width', (bbox.r0 * 3) / icon.attr('width'));
+          preview.attr('stroke-width', Math.sqrt(bbox.w*bbox.w + bbox.h*bbox.h) / icon.attr('width'));
           paper.attr({
             x : icon.attr('x'),
             y : icon.attr('y'),
@@ -26,7 +26,6 @@ module.exports = function Toolbar(toolPaper, picture) {
             height : icon.attr('height')
           });
           paper.attr('viewBox', [bbox.x - 5, bbox.y - 5, bbox.width + 10, bbox.height + 10].join(' '));
-          select('button').append(paper);
         } else {
           paper.remove();
         }

@@ -118,7 +118,7 @@ describe('Rect', function () {
     var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
-      var rect = Shape.of(paper.rect(0, 0, 1, 1));
+      var rect = Shape.of(paper.rect(1, 1).move(0, 0));
       assert.equal(rect.name, 'rect');
       assert.equal(rect.getPoints().length, 4);
       assert.equal(rect.getPoints()[0].x, 0);

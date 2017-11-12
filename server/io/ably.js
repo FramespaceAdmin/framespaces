@@ -17,14 +17,14 @@ function AblyIo() {
 AblyIo.prototype = Object.create(Io.prototype);
 AblyIo.prototype.constructor = AblyIo;
 
-AblyIo.prototype.createChannel = function (name, Journal, cb/*(err, channel)*/) {
+AblyIo.prototype.createChannel = function (name, journal, cb/*(err, channel)*/) {
   var channel = this.realtime.channels.get(name);
   if (channel.state === 'initialized') {
     // Only add subscriber if this is the first time this channel has appeared
     // TODO: Replace with a webtask to achieve stateless nirvana
     channel.subscribe('action', function (message) {
       validate.action(message.data, pass(function () {
-        Journal(name).addEvent(message.data, message.timestamp, pass(_.noop, log.error));
+        journal.addEvent(name, message.data, message.timestamp, pass(_.noop, log.error));
       }, log.error));
     });
   }

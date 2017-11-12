@@ -18,7 +18,8 @@ var _ = require('lodash'),
     port = process.env.PORT || 3000,
     Io = require('./io'),
     Journal = require('./journal'),
-    io = new Io(server);
+    io = new Io(server, app),
+    journal = new Journal(server, app);
 
 // This is used from the stop and restart scripts
 process.title = 'Framespaces';
@@ -70,7 +71,7 @@ app.get('/fsName', auth.cookie, function (req, res, next) {
 app.post('/', auth.cookie, function (req, res, next) {
   var fs = req.body;
   validate.fs(fs, pass(function () {
-    Journal(fs.name).putDetails(fs, pass(function (fs) {
+    journal.putDetails(fs.name, fs, pass(function (fs) {
       res.status(201).location('/' + fs.name).send(fs);
     }, next));
   }, next));
@@ -81,8 +82,8 @@ app.post('/', auth.cookie, function (req, res, next) {
  * TODO ... unless the framespace is private.
  */
 app.get('/:fsName', auth.setCookie, function (req, res, next) {
-  Journal(req.params.fsName).fetchDetails(pass(function (fs) {
-    return fs ? io.createChannel(fs.name, Journal, pass(function () {
+  journal.fetchDetails(req.params.fsName, pass(function (fs) {
+    return fs ? io.createChannel(fs.name, journal, pass(function () {
       return res.render('index', {
         fs : fs,
         config : clientConfig()
@@ -95,7 +96,7 @@ app.get('/:fsName', auth.setCookie, function (req, res, next) {
  * GETting the last snapshot and subsequent events for a framespace.
  */
 app.get('/:fsName/events', auth.cookie, function (req, res, next) {
-  Journal(req.params.fsName).fetchEvents(pass(function (snapshot, events) {
+  journal.fetchEvents(req.params.fsName, pass(function (snapshot, events) {
     return res.send({ snapshot : snapshot, events : events });
   }, next));
 });
@@ -105,9 +106,8 @@ app.get('/:fsName/events', auth.cookie, function (req, res, next) {
  */
 app.post('/:fsName/snapshot', auth.cookie, function (req, res, next) {
   // TODO: 100 - Continue dance
-  var journal = Journal(req.params.fsName);
-  return journal.offerSnapshot(req.body.timestamp, pass(function (nonce) {
-    return nonce ? journal.addSnapshot(nonce, req.body, pass(function () {
+  return journal.offerSnapshot(req.params.fsName, req.body.timestamp, pass(function (nonce) {
+    return nonce ? journal.addSnapshot(req.params.fsName, nonce, req.body, pass(function () {
       return res.sendStatus(201); // Created
     }, next)) : res.sendStatus(409); // Conflict
   }, next));

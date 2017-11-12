@@ -7,7 +7,7 @@ var _ = require('lodash')
     Shape = require('../shape');
 
 module.exports = function suggestLink(picture, lastAction) {
-  var element = _.last(lastAction.results), line = element && !element.removed && Shape.of(element);
+  var element = _.last(lastAction.results), line = Shape.ofAttached(element);
   if (line && (line instanceof Line || line instanceof Arc) && !line.hasClass('link')) {
     // Searching within a reasonable distance of the line
     var searchBox = Shape.delta(_.pick(line.getBBox(), 'x', 'y', 'width', 'height'), {

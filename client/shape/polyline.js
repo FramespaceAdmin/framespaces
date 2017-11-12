@@ -20,7 +20,7 @@ Polyline.fromElement = function (e) {
  * Returns an array of points from a polygon or polyline points attribute string
  */
 Polyline.points = function (pointsStr) {
-  return _(pointsStr.split(',')).chunk(2).map(function (p) {
+  return _(pointsStr.split(/[,\s]\s*/)).chunk(2).map(function (p) {
     return new Point(Number(p[0]), Number(p[1]));
   }).value();
 };

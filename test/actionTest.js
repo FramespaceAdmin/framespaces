@@ -27,7 +27,7 @@ describe('Actions:', function () {
       assert.isOk(action.un().isOK(picture));
       var line = action.un().do(picture);
       assert.equal(shape.attr.id, line.attr('id'));
-      assert.isOk(line.removed);
+      assert.isNotOk(line.parent());
     });
   });
 
@@ -39,7 +39,7 @@ describe('Actions:', function () {
       assert.isOk(action.isOK(picture));
       var removedLine = action.do(picture);
       assert.equal(addedLine, removedLine);
-      assert.isOk(removedLine.removed);
+      assert.isNotOk(removedLine.parent());
     });
 
     it('should undo', function () {
@@ -50,7 +50,7 @@ describe('Actions:', function () {
       var recoveredLine = action.un().do(picture);
       assert.equal(id, recoveredLine.attr('id'));
       assert.equal(0, recoveredLine.attr('x1'));
-      assert.isNotOk(recoveredLine.removed);
+      assert.isOk(recoveredLine.parent());
     });
   });
 });

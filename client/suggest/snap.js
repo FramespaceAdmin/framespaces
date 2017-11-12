@@ -12,7 +12,7 @@ function getConfidence(p1, p2, s1, s2) {
 }
 
 module.exports = function suggestSnap(picture, lastAction) {
-  var element = _.last(lastAction.results), shape = element && !element.removed && Shape.of(element);
+  var element = _.last(lastAction.results), shape = Shape.ofAttached(element);
   if (shape && shape.getEnds().length) {
     var reverseShape = _.invoke(shape, 'reverse'), snaps = [];
 
@@ -21,7 +21,7 @@ module.exports = function suggestSnap(picture, lastAction) {
         confidence : getConfidence(shape.getEnds()[0], shape.getEnds()[1], shape)
       }));
     }
-    picture.paper.selectAll('[id]:not(#' + shape.attr.id + ')').forEach(function (oldElement) {
+    picture.paper.select('[id]:not(#' + shape.attr.id + ')').each(function () {
       function pushSnap(sNew, sOld) {
         if (sNew && sOld && sOld.add) {
           var sFinal = sOld.add(sNew); // carrying forward old shape
@@ -32,7 +32,7 @@ module.exports = function suggestSnap(picture, lastAction) {
           }
         }
       }
-      var oldShape = Shape.of(oldElement), reverseOldShape = _.invoke(oldShape, 'reverse');
+      var oldShape = Shape.of(this), reverseOldShape = _.invoke(oldShape, 'reverse');
       pushSnap(shape, oldShape);
       pushSnap(shape, reverseOldShape);
       pushSnap(reverseShape, oldShape);

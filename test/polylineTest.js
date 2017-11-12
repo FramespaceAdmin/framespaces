@@ -178,7 +178,7 @@ describe('Polyline', function () {
     var paper = MockPaper(10, 10);
 
     it('should have expected properties', function () {
-      var polyline = Shape.of(paper.polyline(0, 0, 1, 1));
+      var polyline = Shape.of(paper.polyline([0, 0, 1, 1]));
       assert.equal(polyline.name, 'polyline');
       assert.equal(polyline.getPoints().length, 2);
       assert.equal(polyline.getPoints()[0].x, 0);
